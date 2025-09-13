@@ -119,4 +119,28 @@ const getUserDetails = asyncHandler(async (req, res, next) => {
         .json(new ApiResponse(200, user, "User details retrieved successfully"));
 });
 
-export { registerUser, loginUser, logoutUser, getUserDetails };
+//Function to update user details in profile section
+const updateUserDetails = asyncHandler(async (req, res, next) => {
+    const { name, location } = req.body;
+    if (!name || !location) {
+        throw new ApiError("Name and location are required", 400);
+    }
+    const updatedData = {
+        name: name.trim(),
+        location
+    };  
+    if (req.file?.path) {
+        const uploadResult = await uploadOnCloudinary(req.file.path);
+        if (!uploadResult) {
+            throw new ApiError("Profile photo upload failed", 500);
+        }
+        updatedData.profilePhoto = uploadResult.secure_url; // Cloudinary hosted URL
+    }   
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, updatedData, { new: true, runValidators: true }).select("-password -refreshToken");
+    if (!updatedUser) {
+        throw new ApiError("User not found", 404);
+    }
+    res.status(200).json(new ApiResponse(200, updatedUser, "User details updated successfully"));
+});
+
+export { registerUser, loginUser, logoutUser, getUserDetails ,updateUserDetails};
