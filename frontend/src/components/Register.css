@@ -1,0 +1,344 @@
+.register-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+}
+
+/* Left Section - Registration Form */
+.register-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 40px;
+  position: relative;
+}
+
+.register-content {
+  width: 100%;
+  max-width: 400px;
+}
+
+.back-button {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.3s ease;
+  z-index: 3;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+  transform: scale(1.05);
+}
+
+.register-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 40px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.brand-name {
+  color: #2563eb;
+  position: relative;
+  display: inline-block;
+}
+
+.brand-name::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 2px;
+}
+
+.register-form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-with-icon {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  padding-bottom: 8px !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.input-icon {
+  color: #374151 !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: auto !important;
+}
+
+.form-input {
+  flex: 1 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 16px !important;
+  color: #1f2937 !important;
+  outline: none !important;
+  padding: 8px 0 !important;
+  width: auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:focus {
+  outline: none;
+}
+
+.input-with-icon:focus-within {
+  border-bottom-color: #2563eb;
+}
+
+.register-button {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 10px;
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+}
+
+.register-button:active {
+  transform: translateY(0);
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.footer-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.login-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.login-link:hover {
+  color: #1e40af;
+}
+
+/* Right Section - Welcome Message */
+.welcome-section {
+  flex: 1;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-top-left-radius: 60px;
+  border-bottom-left-radius: 60px;
+  margin-left: 20px;
+}
+
+.welcome-content {
+  text-align: center;
+  color: white;
+  z-index: 2;
+  position: relative;
+  padding: 40px;
+}
+
+.welcome-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.welcome-message {
+  font-size: 18px;
+  line-height: 1.6;
+  opacity: 0.9;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.welcome-shape {
+  position: absolute;
+  bottom: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(30, 64, 175, 0.3) 100%);
+  border-radius: 50%;
+  transform: rotate(15deg);
+  z-index: 1;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .register-container {
+    flex-direction: column;
+  }
+  
+  .welcome-section {
+    min-height: 300px;
+    order: -1;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 40px;
+    border-bottom-right-radius: 40px;
+    margin-left: 0;
+    margin-right: 20px;
+  }
+  
+  .welcome-title {
+    font-size: 28px;
+  }
+  
+  .welcome-message {
+    font-size: 16px;
+  }
+  
+  .register-form-section {
+    padding: 20px;
+  }
+  
+  .register-title {
+    font-size: 28px;
+    margin-bottom: 30px;
+  }
+  
+  .back-button {
+    top: 20px;
+    left: 20px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-content {
+    max-width: 100%;
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+  }
+  
+  .welcome-message {
+    font-size: 14px;
+  }
+  
+  .register-title {
+    font-size: 24px;
+  }
+  
+  .form-group {
+    margin-bottom: 18px;
+  }
+  
+  .back-button {
+    top: 15px;
+    left: 15px;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .welcome-shape {
+    bottom: -80px;
+    right: -80px;
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Tablet Responsiveness */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .register-form-section {
+    padding: 30px;
+  }
+  
+  .welcome-content {
+    padding: 30px;
+  }
+  
+  .welcome-title {
+    font-size: 32px;
+  }
+  
+  .welcome-message {
+    font-size: 16px;
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1440px) {
+  .register-content {
+    max-width: 500px;
+  }
+  
+  .welcome-content {
+    padding: 60px;
+  }
+  
+  .welcome-title {
+    font-size: 42px;
+  }
+  
+  .welcome-message {
+    font-size: 20px;
+  }
+}
