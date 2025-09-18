@@ -19,9 +19,11 @@ app.use(cookieParser()); // Middleware to parse cookies
 
 // Import routes
 import userRouter from './src/routes/userRoute.js';
+import complaintRouter from './src/routes/complaintRouter.js';
 
 // Use routes
 app.use('/api/v1/users', userRouter);
+app.use("/api/v1/complaints", complaintRouter);
 
 
 export { app };
