@@ -1,0 +1,36 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="40" height="40" rx="8" fill="url(#gradient1)" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Winding road element -->
+  <path d="M6 12C6 12 8 8 12 10C16 12 18 8 22 10C26 12 28 8 32 10" stroke="url(#roadGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Road dashed lines -->
+  <path d="M8 14C8 14 10 10 14 12C18 14 20 10 24 12C28 14 30 10 34 12" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="2,2"/>
+  <path d="M8 16C8 16 10 12 14 14C18 16 20 12 24 14C28 16 30 12 34 14" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="2,2"/>
+  
+  <!-- Checkmark left arm (blue) -->
+  <path d="M14 6L18 14" stroke="#2196f3" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Checkmark right arm (green) -->
+  <path d="M18 14L26 8" stroke="#4caf50" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Leaf element -->
+  <ellipse cx="26" cy="6" rx="6" ry="8" fill="url(#leafGradient)" transform="rotate(-30 26 6)"/>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e9ecef;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196f3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1976d2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#66bb6a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2e7d32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
