@@ -1,446 +1,573 @@
-/* Dashboard Page Styles - Clean Modern Design */
-.dashboard {
-  min-height: 100vh;
-  background: #f0f9ff;
-  padding-top: 70px; /* Adjust for fixed header */
+/* Base Styles */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a202c;
+    background-color: #f7fafc;
+    min-height: calc(100vh - 80px); /* Adjust for header height */
+    overflow-x: hidden;
 }
 
-/* Page Header */
-.page-header {
-  background: white;
-  border-bottom: 1px solid #e0f2fe;
-  padding: 2rem 0;
-  margin-bottom: 2rem;
+/* Header & Nav (from Home.css) */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 3rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 100;
 }
 
-.page-header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2c5292;
+    font-weight: bold;
 }
 
-.page-title-section {
-  text-align: left;
+.logo-image {
+    height: 40px;
 }
 
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
+.logo-text {
+    font-size: 1.2rem;
 }
 
-.page-subtitle {
-  font-size: 1.1rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
+.nav-links a {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease-in-out;
+    border-radius: 0.5rem;
 }
 
-.location-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: #6b7280;
+.nav-links a:hover {
+    background-color: #f0f4f8;
+    color: #2c5292;
 }
 
-/* Metrics Grid */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  padding: 0 2rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+.nav-links a.active {
+    color: #2c5292;
+    background-color: #e2e8f0;
+    font-weight: 700;
 }
 
-.metric-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0f2fe;
-  transition: all 0.2s ease;
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #bae6fd;
+.user-initials {
+    width: 32px;
+    height: 32px;
+    background-color: #2c5292;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.875rem;
 }
 
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.user-name {
+    font-weight: 600;
+    color: #1a202c;
 }
 
-.metric-title {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #6b7280;
-  margin: 0;
+.logout-btn-header {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #4a5568;
+    transition: all 0.2s;
 }
 
-.metric-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f0f9ff;
-  color: #10b981;
+.logout-btn-header:hover {
+    color: #2c5292;
 }
 
-.metric-content {
-  text-align: left;
+/* Hero Section */
+.dashboard-hero {
+    /* Corrected path to be relative from the CSS file */
+    background: linear-gradient(rgba(44, 82, 146, 0.6), rgba(44, 82, 146, 0.6)), url('../../public/images/dashboard.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 4rem 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.metric-value {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem 0;
-  color: #1f2937;
+.hero-content-wrapper {
+    text-align: center;
 }
 
-.metric-description {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0;
+.dashboard-hero h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
 }
 
-/* Community Progress */
-.community-progress {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 0 2rem 2rem;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0f2fe;
+.dashboard-hero p {
+    font-size: 1.125rem;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    opacity: 0.9;
 }
 
-.progress-header {
-  margin-bottom: 1rem;
+.hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
 }
 
-.progress-title-section {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.hero-btn-primary, .hero-btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: white;
+    border: 1px solid white;
+    background-color: transparent;
 }
 
-.progress-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+.hero-btn-primary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.progress-description {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin: 0 0 1rem 0;
+.hero-btn-secondary {
+    background-color: transparent;
 }
 
-.progress-bar-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: 100%;
-  text-align: center;
+.hero-btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.progress-label {
-  font-size: 0.9rem;
-  color: #6b7280;
-  min-width: 100px;
+/* Stats Row */
+.dashboard-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 3rem;
 }
 
-.progress-bar {
-  flex: 0 0 200px;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
+.stat-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
 }
 
-.progress-fill {
-  height: 100%;
-  background: #10b981;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+.stat-icon-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    color: white;
 }
 
-.progress-percentage {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #6b7280;
-  min-width: 30px;
-  text-align: center;
+.stat-icon {
+    font-size: 1.5rem;
 }
 
-/* Reports Grid */
-.reports-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  padding: 0 2rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+.stat-card h3, .stat-card p {
+    margin: 0;
 }
 
-.reports-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0f2fe;
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.stat-label {
+    color: #4a5568;
+    font-size: 0.875rem;
 }
 
-.card-title-section {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.stat-card.total-reports-card .stat-icon-container { background-color: #90cdf4; }
+.stat-card.active-issues-card .stat-icon-container { background-color: #f6ad55; }
+.stat-card.resolved-card .stat-icon-container { background-color: #9ae6b4; }
+.stat-card.pending-card .stat-icon-container { background-color: #fbd38d; }
+
+/* Main Dashboard Panels */
+.dashboard-main {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    padding: 2rem 3rem;
+    align-items: flex-start;
 }
 
-.card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+.dashboard-sidebar-panels, .dashboard-content-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
-.card-description {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin: 0 0 1.5rem 0;
+.panel {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: #f0f9ff;
-  border: 1px solid #e0f2fe;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8rem;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.panel h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.refresh-btn:hover {
-  background: #e0f2fe;
-  border-color: #bae6fd;
+.panel-subtitle {
+    color: #718096;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
 }
 
-/* Issues List */
-.issues-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* Community Impact Panel */
+.community-impact-panel {
+    min-height: 250px;
 }
 
-.issue-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem;
-  background: #f0f9ff;
-  border-radius: 8px;
-  border: 1px solid #e0f2fe;
-  transition: all 0.2s ease;
+.impact-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
-.issue-item:hover {
-  background: #e0f2fe;
-  border-color: #bae6fd;
+.impact-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    color: #4a5568;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.5rem;
 }
 
-.issue-content {
-  flex: 1;
+.impact-stat-item strong {
+    font-size: 1.5rem;
+    color: #2c5292;
 }
 
-.issue-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+.impact-stat-item small {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #718096;
 }
 
-.issue-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+/* Issue Categories Panel */
+.issue-categories-panel {
+    min-height: 300px;
 }
 
-.issue-address {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0 0 0.5rem 0;
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.issue-stats {
-  font-size: 0.8rem;
-  color: #6b7280;
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f7fafc;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
-.issue-votes {
-  margin: 0;
+.category-item:hover {
+    background-color: #e2e8f0;
 }
 
-.issue-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
+.category-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
-  text-transform: capitalize;
+.category-icon {
+    color: #4c66e4;
 }
 
-.issue-date {
-  font-size: 0.75rem;
-  color: #6b7280;
+.category-title {
+    font-weight: 600;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .reports-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .metrics-grid {
+.category-count {
+    background-color: #d1d5db;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+/* Recent Reports Panel */
+.recent-reports-panel {
+    grid-column: span 1;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header .view-all {
+    color: #2c5292;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.report-card {
+    background-color: #f7fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+
+.report-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.report-title {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.report-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.report-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.status-label {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    text-transform: capitalize;
+}
+
+.status-label.status-pending {
+    background-color: #fbd38d;
+    color: #744210;
+}
+.status-label.status-inprogress {
+    background-color: #90cdf4;
+    color: #2c5292;
+}
+.status-label.status-resolved {
+    background-color: #9ae6b4;
+    color: #2f855a;
+}
+
+/* Quick Actions Panel */
+.quick-actions-panel {
+    grid-column: span 1;
+}
+
+.actions-grid {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
-  }
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.action-card {
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.action-card button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    width: 100%;
+    height: 100%;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-card.primary button {
+    background-color: #4c66e4;
+}
+
+.action-card.secondary button {
+    background-color: #e2e8f0;
+    color: #1a202c;
+}
+
+.action-card h4 {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.action-card p {
+    font-size: 0.75rem;
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Footer (from Home.css) */
+.footer {
+    background-color: #2c5292;
+    color: white;
+    padding: 3rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.footer-column h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column a {
+    color: white;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.footer-column a:hover {
+    opacity: 1;
+}
+
+.footer-logo-section .logo-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.footer-logo-section p {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-top: 1rem;
+}
+
+.contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+}
+
+.contact-info a {
+    color: white;
+    text-decoration: none;
+}
+
+.footer-tagline {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 1;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .dashboard-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .dashboard-main {
+        grid-template-columns: 1fr;
+    }
+    .footer {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    padding: 1.5rem 0;
-  }
-  
-  .page-header-content {
-    padding: 0 1rem;
-  }
-  
-  .page-title {
-    font-size: 1.5rem;
-  }
-  
-  .metrics-grid {
-    grid-template-columns: 1fr;
-    padding: 0 1rem 1rem;
-  }
-  
-  .community-progress {
-    margin: 0 1rem 1rem;
-  }
-  
-  .reports-grid {
-    padding: 0 1rem 1rem;
-    grid-template-columns: 1fr;
-  }
-  
-  .progress-bar-section {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .progress-label {
-    min-width: auto;
-  }
-  
-  .progress-percentage {
-    min-width: auto;
-    text-align: left;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-title {
-    font-size: 1.25rem;
-  }
-  
-  .metric-card {
-    padding: 1rem;
-  }
-  
-  .metric-value {
-    font-size: 1.5rem;
-  }
-  
-  .reports-card {
-    padding: 1rem;
-  }
-  
-  .issue-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .issue-status {
-    align-items: flex-start;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .page-header-content {
-    padding: 0 1.5rem;
-  }
-  
-  .metrics-grid {
-    padding: 0 1.5rem 1.5rem;
-  }
-  
-  .community-progress {
-    margin: 0 1.5rem 1.5rem;
-  }
-  
-  .reports-grid {
-    padding: 0 1.5rem 1.5rem;
-  }
-}
-
-/* Large screen adjustments */
-@media (min-width: 1200px) {
-  .page-header-content {
-    padding: 0 2.5rem;
-  }
-  
-  .metrics-grid {
-    padding: 0 2.5rem 2rem;
-  }
-  
-  .community-progress {
-    margin: 0 2.5rem 2rem;
-  }
-  
-  .reports-grid {
-    padding: 0 2.5rem 2rem;
-  }
+    .dashboard-stats-row {
+        grid-template-columns: 1fr;
+    }
+    .header-top {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    .nav-links {
+        display: none;
+    }
+    .user-profile {
+        margin-top: 1rem;
+    }
+    .dashboard-hero {
+        padding: 2rem 1rem;
+    }
+    .dashboard-main {
+        padding: 1rem;
+    }
+    .footer {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .contact-info {
+        justify-content: center;
+    }
 }

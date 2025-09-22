@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Search, BookOpen, MessageCircle, Phone, CheckCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Search, BookOpen, MessageCircle, Phone, ArrowRight, Mail, Globe } from 'lucide-react';
 import './Help.css';
 
 const Help = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const isSignedIn = false; // Placeholder, assuming authentication state is managed globally
 
   const faqs = [
     {
@@ -33,7 +36,7 @@ const Help = () => {
     }
   ];
 
-  const filteredFAQs = faqs.filter(faq => 
+  const filteredFAQs = faqs.filter(faq =>
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -42,236 +45,150 @@ const Help = () => {
     setOpenFAQ(openFAQ === index ? null : index);
   };
 
-  return React.createElement('div', { className: 'help-page' },
+  const handleSignIn = () => navigate("/login");
+  const handleGetStarted = () => navigate("/signup");
 
-    // Search Section
-    React.createElement('section', { className: 'section' },
-      React.createElement('div', { className: 'container' },
-        React.createElement('div', { 
-          style: { 
-            maxWidth: '600px', 
-            margin: '0 auto', 
-            position: 'relative' 
-          } 
-        },
-          React.createElement('div', { 
-            style: { 
-              position: 'relative', 
-              display: 'flex', 
-              alignItems: 'center' 
-            } 
-          },
-            React.createElement(Search, { 
-              size: 20, 
-              style: { 
-                position: 'absolute', 
-                left: '16px', 
-                color: '#6b7280' 
-              } 
-            }),
-            React.createElement('input', {
-              type: 'text',
-              placeholder: 'Search for help...',
-              value: searchTerm,
-              onChange: (e) => setSearchTerm(e.target.value),
-              style: {
-                width: '100%',
-                padding: '16px 16px 16px 48px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '12px',
-                fontSize: '16px',
-                outline: 'none'
-              }
-            })
-          )
-        )
-      )
-    ),
+  return (
+    <div className="help-container">
+      <header className="header-top">
+        <div className="logo-section">
+          <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+          <div className="logo-text">Clean Street</div>
+        </div>
+        <nav className="nav-links">
+          <Link to="/">Home</Link>
+          <Link to="/help" className="active">Help</Link>
+          <Link to="/about">About</Link>
+        </nav>
+        <div className="auth-buttons">
+          <button onClick={handleSignIn} className="sign-in-btn">
+            Sign In <ArrowRight size={16} />
+          </button>
+          <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
+        </div>
+      </header>
 
-    // FAQ Section
-    React.createElement('section', { className: 'section', style: { background: '#f8fafc' } },
-      React.createElement('div', { className: 'container' },
-        React.createElement('div', { className: 'text-center', style: { marginBottom: '60px' } },
-          React.createElement('h2', { style: { fontSize: '40px', fontWeight: '700', marginBottom: '16px' } },
-            'Frequently Asked Questions'
-          ),
-          React.createElement('p', { style: { fontSize: '18px', color: '#6b7280', maxWidth: '600px', margin: '0 auto' } },
-            'Find quick answers to the most common questions about Clean Street.'
-          )
-        ),
+      <main>
+        {/* Help Banner Section */}
+        <section className="help-banner-section">
+          <div className="banner-content">
+            <h1 className="banner-title">How can we help?</h1>
+            <p className="banner-subtitle">Find answers to your questions, connect with the community, or contact our support team.</p>
+          </div>
+          <div className="search-bar-container">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search for help..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </section>
 
-        React.createElement('div', { style: { maxWidth: '800px', margin: '0 auto' } },
-          ...filteredFAQs.map((faq, index) =>
-            React.createElement('div', {
-              key: index,
-              style: {
-                background: 'white',
-                borderRadius: '12px',
-                marginBottom: '16px',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                overflow: 'hidden'
-              }
-            },
-              React.createElement('button', {
-                onClick: () => toggleFAQ(index),
-                style: {
-                  width: '100%',
-                  padding: '24px',
-                  background: 'none',
-                  border: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '18px',
-                  fontWeight: '600'
-                }
-              },
-                React.createElement('span', null, faq.question),
-                openFAQ === index ? 
-                  React.createElement(ChevronUp, { size: 24, color: '#2563eb' }) :
-                  React.createElement(ChevronDown, { size: 24, color: '#6b7280' })
-              ),
-              openFAQ === index && React.createElement('div', {
-                style: {
-                  padding: '0 24px 24px 24px',
-                  color: '#6b7280',
-                  lineHeight: '1.6'
-                }
-              }, faq.answer)
-            )
-          )
-        )
-      )
-    ),
+        {/* FAQ Section */}
+        <section className="faq-section">
+          <div className="text-center">
+            <h2>Frequently Asked Questions</h2>
+            <p className="subtitle">Find quick answers to the most common questions about Clean Street.</p>
+          </div>
+          <div className="faq-list">
+            {filteredFAQs.map((faq, index) => (
+              <div key={index} className="faq-item">
+                <button className="faq-question-btn" onClick={() => toggleFAQ(index)}>
+                  <span>{faq.question}</span>
+                  {openFAQ === index ? <ChevronUp size={24} color="#2c5292" /> : <ChevronDown size={24} color="#718096" />}
+                </button>
+                {openFAQ === index && (
+                  <div className="faq-answer">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
 
-    // Additional Resources Section
-    React.createElement('section', { className: 'section' },
-      React.createElement('div', { className: 'container' },
-        React.createElement('div', { className: 'text-center', style: { marginBottom: '60px' } },
-          React.createElement('h2', { style: { fontSize: '40px', fontWeight: '700', marginBottom: '16px' } },
-            'Additional Resources'
-          ),
-          React.createElement('p', { style: { fontSize: '18px', color: '#6b7280', maxWidth: '600px', margin: '0 auto' } },
-            'More ways to get help and learn about Clean Street.'
-          )
-        ),
+        {/* Additional Resources Section */}
+        <section className="resources-section">
+          <div className="text-center">
+            <h2>Additional Resources</h2>
+            <p className="subtitle">More ways to get help and learn about Clean Street.</p>
+          </div>
+          <div className="resources-grid">
+            <div className="resource-card">
+              <div className="resource-icon-container" style={{ backgroundColor: '#e2f0ff' }}>
+                <BookOpen size={40} color="#2c5292" />
+              </div>
+              <h3>User Guide</h3>
+              <p>Comprehensive guide to using all features of Clean Street.</p>
+              <button className="btn btn-primary">Read Guide</button>
+            </div>
+            <div className="resource-card">
+              <div className="resource-icon-container" style={{ backgroundColor: '#d1fae5' }}>
+                <MessageCircle size={40} color="#10b981" />
+              </div>
+              <h3>Community Forum</h3>
+              <p>Connect with other users and share experiences.</p>
+              <button className="btn btn-primary">Join Forum</button>
+            </div>
+            <div className="resource-card">
+              <div className="resource-icon-container" style={{ backgroundColor: '#f3e8ff' }}>
+                <Phone size={40} color="#8b5cf6" />
+              </div>
+              <h3>Contact Support</h3>
+              <p>Still need help? Our support team is here for you.</p>
+              <button className="btn btn-primary">Contact Us</button>
+            </div>
+          </div>
+        </section>
+      </main>
 
-        React.createElement('div', { 
-          style: { 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '40px' 
-          } 
-        },
-          React.createElement('div', {
-            style: {
-              background: 'white',
-              padding: '40px',
-              borderRadius: '16px',
-              textAlign: 'center',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #e5e7eb'
-            }
-          },
-            React.createElement('div', {
-              style: {
-                width: '80px',
-                height: '80px',
-                background: '#2563eb',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 24px auto'
-              }
-            },
-              React.createElement(BookOpen, { size: 40, color: 'white' })
-            ),
-            React.createElement('h3', { style: { fontSize: '24px', fontWeight: '700', marginBottom: '16px' } },
-              'User Guide'
-            ),
-            React.createElement('p', { style: { color: '#6b7280', marginBottom: '24px' } },
-              'Comprehensive guide to using all features of Clean Street.'
-            ),
-            React.createElement('button', { className: 'btn btn-primary' },
-              'Read Guide'
-            )
-          ),
-
-          React.createElement('div', {
-            style: {
-              background: 'white',
-              padding: '40px',
-              borderRadius: '16px',
-              textAlign: 'center',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #e5e7eb'
-            }
-          },
-            React.createElement('div', {
-              style: {
-                width: '80px',
-                height: '80px',
-                background: '#10b981',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 24px auto'
-              }
-            },
-              React.createElement(MessageCircle, { size: 40, color: 'white' })
-            ),
-            React.createElement('h3', { style: { fontSize: '24px', fontWeight: '700', marginBottom: '16px' } },
-              'Community Forum'
-            ),
-            React.createElement('p', { style: { color: '#6b7280', marginBottom: '24px' } },
-              'Connect with other users and share experiences.'
-            ),
-            React.createElement('button', { className: 'btn btn-primary' },
-              'Join Forum'
-            )
-          ),
-
-          React.createElement('div', {
-            style: {
-              background: 'white',
-              padding: '40px',
-              borderRadius: '16px',
-              textAlign: 'center',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #e5e7eb'
-            }
-          },
-            React.createElement('div', {
-              style: {
-                width: '80px',
-                height: '80px',
-                background: '#8b5cf6',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 24px auto'
-              }
-            },
-              React.createElement(Phone, { size: 40, color: 'white' })
-            ),
-            React.createElement('h3', { style: { fontSize: '24px', fontWeight: '700', marginBottom: '16px' } },
-              'Contact Support'
-            ),
-            React.createElement('p', { style: { color: '#6b7280', marginBottom: '24px' } },
-              'Still need help? Our support team is here for you.'
-            ),
-            React.createElement('button', { className: 'btn btn-primary' },
-              'Contact Us'
-            )
-          )
-        )
-      )
-    )
+      {/* Footer Section */}
+      <footer className="footer">
+        <div className="footer-column footer-logo-section">
+          <div className="logo-section">
+            <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+            <div className="logo-text">Clean Street</div>
+          </div>
+          <p className="footer-tagline">Civic Engagement Platform</p>
+          <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
+          <div className="contact-info">
+            <p><Mail size={16} /> <a href="mailto:hello@cleanstreet.org">hello@cleanstreet.org</a></p>
+            <p><Phone size={16} /> <a href="tel:5551234567">(555) 123-4567</a></p>
+            <p><Globe size={16} /> <a href="http://www.cleanstreet.org" target="_blank" rel="noopener noreferrer">www.cleanstreet.org</a></p>
+          </div>
+        </div>
+        <div className="footer-column">
+          <h4>Platform</h4>
+          <ul>
+            <li><Link to="/how-it-works">How it Works</Link></li>
+            <li><Link to="/features">Features</Link></li>
+            <li><a href="#">Pricing</a></li>
+            <li><a href="#">Mobile App</a></li>
+          </ul>
+        </div>
+        <div className="footer-column">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">Help Center</a></li>
+            <li><Link to="/contact">Contact Us</Link></li>
+            <li><a href="#">User Guide</a></li>
+            <li><a href="#">Community Forum</a></li>
+          </ul>
+        </div>
+        <div className="footer-column">
+          <h4>Company</h4>
+          <ul>
+            <li><Link to="/about">About Us</Link></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Press Kit</a></li>
+            <li><a href="#">Blog</a></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
   );
 };
 

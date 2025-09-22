@@ -9,22 +9,22 @@ const registerUser = asyncHandler(async (req, res, next) => {
     const { name, email, password, location, role } = req.body;
 
     if (!name || !email || !password || !location) {
-        throw new ApiError("All required fields must be provided", 400);
+        throw new ApiError(400, "All required fields must be provided");
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        throw new ApiError("User already exists", 400);
+        throw new ApiError(400, "User already exists");
     }
 
     let profilePhotoUrl = "";
-    if (req.file?.path) {
-        const uploadResult = await uploadOnCloudinary(req.file.path);
-        if (!uploadResult) {
-            throw new ApiError("Profile photo upload failed", 500);
-        }
-        profilePhotoUrl = uploadResult.secure_url; // Cloudinary hosted URL
+if (req.file?.path) {
+    const uploadResult = await uploadOnCloudinary(req.file.path);
+    if (!uploadResult) {
+        throw new ApiError(500, "Profile photo upload failed");
     }
+    profilePhotoUrl = uploadResult.secure_url; // Cloudinary hosted URL
+}
 
     const user = await User.create({
         name: name.trim(),
@@ -37,7 +37,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
     if (!createdUser) {
-        throw new ApiError("User creation failed", 500);
+        throw new ApiError(500, "User creation failed");
     }
 
     res.status(201).json(new ApiResponse(201, createdUser, "User created successfully"));
@@ -47,17 +47,17 @@ const registerUser = asyncHandler(async (req, res, next) => {
 const loginUser = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        throw new ApiError("Email and password are required", 400);
+        throw new ApiError(400, "Email and password are required");
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw new ApiError("User not found", 404);
+        throw new ApiError(404, "User not found");
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-        throw new ApiError("Invalid password", 401);
+        throw new ApiError(401, "Invalid password");
     }
 
     const accessToken = user.generateAccessToken();
@@ -69,7 +69,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     if (!loggedInUser) {
-        throw new ApiError("User not found after login", 404);
+        throw new ApiError(404, "User not found after login");
     }
 
     const cookieOptions = {
@@ -112,7 +112,7 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 const getUserDetails = asyncHandler(async (req, res, next) => {
     const user = req.user; // Attached by auth middleware
     if (!user) {
-        throw new ApiError("User not found", 404);
+        throw new ApiError(404, "User not found");
     }
 
     res.status(200)
@@ -123,7 +123,7 @@ const getUserDetails = asyncHandler(async (req, res, next) => {
 const updateUserDetails = asyncHandler(async (req, res, next) => {
     const { name, location } = req.body;
     if (!name || !location) {
-        throw new ApiError("Name and location are required", 400);
+        throw new ApiError(400, "Name and location are required");
     }
     const updatedData = {
         name: name.trim(),
@@ -132,13 +132,13 @@ const updateUserDetails = asyncHandler(async (req, res, next) => {
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
         if (!uploadResult) {
-            throw new ApiError("Profile photo upload failed", 500);
+            throw new ApiError(500, "Profile photo upload failed");
         }
         updatedData.profilePhoto = uploadResult.secure_url; // Cloudinary hosted URL
     }   
     const updatedUser = await User.findByIdAndUpdate(req.user._id, updatedData, { new: true, runValidators: true }).select("-password -refreshToken");
     if (!updatedUser) {
-        throw new ApiError("User not found", 404);
+        throw new ApiError(404, "User not found");
     }
     res.status(200).json(new ApiResponse(200, updatedUser, "User details updated successfully"));
 });
