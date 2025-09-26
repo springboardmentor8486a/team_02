@@ -2,13 +2,14 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Complaint } from "../models/complaint.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // ================= Complaint Registration =================
 const registerComplaint = asyncHandler(async (req, res, next)=>{
-    const {userId, title, description, address} = req.body;
+    const {title, description, address, locationCoords, assignedTo} = req.body;
 
-    if (!userId || !title || !description || !address) {
-        throw new ApiError("All required fields must be provided", 400);
+    if ( !title || !description || !address || !locationCoords) {
+        throw new ApiError(400, "All required fields must be provided");
     };
 
     let complaintPhotoUrl = "";
@@ -21,11 +22,13 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
     };
 
     let complaint = await Complaint.create({
-        userId,
+        userId: req.user._id,
         title,
         description,
         address,
-        photo: complaintPhotoUrl
+        photo: complaintPhotoUrl,
+        locationCoords: locationCoords,
+        assignedTo: assignedTo
     });
 
     const createdComplaint = await Complaint.findById(complaint._id);
@@ -33,12 +36,12 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
         throw new ApiError("complaint registration failed", 500);
     }
 
-    res.status(201).json(new ApiResponse(201, createdComplaint, "Complaint Registered successfully"));
+    res.status(201).json(new ApiResponse(200, createdComplaint, "Complaint Registered successfully"));
 });
 
 // ================= Complaint List =================
-const viewComplaint = asyncHandler(async (req, res, next)=>{
-    let allComplaints = await Complaint.find({userId: req.params.userId}).populate("userId");
+const viewComplaint = asyncHandler(async (req, res)=>{
+    let allComplaints = await Complaint.find({userId: req.user._id});
     res.status(201).json(new ApiResponse(201, allComplaints, "user data fetched successfully"));
 });
 
