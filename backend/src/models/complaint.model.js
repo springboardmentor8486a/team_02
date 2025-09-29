@@ -23,17 +23,25 @@ const complaintSchema = new mongoose.Schema({
     },
 
     locationCoords: {
-        type: String,
-        //required: true // Complaint geographic area
+        type: [Number], // [lng, lat]
+        required: true // Complaint geographic area
     },
 
     address: {
-        type: String,
+        type: [String],
         required: true // address
     },
 
     assignedTo: {
-        type: String, //complaint assigned
+        type: String,
+        enum: [
+            "Municipal sanitation and public health",
+            "Roads and street infrastructure",
+            "Street lighting and electrical assets",
+            "Water, sewerage, and stormwater",
+            "Ward/zone office and central admin"
+        ],
+        required: true
     },
 
     status: {
