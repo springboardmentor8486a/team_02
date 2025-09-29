@@ -50,6 +50,13 @@ const complaintSchema = new mongoose.Schema({
         default: "recived"
     },
 
+    comments: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: "Comment"
+        }
+    ],
+
     createdAt: {
         type: Date,
         default: new Date(Date.now())
