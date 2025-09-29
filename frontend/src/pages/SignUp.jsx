@@ -269,18 +269,19 @@ const SignUp = () => {
                             </div>
                             <div className="role-container">
                                 <div
-                                    className={`role-option ${form.role === 'citizen' ? 'active' : ''}`}
-                                    onClick={() => setForm((prev) => ({ ...prev, role: 'citizen' }))}
-                                >
-                                    <div className="role-info">
-                                        <i className="role-icon">👤</i>
-                                        <div className="role-text">
-                                            <h3>Citizen</h3>
-                                            <p>Report issues and vote on community problems</p>
-                                        </div>
-                                    </div>
-                                    {form.role === 'citizen' && <i className="check-icon-active">✔️</i>}
-                                </div>
+    className={`role-option ${form.role === 'user' ? 'active' : ''}`}
+    onClick={() => setForm((prev) => ({ ...prev, role: 'user' }))}
+>
+    <div className="role-info">
+        <i className="role-icon">👤</i>
+        <div className="role-text">
+            <h3>Citizen</h3>
+            <p>Report issues and vote on community problems</p>
+        </div>
+    </div>
+    {form.role === 'user' && <i className="check-icon-active">✔️</i>}
+</div>
+
                                 <div
                                     className={`role-option ${form.role === 'volunteer' ? 'active' : ''}`}
                                     onClick={() => setForm((prev) => ({ ...prev, role: 'volunteer' }))}
