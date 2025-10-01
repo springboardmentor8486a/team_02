@@ -7,7 +7,7 @@ import {Complaint} from "../models/complaint.model.js"
 //===================Create commnet===============
 const createComment = asyncHandler(async (req, res)=>{
     let {complaintId} = req.params;
-    let {content} = req.body;
+    let content = req.body?.content;
 
     if(!complaintId){
         throw new ApiError(500, "complaint id is required");
@@ -18,6 +18,9 @@ const createComment = asyncHandler(async (req, res)=>{
         throw new ApiError(404, "complaint not found");
     };
 
+    if(!content){
+        throw new ApiError(401, "comment content is required");
+    };
    
     let comment = await Comment.create({
         userId: req.user._id,
