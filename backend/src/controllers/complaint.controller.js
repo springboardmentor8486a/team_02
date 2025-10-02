@@ -11,7 +11,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
     const { title, description, address, assignedTo, locationCoords} = req.body;
 
     if (!userId || !title || !description || !address || !assignedTo || !locationCoords) {
-        throw new ApiError("All required fields must be provided", 400);
+        throw new ApiError(400, "All required fields must be provided");
     }
 
     // Validate assignedTo field against allowed values
@@ -24,7 +24,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
     ];
     
     if (!allowedDepartments.includes(assignedTo)) {
-        throw new ApiError("Invalid department assigned", 400);
+        throw new ApiError(404,"Invalid department assigned");
 
     };
 
@@ -32,7 +32,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
         if (!uploadResult) {
-            throw new ApiError("complaint photo upload failed", 500);
+            throw new ApiError(500, "complaint photo upload failed");
         }
         complaintPhotoUrl = uploadResult.secure_url; // Cloudinary hosted URL
     };
@@ -51,7 +51,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
 
     const createdComplaint = await Complaint.findById(complaint._id);
     if (!createdComplaint) {
-        throw new ApiError("complaint registration failed", 500);
+        throw new ApiError(500, "complaint registration failed");
     }
 
     res.status(201).json(new ApiResponse(200, createdComplaint, "Complaint Registered successfully"));
@@ -71,7 +71,7 @@ const editComplaint = asyncHandler(async (req, res, next) => {
     // Find the complaint first
     const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
-        throw new ApiError("Complaint not found", 404);
+        throw new ApiError(404, "Complaint not found");
     }
 
     // Validate assignedTo if it's being updated
@@ -85,7 +85,7 @@ const editComplaint = asyncHandler(async (req, res, next) => {
         ];
         
         if (!allowedDepartments.includes(assignedTo)) {
-            throw new ApiError("Invalid department assigned", 400);
+            throw new ApiError(400, "Invalid department assigned");
         }
     }
 
@@ -94,7 +94,7 @@ const editComplaint = asyncHandler(async (req, res, next) => {
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
         if (!uploadResult) {
-            throw new ApiError("complaint photo upload failed", 500);
+            throw new ApiError(500,"complaint photo upload failed",);
         }
         complaintPhotoUrl = uploadResult.secure_url;
     }
@@ -118,7 +118,7 @@ const editComplaint = asyncHandler(async (req, res, next) => {
     ).populate("userId");
 
     if (!updatedComplaint) {
-        throw new ApiError("Error while updating complaint", 500);
+        throw new ApiError(500, "Error while updating complaint");
     }
 
     res.status(200).json(new ApiResponse(200, updatedComplaint, "Complaint updated successfully"));
@@ -132,7 +132,7 @@ const deleteComplaint = asyncHandler(async (req, res, next) => {
     const deletedComplaint = await Complaint.findByIdAndDelete(complaintId);
     
     if (!deletedComplaint) {
-        throw new ApiError("Complaint not found", 404);
+        throw new ApiError(404, "Complaint not found");
     }
 
     res.status(200).json(new ApiResponse(200, {}, "Complaint deleted successfully"));
