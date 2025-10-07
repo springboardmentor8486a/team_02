@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { Target, Globe, Heart, Shield, Users, Lightbulb, ArrowRight, Mail, Phone } from 'lucide-react';
 import './About.css';
 
 const About = () => {
   const navigate = useNavigate();
-  const isSignedIn = false; // Placeholder for authentication state
+  const { user, signOut } = useAuth();
 
   const coreValues = [
     {
@@ -36,6 +37,30 @@ const About = () => {
 
   const handleSignIn = () => navigate("/login");
   const handleGetStarted = () => navigate("/signup");
+  
+  // Role-based dashboard navigation - FIXED
+  const handleDashboard = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (user.role === 'volunteer') {
+      navigate('/volunteer', { state: { userType: 'volunteer' } });
+    } else if (user.role === 'admin') {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+  
+  // Fixed logout with confirmation
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      signOut();
+      navigate("/");
+    }
+  };
 
   return (
     <div className="about-container">
@@ -49,12 +74,28 @@ const About = () => {
           <Link to="/">Home</Link>
           <Link to="/help">Help</Link>
           <Link to="/about" className="active">About</Link>
+          <Link to="/contactpage">Contact</Link>
         </nav>
         <div className="auth-buttons">
-          <button onClick={handleSignIn} className="sign-in-btn">
-            Sign In <ArrowRight size={16} />
-          </button>
-          <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
+          {user ? (
+            <>
+              <button onClick={handleDashboard} className="sign-in-btn">
+                Dashboard <ArrowRight size={16} />
+              </button>
+              <button onClick={handleLogout} className="get-started-btn">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleSignIn} className="sign-in-btn">
+                Sign In <ArrowRight size={16} />
+              </button>
+              <button onClick={handleGetStarted} className="get-started-btn">
+                Get Started
+              </button>
+            </>
+          )}
         </div>
       </header>
       
@@ -69,8 +110,6 @@ const About = () => {
                 <h2>Our Mission</h2>
                 <p>To bridge the gap between citizens and local government by providing a transparent, efficient, and engaging platform for reporting and resolving community issues.</p>
               </div>
-              {/* Note: The mission image is not in your provided image, so I'll assume you still want it. */}
-              {/* To remove it, simply delete the following div. */}
               <div className="mission-image-container">
                 <img src="/images/mission-image.png" alt="Mission" className="mission-image" />
               </div>
@@ -143,26 +182,26 @@ const About = () => {
           <ul>
             <li><Link to="/how-it-works">How it Works</Link></li>
             <li><Link to="/features">Features</Link></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="#">Mobile App</a></li>
+            <li><Link to="/pricing">Pricing</Link></li>
+            <li><Link to="/mobile-app">Mobile App</Link></li>
           </ul>
         </div>
         <div className="footer-column">
           <h4>Support</h4>
           <ul>
-            <li><a href="#">Help Center</a></li>
-            <li><Link to="/contact">Contact Us</Link></li>
-            <li><a href="#">User Guide</a></li>
-            <li><a href="#">Community Forum</a></li>
+            <li><Link to="/help">Help Center</Link></li>
+            <li><Link to="/contactpage">Contact Us</Link></li>
+            <li><Link to="/user-guide">User Guide</Link></li>
+            <li><Link to="/community-forum">Community Forum</Link></li>
           </ul>
         </div>
         <div className="footer-column">
           <h4>Company</h4>
           <ul>
             <li><Link to="/about">About Us</Link></li>
-            <li><a href="#">Careers</a></li>
-            <li><a href="#">Press Kit</a></li>
-            <li><a href="#">Blog</a></li>
+            <li><Link to="/careers">Careers</Link></li>
+            <li><Link to="/press">Press Kit</Link></li>
+            <li><Link to="/blog">Blog</Link></li>
           </ul>
         </div>
       </footer>

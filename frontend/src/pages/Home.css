@@ -122,11 +122,11 @@
   margin-bottom: 1rem;
 }
 
-.hero-title {
+.hero-titleeee {
   font-size: 3.5rem;
   font-weight: 800;
-  color: #1a202c;
   margin-bottom: 1rem;
+  color: #000000;
 }
 
 .highlight-text {
@@ -237,18 +237,26 @@
   background-color: #f7fafc;
   text-align: center;
   animation: fadeIn 1s ease-out;
+  border-top: 1px solid #e2e8f0;
+  color: #000;
 }
 
 .how-it-works-section h2 {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: #000000;
 }
 
 .how-it-works-section .subtitle {
-  font-size: 1.125rem;
-  color: #718096;
-  margin-bottom: 3rem;
+    font-size: 1.125rem;
+    color: #000000;
+    margin-bottom: 3rem;
+    font-weight: 600;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
 }
 
 .steps-container {

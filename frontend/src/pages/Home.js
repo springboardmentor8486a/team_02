@@ -1,14 +1,38 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Camera, MapPin, Users, Clock, MessageCircle, BarChart3, Shield, CheckCircle, Smartphone, Mail, Phone, Globe } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { ArrowRight, Camera, MapPin, Users, Clock, MessageCircle, BarChart3, Shield, CheckCircle, Mail, Phone, Globe } from "lucide-react";
 import "./Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
-  const isSignedIn = false;
+  const { user, signOut } = useAuth();
 
   const handleSignIn = () => navigate("/login");
   const handleGetStarted = () => navigate("/signup");
+  
+  // Role-based dashboard navigation
+  const handleDashboard = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (user.role === 'volunteer') {
+      navigate('/volunteer', { state: { userType: 'volunteer' } });
+    } else if (user.role === 'admin') {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+  
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      signOut();
+      navigate("/");
+    }
+  };
 
   const features = [
     { icon: Camera, title: "Photo Reports", description: "Upload photos to document issues clearly and help authorities understand the problem." },
@@ -30,27 +54,54 @@ const Home = () => {
           <Link to="/" className="active">Home</Link>
           <Link to="/help">Help</Link>
           <Link to="/about">About</Link>
+          <Link to="/contactpage">Contact</Link>
         </nav>
+        
         <div className="auth-buttons">
-          <button onClick={handleSignIn} className="sign-in-btn">
-            Sign In <ArrowRight size={16} />
-          </button>
-          <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
+          {user ? (
+            <>
+              <button onClick={handleDashboard} className="sign-in-btn">
+                Dashboard <ArrowRight size={16} />
+              </button>
+              <button onClick={handleLogout} className="get-started-btn">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleSignIn} className="sign-in-btn">
+                Sign In <ArrowRight size={16} />
+              </button>
+              <button onClick={handleGetStarted} className="get-started-btn">
+                Get Started
+              </button>
+            </>
+          )}
         </div>
       </header>
 
       <main>
-        {/* New Hero Section */}
+        {/* Hero Section */}
         <section className="hero-main">
           <div className="hero-content">
             <p className="hero-badge-small">Empowering Communities Since 2024</p>
-            <h1 className="hero-title">Make Your <span className="highlight-text">Community</span> Better</h1>
+            <h1 className="hero-titleeee">Make Your <span className="highlight-text">Community</span> Better</h1>
             <p className="hero-description">
               Clean Street is a smart civic engagement platform that empowers citizens to report local issues, track their resolution, and build stronger communities through collaborative action.
             </p>
             <div className="hero-action-buttons-alt">
-              <button onClick={handleGetStarted} className="get-started-free-btn">Get Started Free <ArrowRight size={20} /></button>
-              <button className="learn-more-btn">Learn More</button>
+              {user ? (
+                <button onClick={handleDashboard} className="get-started-free-btn">
+                  Go to Dashboard <ArrowRight size={20} />
+                </button>
+              ) : (
+                <>
+                  <button onClick={handleGetStarted} className="get-started-free-btn">
+                    Get Started Free <ArrowRight size={20} />
+                  </button>
+                  <button className="learn-more-btn">Learn More</button>
+                </>
+              )}
             </div>
           </div>
           <div className="hero-image-section">
@@ -177,10 +228,18 @@ const Home = () => {
             Join your community in building a better neighborhood. Report issues, track progress, and see real change happen.
           </p>
           <div className="hero-action-buttons">
-            <button onClick={handleGetStarted} className="sign-up-btn">
-              Sign Up Now <ArrowRight size={20} />
-            </button>
-            <span className="no-credit-text">Free to use • No credit card required</span>
+            {user ? (
+              <button onClick={handleDashboard} className="sign-up-btn">
+                Go to Dashboard <ArrowRight size={20} />
+              </button>
+            ) : (
+              <>
+                <button onClick={handleGetStarted} className="sign-up-btn">
+                  Sign Up Now <ArrowRight size={20} />
+                </button>
+                <span className="no-credit-text">Free to use • No credit card required</span>
+              </>
+            )}
           </div>
         </section>
       </main>
@@ -202,28 +261,28 @@ const Home = () => {
         <div className="footer-column">
           <h4>Platform</h4>
           <ul>
-            <li><a href="#">How it Works</a></li>
-            <li><a href="#">Features</a></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="#">Mobile App</a></li>
+            <li><Link to="/how-it-works">How it Works</Link></li>
+            <li><Link to="/features">Features</Link></li>
+            <li><Link to="/pricing">Pricing</Link></li>
+            <li><Link to="/mobile-app">Mobile App</Link></li>
           </ul>
         </div>
         <div className="footer-column">
           <h4>Support</h4>
           <ul>
-            <li><a href="#">Help Center</a></li>
-            <li><a href="#">Contact Us</a></li>
-            <li><a href="#">User Guide</a></li>
-            <li><a href="#">Community Forum</a></li>
+            <li><Link to="/help">Help Center</Link></li>
+            <li><Link to="/contactpage">Contact Us</Link></li>
+            <li><Link to="/user-guide">User Guide</Link></li>
+            <li><Link to="/community-forum">Community Forum</Link></li>
           </ul>
         </div>
         <div className="footer-column">
           <h4>Company</h4>
           <ul>
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">Careers</a></li>
-            <li><a href="#">Press Kit</a></li>
-            <li><a href="#">Blog</a></li>
+            <li><Link to="/about">About Us</Link></li>
+            <li><Link to="/careers">Careers</Link></li>
+            <li><Link to="/press">Press Kit</Link></li>
+            <li><Link to="/blog">Blog</Link></li>
           </ul>
         </div>
       </footer>

@@ -4,44 +4,38 @@ const complaintSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true, // Id of the user
+        required: true,
     },
 
     title: {
         type: String,
-        required: true, // Title about the complaint
+        required: true,
     },
 
     description: {
         type: String,
-        required: true, // Tescription about the complaint
+        required: true,
     },
 
     photo: {
         type: String,
-        //required: true, // Img url
     },
 
     locationCoords: {
-        type: [Number], // [lng, lat]
-        required: true // Complaint geographic area
+        type: [Number], 
+        required: true
     },
 
     address: {
         type: [String],
-        required: true // address
+        required: true
     },
 
+    // 💡 FIX: Removed the restrictive 'enum' to allow saving Volunteer Names (strings)
     assignedTo: {
-        type: String,
-        enum: [
-            "Municipal sanitation and public health",
-            "Roads and street infrastructure",
-            "Street lighting and electrical assets",
-            "Water, sewerage, and stormwater",
-            "Ward/zone office and central admin"
-        ],
-        required: true
+        type: String, // Now accepts any string, including volunteer names or department names
+        required: true,
+        default: "Ward/zone office and central admin" // Use a valid initial default value
     },
 
     status: {

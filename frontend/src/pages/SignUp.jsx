@@ -8,8 +8,8 @@ import { ArrowRight } from "lucide-react";
 const SignUp = () => {
     const navigate = useNavigate();
 
-  const handleSignIn = () => navigate("/login");
-  const handleGetStarted = () => navigate("/signup");
+    const handleSignIn = () => navigate("/login");
+    const handleGetStarted = () => navigate("/signup");
 
     const [step, setStep] = useState(1);
     const [form, setForm] = useState({
@@ -18,7 +18,7 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         location: '',
-        role: null, // Initial role is null
+        role: null,
         profilePhoto: null,
     });
 
@@ -85,7 +85,7 @@ const SignUp = () => {
         }
     };
 
-    // Submit registration
+    // Submit registration with role-based redirect
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -106,8 +106,32 @@ const SignUp = () => {
             );
 
             console.log('Registration response:', res.data);
+            
+            // Store user data in localStorage
+            localStorage.setItem('userRole', form.role);
+            localStorage.setItem('userName', form.name);
+            localStorage.setItem('userEmail', form.email);
+            localStorage.setItem('userLocation', form.location);
+            
+            // Optional: Store token if backend sends it
+            if (res.data.token) {
+                localStorage.setItem('authToken', res.data.token);
+            }
+
             alert(res.data.message || 'Registration Successful!');
-            navigate('/login');
+            
+            // Redirect based on role
+            if (form.role === 'volunteer') {
+                navigate('/volunteer');
+            } else if (form.role === 'admin') {
+                navigate('/admin');
+            } else if (form.role === 'user') {
+                navigate('/dashboard');
+            } else {
+                // Default fallback
+                navigate('/dashboard');
+            }
+            
         } catch (err) {
             const serverData = err.response?.data;
             const serverMessage =
@@ -269,18 +293,18 @@ const SignUp = () => {
                             </div>
                             <div className="role-container">
                                 <div
-    className={`role-option ${form.role === 'user' ? 'active' : ''}`}
-    onClick={() => setForm((prev) => ({ ...prev, role: 'user' }))}
->
-    <div className="role-info">
-        <i className="role-icon">👤</i>
-        <div className="role-text">
-            <h3>Citizen</h3>
-            <p>Report issues and vote on community problems</p>
-        </div>
-    </div>
-    {form.role === 'user' && <i className="check-icon-active">✔️</i>}
-</div>
+                                    className={`role-option ${form.role === 'user' ? 'active' : ''}`}
+                                    onClick={() => setForm((prev) => ({ ...prev, role: 'user' }))}
+                                >
+                                    <div className="role-info">
+                                        <i className="role-icon">👤</i>
+                                        <div className="role-text">
+                                            <h3>Citizen</h3>
+                                            <p>Report issues and vote on community problems</p>
+                                        </div>
+                                    </div>
+                                    {form.role === 'user' && <i className="check-icon-active">✔️</i>}
+                                </div>
 
                                 <div
                                     className={`role-option ${form.role === 'volunteer' ? 'active' : ''}`}
@@ -295,6 +319,7 @@ const SignUp = () => {
                                     </div>
                                     {form.role === 'volunteer' && <i className="check-icon-active">✔️</i>}
                                 </div>
+                                
                                 <div
                                     className={`role-option ${form.role === 'admin' ? 'active' : ''}`}
                                     onClick={() => setForm((prev) => ({ ...prev, role: 'admin' }))}
@@ -312,8 +337,8 @@ const SignUp = () => {
                             <div className="terms-checkbox">
                                 <input type="checkbox" id="terms" required />
                                 <label htmlFor="terms">
-                                    I agree to the <a href="#">Terms of Service</a> and{' '}
-                                    <a href="#">Privacy Policy</a>
+                                    I agree to the <a href="/">Terms of Service</a> and{' '}
+                                    <a href="/">Privacy Policy</a>
                                 </label>
                             </div>
                         </div>
@@ -347,13 +372,14 @@ const SignUp = () => {
                     <Link to="/">Home</Link>
                     <Link to="/help">Help</Link>
                     <Link to="/about">About</Link>
+                    <Link to="/contactpage">Contact</Link>
                 </div>
                 <div className="auth-buttons">
-          <button onClick={handleSignIn} className="sign-in-btn">
-            Sign In <ArrowRight size={16} />
-          </button>
-          <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
-        </div>
+                    <button onClick={handleSignIn} className="sign-in-btn">
+                        Sign In <ArrowRight size={16} />
+                    </button>
+                    <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
+                </div>
             </div>
             <div className="signup-page">
                 <div className="signup-panel-left">

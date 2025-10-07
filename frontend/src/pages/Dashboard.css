@@ -168,11 +168,25 @@
     padding: 1.5rem;
     border-radius: 12px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    /* Changed to flex for internal control, removed redundant flex-direction: column; */
+    display: flex;
+    /* REMOVED: position: relative; */
+}
+
+/* 💡 FIX: New wrapper to handle content alignment */
+.stat-content-wrapper {
+    display: flex;
+    justify-content: space-between; /* Pushes text to left, icon container to right */
+    align-items: flex-start;
+    width: 100%;
+}
+
+.stat-info-text {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    position: relative;
 }
+/* END FIX */
 
 .stat-icon-container {
     width: 48px;
@@ -181,10 +195,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    color: white;
+    
+    /* REMOVED: absolute positioning that caused the overlap */
+    /* REMOVED: position: absolute; */
+    /* REMOVED: top: 1.5rem; */
+    /* REMOVED: right: 1.5rem; */
+    
+    color: white; /* Icon color */
+    flex-shrink: 0; /* Ensures the icon doesn't squeeze */
 }
 
 .stat-icon {
@@ -199,6 +217,7 @@
     font-size: 2rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
+    color: #1a202c;
 }
 
 .stat-label {

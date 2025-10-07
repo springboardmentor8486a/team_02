@@ -2,13 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-// Added Globe and Phone to the import statement
-import { User, Mail, MapPin, Briefcase, Award, Heart, CheckCircle, LogOut, Phone, Globe, ArrowRight } from 'lucide-react';
-import './Profile.css';
+// All necessary icons imported
+import { User, Mail, MapPin, Briefcase, Award, Heart, CheckCircle, LogOut, Phone, Globe, ArrowRight, Edit3 } from 'lucide-react'; 
+import './ProfilePage.css';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
+    
+    // --- Mock User Data Enhancement (for demonstration) ---
+    // In a real app, this data would come from the backend.
+    const mockUser = {
+        ...user,
+        phone: user.phone || '987-654-3210', 
+        location: user.location || 'Maharashtra, India',
+        about: user.about || 'Active community member passionate about improving our neighborhood. I believe in working together to create cleaner, safer streets for everyone.',
+        isPremium: true,
+    };
+    // -----------------------------------------------------
 
     useEffect(() => {
         if (!user) {
@@ -25,12 +36,8 @@ const Profile = () => {
             });
     };
 
-    if (!user) {
-        return null;
-    }
-
     const getUserInitials = (name) => {
-        if (!name) return 'S'; // Default initial
+        if (!name) return 'S'; 
         const nameParts = name.split(' ');
         const initials = nameParts.map(part => part[0]).join('');
         return initials.toUpperCase();
@@ -39,13 +46,31 @@ const Profile = () => {
     const getJoinedDate = (dateString) => {
         if (!dateString) return 'Joined unknown date';
         const date = new Date(dateString);
+        // Ensure date is valid before formatting
+        if (isNaN(date)) return 'Joined unknown date'; 
         return `Joined ${date.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
     };
 
-    const username = user.email ? user.email.split('@')[0] : 'sakupatil2004';
+    const username = mockUser.email ? mockUser.email.split('@')[0] : 'cleanstreeter';
+
+    if (!user) {
+        return null;
+    }
+    
+    // Helper component to format the info item cleanly
+    const InfoField = ({ icon: Icon, label, value }) => (
+        <div className="info-item">
+            <Icon size={20} />
+            <div className="info-text-inline">
+                <span className="info-label">{label}:</span>
+                <strong className="info-value">{value}</strong>
+            </div>
+        </div>
+    );
 
     return (
         <>
+            {/* --- Navigation Header --- */}
             <header className="header-top">
                 <div className="logo-section">
                     <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
@@ -58,8 +83,8 @@ const Profile = () => {
                 </nav>
                 <div className="user-profile">
                     <Link to="/profile" className="profile-link active">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
+                        <div className="user-initials">{getUserInitials(mockUser.name)}</div>
+                        <span className="user-name">{mockUser.name}</span>
                     </Link>
                     <button onClick={handleLogout} className="logout-btn-header">
                         <ArrowRight size={20} />
@@ -67,18 +92,25 @@ const Profile = () => {
                 </div>
             </header>
 
+            {/* --- Main Profile Layout --- */}
             <div className="profile-page-container">
+                
+                {/* --- Sidebar --- */}
                 <div className="profile-sidebar">
                     <div className="profile-avatar-large">
-                        <span>{getUserInitials(user.name)}</span>
+                        <span>{getUserInitials(mockUser.name)}</span>
                     </div>
-                    <h2 className="profile-name">{user.name}</h2>
+                    <h2 className="profile-name">{mockUser.name}</h2>
                     <p className="profile-username">@{username}</p>
-                    <p className="profile-joined">{getJoinedDate(user.createdAt)}</p>
+                    <p className="profile-joined">{getJoinedDate(mockUser.createdAt)}</p>
 
                     <div className="profile-actions">
-                        <button className="update-profile-btn" onClick={() => navigate('/edit-profile')}>Update Profile</button>
-                        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                        <button className="update-profile-btn" onClick={() => navigate('/edit-profile')}>
+                            <Edit3 size={16} /> Edit Profile
+                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>
+                            <LogOut size={16} /> Logout
+                        </button>
                     </div>
 
                     <div className="profile-badges">
@@ -94,52 +126,48 @@ const Profile = () => {
                     </div>
                 </div>
 
+                {/* --- Main Content --- */}
                 <div className="profile-main-content">
+                    
+                    {/* Panel 1: Profile Information */}
                     <div className="profile-panel">
                         <div className="panel-header-details">
-                            <h3>Profile Information</h3>
-                            <p>Your personal information and details</p>
-                            <span className="premium-badge">Premium Member</span>
+                            <div>
+                                <h3>Contact Details</h3>
+                                <p>Your personal contact and geographic information</p>
+                            </div>
+                            {mockUser.isPremium && <span className="premium-badge">Premium Member</span>}
                         </div>
                         <div className="profile-info-grid">
-                            <div className="info-item">
-                                <User size={20} />
-                                <div className="info-text">
-                                    <strong>{user.name}</strong>
-                                    <span>@{username}</span>
-                                </div>
-                            </div>
-                            <div className="info-item">
-                                <Phone size={20} />
-                                <strong>Not provided</strong>
-                            </div>
-                            <div className="info-item">
-                                <Mail size={20} />
-                                <strong>{user.email}</strong>
-                            </div>
-                            <div className="info-item">
-                                <MapPin size={20} />
-                                <strong>{user.location || 'Not provided'}</strong>
-                            </div>
+                            {/* Updated JSX structure */}
+                            <InfoField icon={User} label="Full Name" value={mockUser.name} />
+                            <InfoField icon={Briefcase} label="Role" value="Citizen Contributor" />
+                            <InfoField icon={Mail} label="Email Address" value={mockUser.email} />
+                            <InfoField icon={Phone} label="Phone Number" value={mockUser.phone} />
+                            <InfoField icon={MapPin} label="Primary Location" value={mockUser.location} />
+                            <InfoField icon={Globe} label="Member Since" value={getJoinedDate(mockUser.createdAt).replace('Joined ', '')} />
                         </div>
                     </div>
 
+                    {/* Panel 2: About Me */}
                     <div className="profile-panel about-me-panel">
                         <h3>About Me</h3>
-                        <p>{user.about || 'Active community member passionate about improving our neighborhood. I believe in working together to create cleaner, safer streets for everyone.'}</p>
+                        <p>{mockUser.about}</p>
                     </div>
 
+                    {/* Panel 3: Contributor Badges (Activity Summary) */}
                     <div className="profile-panel contributor-badges-panel">
-                        <h3>Contributor Badges</h3>
+                        <h3>Contributor Badges & Activity</h3>
                         <div className="badges-grid">
-                            <span className="badge-card trusted-member">Trusted Member</span>
-                            <span className="badge-card community-love">Community Love</span>
-                            <span className="badge-card top-contributor">Top Contributor</span>
+                            <span className="badge-card trusted-member">12 Issues Reported</span>
+                            <span className="badge-card community-love">87 Votes Given</span>
+                            <span className="badge-card top-contributor">5 Issues Resolved</span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* --- Footer --- */}
             <footer className="footer">
                 <div className="footer-column footer-logo-section">
                     <div className="logo-section">

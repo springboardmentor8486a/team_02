@@ -12,58 +12,82 @@ const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
+  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle login submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:3000/api/v1/users/login', form, { withCredentials: true });
+      const res = await axios.post(
+        'http://localhost:3000/api/v1/users/login',
+        form,
+        { withCredentials: true }
+      );
+
+      const user = res.data.data.user;
       localStorage.setItem('token', res.data.data.accessToken);
-      signIn(res.data.data.user);
+      signIn(user);
+
       alert('Login Successful!');
-      navigate('/dashboard'); // Redirect after login
+
+      // 🔹 Redirect based on user role
+      if (user.role === 'volunteer') {
+        navigate('/volunteer', { state: { userType: 'volunteer' } });
+      } else if (user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
-      alert(err.response?.data?.message || 'Error occurred');
+      alert(err.response?.data?.message || 'Error occurred during login.');
     }
   };
 
+  // Google OAuth login
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth
     window.location.href = 'http://localhost:3000/api/v1/auth/google';
   };
 
   return (
     <div className="login-page-container">
-      {/* Header and Navigation */}
+      {/* Header Section */}
       <header className="header-top">
         <div className="logo-section">
           <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
           <div className="logo-text">Clean Street</div>
         </div>
+
         <nav className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/help">Help</Link>
           <Link to="/about">About</Link>
+          <Link to="/contactpage">Contact</Link>
         </nav>
+
         <div className="auth-buttons">
           <button onClick={() => navigate('/login')} className="sign-in-btn">
             Sign In <ArrowRight size={16} />
           </button>
-          <button onClick={() => navigate('/signup')} className="get-started-btn">Get Started</button>
+          <button onClick={() => navigate('/signup')} className="get-started-btn">
+            Get Started
+          </button>
         </div>
       </header>
 
+      {/* Main Login Area */}
       <div className="login-main-content">
         {/* Left Panel - Login Form */}
         <div className="login-panel left-panel">
           <div className="form-card">
             <h2 className="welcome-title">Welcome Back</h2>
             <p className="welcome-subtitle">Sign in to continue to CleanStreet</p>
-            
+
             <form onSubmit={handleSubmit}>
+              {/* Email Field */}
               <div className="form-field-container">
                 <label className="form-label">Email Address</label>
                 <div className="input-group">
@@ -80,6 +104,7 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Password Field */}
               <div className="form-field-container">
                 <label className="form-label">Password</label>
                 <div className="input-group">
@@ -103,6 +128,7 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Remember & Forgot Password */}
               <div className="flex-row justify-between align-center mb-4">
                 <label className="checkbox-label">
                   <input type="checkbox" className="checkbox-input" />
@@ -113,19 +139,27 @@ const Login = () => {
                 </Link>
               </div>
 
+              {/* Submit Button */}
               <button type="submit" className="login-btn">
                 Sign In
               </button>
 
+              {/* Divider */}
               <div className="divider">
                 <span>or continue with</span>
               </div>
 
-              <button type="button" className="social-google-btn" onClick={handleGoogleLogin}>
+              {/* Google Login */}
+              <button
+                type="button"
+                className="social-google-btn"
+                onClick={handleGoogleLogin}
+              >
                 <FcGoogle size={20} />
                 Sign in with Google
               </button>
-              
+
+              {/* Signup Link */}
               <div className="create-account-link-container">
                 Don't have an account? <Link to="/signup">Create Account</Link>
               </div>
@@ -133,11 +167,13 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Panel - Info */}
+        {/* Right Panel - Info Section */}
         <div className="login-panel right-panel">
           <div className="right-panel-content">
             <h2 className="right-panel-title">Welcome Back!</h2>
-            <p className="right-panel-subtitle">Report civic issues, track progress, and help build a better community together.</p>
+            <p className="right-panel-subtitle">
+              Report civic issues, track progress, and help build a better community together.
+            </p>
             <div className="stats-container">
               <div className="stat-item">
                 <div className="stat-value">1.2K+</div>
