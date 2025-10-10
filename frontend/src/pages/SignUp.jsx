@@ -122,14 +122,14 @@ const SignUp = () => {
             
             // Redirect based on role
             if (form.role === 'volunteer') {
-                navigate('/volunteer');
+                navigate('/login');
             } else if (form.role === 'admin') {
-                navigate('/admin');
+                navigate('/login');
             } else if (form.role === 'user') {
-                navigate('/dashboard');
+                navigate('/login');
             } else {
                 // Default fallback
-                navigate('/dashboard');
+                navigate('/');
             }
             
         } catch (err) {
@@ -372,7 +372,6 @@ const SignUp = () => {
                     <Link to="/">Home</Link>
                     <Link to="/help">Help</Link>
                     <Link to="/about">About</Link>
-                    <Link to="/contactpage">Contact</Link>
                 </div>
                 <div className="auth-buttons">
                     <button onClick={handleSignIn} className="sign-in-btn">

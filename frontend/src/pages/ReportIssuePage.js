@@ -315,7 +315,7 @@ const handleSubmit = async (e) => {
             .catch((error) => console.error("Logout failed:", error))
             .finally(() => {
                 signOut();
-                navigate('/login');
+                navigate('/');
             });
     };
 

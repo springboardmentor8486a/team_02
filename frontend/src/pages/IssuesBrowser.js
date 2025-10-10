@@ -272,7 +272,7 @@ const handleVote = async (issueId) => {
             .catch(() => {})
             .finally(() => {
                 signOut();
-                navigate('/login');
+                navigate('/');
             });
     };
 

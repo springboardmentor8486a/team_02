@@ -199,7 +199,7 @@ const Dashboard = () => {
             .catch(() => {})
             .finally(() => {
                 signOut();
-                navigate('/login');
+                navigate('/');
             });
     };
 

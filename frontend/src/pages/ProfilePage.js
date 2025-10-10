@@ -156,14 +156,7 @@ const Profile = () => {
                     </div>
 
                     {/* Panel 3: Contributor Badges (Activity Summary) */}
-                    <div className="profile-panel contributor-badges-panel">
-                        <h3>Contributor Badges & Activity</h3>
-                        <div className="badges-grid">
-                            <span className="badge-card trusted-member">12 Issues Reported</span>
-                            <span className="badge-card community-love">87 Votes Given</span>
-                            <span className="badge-card top-contributor">5 Issues Resolved</span>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 

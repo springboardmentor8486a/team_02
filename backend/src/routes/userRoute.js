@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { registerUser,loginUser,logoutUser,getUserDetails ,updateUserDetails} from "../controllers/user.controller.js";
+import { 
+    registerUser,
+    loginUser,
+    logoutUser,
+    getUserDetails,
+    updateUserDetails,
+    getAllUsersAndStats // <<< CRITICAL: NOW IMPORTED
+} from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -10,5 +17,8 @@ userRouter.route("/login").post(loginUser);
 userRouter.route("/logout").post(verifyJWT, logoutUser);
 userRouter.route("/profile").get(verifyJWT, getUserDetails);
 userRouter.route("/profile").put(verifyJWT, upload.single("profilePhoto"), updateUserDetails);
+
+// NEW ADMIN ROUTE
+userRouter.route("/list-all").get(verifyJWT, getAllUsersAndStats); 
 
 export default userRouter;

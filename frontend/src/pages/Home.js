@@ -6,7 +6,7 @@ import "./Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   const handleSignIn = () => navigate("/login");
   const handleGetStarted = () => navigate("/signup");
@@ -27,12 +27,6 @@ const Home = () => {
     }
   };
   
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      signOut();
-      navigate("/");
-    }
-  };
 
   const features = [
     { icon: Camera, title: "Photo Reports", description: "Upload photos to document issues clearly and help authorities understand the problem." },
@@ -54,30 +48,17 @@ const Home = () => {
           <Link to="/" className="active">Home</Link>
           <Link to="/help">Help</Link>
           <Link to="/about">About</Link>
-          <Link to="/contactpage">Contact</Link>
         </nav>
         
-        <div className="auth-buttons">
-          {user ? (
-            <>
-              <button onClick={handleDashboard} className="sign-in-btn">
-                Dashboard <ArrowRight size={16} />
-              </button>
-              <button onClick={handleLogout} className="get-started-btn">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleSignIn} className="sign-in-btn">
-                Sign In <ArrowRight size={16} />
-              </button>
-              <button onClick={handleGetStarted} className="get-started-btn">
-                Get Started
-              </button>
-            </>
-          )}
-        </div>
+       <div className="auth-buttons">
+  <button onClick={handleSignIn} className="sign-in-btn">
+    Sign In <ArrowRight size={16} />
+  </button>
+  <button onClick={handleGetStarted} className="get-started-btn">
+    Get Started
+  </button>
+</div>
+
       </header>
 
       <main>

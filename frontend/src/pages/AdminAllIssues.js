@@ -4,21 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
     LayoutDashboard, AlertCircle, Users, FileText, Clock, 
-    CheckCircle, BarChart3, Search, Download, UserX, UserCheck, 
-    Bell, LogOut, Settings, User as UserIcon
+    CheckCircle, BarChart3, Search, UserX, UserCheck,ArrowRight, 
+    User as UserIcon, Loader2 
 } from 'lucide-react';
 import './AdminAllIssues.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1';
-
-// --- MOCK VOLUNTEER DATA (Used for assignment dropdown and persistence check) ---
-const MOCK_VOLUNTEERS = [
-    { id: 'v1', name: 'Sarah Wilson' },
-    { id: 'v2', name: 'Mike Thompson' },
-    { id: 'v3', name: 'Rajesh Kumar' },
-    { id: 'v4', name: 'Amara Singh' },
-    { id: 'v5', name: 'Priya Sharma' },
-];
 
 // List of standard department strings used during initial complaint registration
 const DEPARTMENTS = [
@@ -36,13 +27,11 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
     const [selectedVolunteer, setSelectedVolunteer] = useState(issue.assignedTo);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Sync local state with props (important when parent fetches new data)
     useEffect(() => {
         setSelectedVolunteer(issue.assignedTo);
     }, [issue.assignedTo]);
 
-    // Check if the current assignedTo value is a name from the volunteer list
-    const isAssigned = volunteers.some(v => v.name === issue.assignedTo);
+    const isAssigned = issue.assignedTo && issue.assignedTo !== 'Unassigned';
     const isSameVolunteer = selectedVolunteer === issue.assignedTo;
 
     const handleAssignment = async () => {
@@ -54,13 +43,11 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
         setIsSaving(true);
 
         try {
-            // API Call to Assign Issue
             await axios.put(`${API_BASE_URL}/complaints/assign/${issue.id}`, 
-                { assignedTo: selectedVolunteer }, // Sends the volunteer's name
+                { assignedTo: selectedVolunteer },
                 { withCredentials: true }
             );
 
-            // Successful Update (update parent state)
             onAssign(issue.id, selectedVolunteer);
 
             setIsReassigning(false);
@@ -70,7 +57,6 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
             console.error("Assignment failed:", error.response?.data || error.message);
             alert(`Failed to assign issue: ${error.response?.data?.message || 'Server error.'}`);
             
-            // ROLLBACK local select state
             setSelectedVolunteer(issue.assignedTo); 
         } finally {
             setIsSaving(false);
@@ -81,13 +67,14 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
         return (
             <div className="reassign-control-inline">
                 <select 
-                    value={selectedVolunteer} 
-                    onChange={(e) => setSelectedVolunteer(e.target.value)}
+                    value={selectedVolunteer || 'Unassigned'} 
+                    onChange={(e) => setSelectedVolunteer(e.target.value === 'Unassigned' ? null : e.target.value)}
                     className="volunteer-select-admin"
                     disabled={isSaving}
                 >
                     <option value="Unassigned">Select Volunteer</option>
-                    {volunteers.map(v => (
+                    {/* CRITICAL FIX: Use the live 'volunteers' prop */}
+                    {volunteers.map(v => ( 
                         <option key={v.id} value={v.name}>{v.name}</option>
                     ))}
                 </select>
@@ -97,13 +84,14 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
                         onClick={handleAssignment}
                         disabled={isSaving || !selectedVolunteer || selectedVolunteer === 'Unassigned' || isSameVolunteer}
                     >
-                        {isSaving ? 'Saving...' : <><UserCheck size={14} /> Assign</>}
+                        {isSaving ? <Loader2 size={14} className="spinner" /> : <UserCheck size={14} />}
+                        {isSaving ? 'Saving...' : 'Assign'}
                     </button>
                     <button 
                         className="action-btn assign-cancel-btn"
                         onClick={() => { 
                             setIsReassigning(false); 
-                            setSelectedVolunteer(issue.assignedTo); // Reset selection
+                            setSelectedVolunteer(issue.assignedTo);
                         }}
                         disabled={isSaving}
                     >
@@ -116,7 +104,7 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
 
     return (
         <div className="assigned-display">
-            <span className="assigned-name-display">{isAssigned ? issue.assignedTo : 'Unassigned'}</span>
+            <span className="assigned-name-display">{issue.assignedTo || 'Unassigned'}</span>
             <button 
                 className={`reassign-btn ${isAssigned ? 'reassign' : 'assign'}`}
                 onClick={() => setIsReassigning(true)}
@@ -135,6 +123,7 @@ const AllIssuesAdmin = () => {
     
     // --- State for Live Data ---
     const [allIssues, setAllIssues] = useState([]);
+    const [allVolunteers, setAllVolunteers] = useState([]); // Live volunteers list
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -144,7 +133,7 @@ const AllIssuesAdmin = () => {
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
             signOut();
-            navigate('/login');
+            navigate('/');
         }
     };
 
@@ -162,7 +151,23 @@ const AllIssuesAdmin = () => {
         }
     };
     
-    // --- API Fetch Function ---
+    // --- API Fetch Functions ---
+    const fetchVolunteers = useCallback(async () => {
+        try {
+            // Fetches all users and filters for volunteers
+            const response = await axios.get(`${API_BASE_URL}/users/list-all`, { withCredentials: true });
+            const volunteersList = response.data.data.filter(u => u.role === 'volunteer').map(v => ({
+                id: v._id,
+                name: v.name,
+                location: v.location 
+            }));
+            setAllVolunteers(volunteersList);
+        } catch (err) {
+            console.error("Failed to fetch volunteer list:", err.message);
+        }
+    }, []);
+
+
     const fetchIssues = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -178,20 +183,19 @@ const AllIssuesAdmin = () => {
                 
                 let assignedToName = comp.assignedTo; 
                 
-                // 💡 FIX 1: Check if assignedTo is a department string. 
-                // If it is, treat it as 'Unassigned' for the volunteer logic.
+                // CRITICAL FIX: If assignedTo is one of the department strings, show it as null/Unassigned.
                 if (DEPARTMENTS.includes(assignedToName)) {
-                    assignedToName = 'Unassigned';
+                    assignedToName = null; 
                 }
 
-                const mockReportedBy = comp.userId?.name || 'Anonymous User'; 
+                const mockReportedBy = comp.userId?.name || 'Anonymous Citizen'; 
 
                 return {
                     id: comp._id,
                     title: comp.title,
                     status: statusText.toLowerCase().replace(' ', ''), 
                     priority: mockPriority, 
-                    assignedTo: assignedToName, 
+                    assignedTo: assignedToName, // Name comes directly from DB
                     reportedBy: mockReportedBy,
                     date: new Date(comp.createdAt).toLocaleDateString('en-US'),
                 };
@@ -206,43 +210,38 @@ const AllIssuesAdmin = () => {
         }
     }, []); 
 
-    // --- Auth Check and Data Fetch Effects (Unchanged) ---
+    // --- Auth Check and Data Fetch Effects ---
     useEffect(() => {
-        const checkAuth = setTimeout(() => {
-            setAuthChecked(true);
-        }, 50); 
+        const checkAuth = setTimeout(() => { setAuthChecked(true); }, 50); 
         return () => clearTimeout(checkAuth);
     }, []);
 
     useEffect(() => {
-        if (!authChecked) {
-            return;
-        }
+        if (!authChecked) return;
         if (user) {
             fetchIssues();
+            fetchVolunteers(); // Fetch the list of volunteers
         } else {
             navigate('/login');
         }
-    }, [user, navigate, fetchIssues, authChecked]);
+    }, [user, navigate, fetchIssues, fetchVolunteers, authChecked]);
 
 
-    // --- Data Aggregation and Filtering (Unchanged) ---
+    // --- Data Aggregation and Filtering ---
     const filteredIssues = useMemo(() => {
-        if (!searchTerm) {
-            return allIssues;
-        }
+        if (!searchTerm) return allIssues;
         const lowerSearchTerm = searchTerm.toLowerCase();
         return allIssues.filter(issue => 
             issue.title.toLowerCase().includes(lowerSearchTerm) ||
             issue.reportedBy.toLowerCase().includes(lowerSearchTerm) ||
-            issue.assignedTo.toLowerCase().includes(lowerSearchTerm) ||
+            (issue.assignedTo || '').toLowerCase().includes(lowerSearchTerm) ||
             issue.status.toLowerCase().includes(lowerSearchTerm)
         );
     }, [allIssues, searchTerm]);
 
     const dynamicStats = useMemo(() => {
         const total = allIssues.length;
-        const inProgress = allIssues.filter(i => i.status === 'in progress').length;
+        const inProgress = allIssues.filter(i => i.status === 'inprogress').length;
         const resolved = allIssues.filter(i => i.status === 'resolved').length;
         const pending = allIssues.filter(i => i.status === 'pending').length;
 
@@ -255,20 +254,14 @@ const AllIssuesAdmin = () => {
     }, [allIssues]);
 
 
-    // --- Assignment Logic (Updates local state, ensuring persistence on next fetch) ---
+    // --- Assignment Logic ---
     const handleAssignIssue = (issueId, newVolunteerName) => {
-        // Updates the list locally to reflect the assigned name
         setAllIssues(prevIssues => prevIssues.map(issue => 
             issue.id === issueId ? { ...issue, assignedTo: newVolunteerName } : issue
         ));
     };
     
-    const handleViewDetails = (issueId) => {
-        navigate(`/admin/issue/${issueId}`);
-    };
-    // ----------------------------
-
-
+    // ... (handleViewDetails and conditional rendering remains) ...
     if (!user && !authChecked) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -277,13 +270,11 @@ const AllIssuesAdmin = () => {
         );
     }
     
-    if (!user) {
-        return null;
-    }
+    if (!user) return null;
 
     return (
         <div className="all-issues-admin">
-            {/* Header (unchanged) */}
+            {/* Header */}
             <header className="admin-header">
                 <div className="admin-header-left">
                     <div className="admin-logo">
@@ -295,45 +286,29 @@ const AllIssuesAdmin = () => {
                     </div>
                     <nav className="admin-nav">
                         <Link to="/admin-dashboard" className="admin-nav-link">
-                            <LayoutDashboard size={18} />
-                            Dashboard
+                            <LayoutDashboard size={18} /> Dashboard
                         </Link>
                         <Link to="/admin-all-issues" className="admin-nav-link active">
-                            <AlertCircle size={18} />
-                            All Issues
+                            <AlertCircle size={18} /> All Issues
                         </Link>
                         <Link to="/admin-users-volunteers" className="admin-nav-link">
-                            <Users size={18} />
-                            Users & Volunteers
+                            <Users size={18} /> Users & Volunteers
                         </Link>
                         <Link to="/admin-requests" className="admin-nav-link">
-                            <FileText size={18} />
-                            Admin Requests
+                            <FileText size={18} /> Admin Requests
                         </Link>
                         <Link to="/admin-issues-updates" className="admin-nav-link">
-                            <Clock size={18} />
-                            Issue Updates
+                            <Clock size={18} /> Issue Updates
                         </Link>
                     </nav>
                 </div>
-                <div className="admin-header-right">
-                    <button className="admin-icon-btn">
-                        <Bell size={20} />
-                    </button>
-                    <button className="admin-icon-btn">
-                        <Settings size={20} />
-                    </button>
-                    <div className="admin-user-info">
-                        <div className="admin-user-avatar">
-                            {getUserInitials(user?.name || 'Michael Johnson')}
-                        </div>
-                        <div className="admin-user-details">
-                            <span className="admin-user-name">{user?.name || 'Michael Johnson'}</span>
-                            <span className="admin-user-role">(admin)</span>
-                        </div>
-                    </div>
-                    <button className="admin-icon-btn logout" onClick={handleLogout}>
-                        <LogOut size={20} />
+                <div className="user-profile">
+                    <Link to="/AdminProfile" className="profile-link">
+                        <div className="user-initials">{getUserInitials(user.name)}</div>
+                        <span className="user-name">{user.name}</span>
+                    </Link>
+                    <button onClick={handleLogout} className="logout-btn-header">
+                        <ArrowRight size={20} />
                     </button>
                 </div>
             </header>
@@ -384,12 +359,11 @@ const AllIssuesAdmin = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    {/* Export button removed */}
                 </div>
 
                 <div className="issues-table-container">
                     {loading ? (
-                         <div className="loading-state-admin">
+                        <div className="loading-state-admin">
                             <div className="loading-spinner"></div>
                             <p>Loading issues from database...</p>
                         </div>
@@ -433,7 +407,7 @@ const AllIssuesAdmin = () => {
                                         <td className="assigned-cell-combined">
                                             <AssignButton 
                                                 issue={issue}
-                                                volunteers={MOCK_VOLUNTEERS}
+                                                volunteers={allVolunteers}
                                                 onAssign={handleAssignIssue}
                                             />
                                         </td>

@@ -50,7 +50,7 @@ const AdminRequests = () => {
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       signOut();
-      navigate('/login');
+      navigate('/');
     }
   };
 
@@ -82,37 +82,51 @@ const AdminRequests = () => {
   return (
     <div className="admin-requests-page">
       {/* Standard Header */}
-      <header className="header-top">
-        <div className="logo-section">
-          <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-          <div className="logo-text">Clean Street</div>
-        </div>
-        <nav className="nav-links">
-          {/* <Link to="/">Home</Link> */}
-          {navLinks.map((link, index) => {
-            const Icon = link.icon;
-            return (
-              <Link 
-                key={index} 
-                to={link.to}
-                className={link.to === '/admin-requests' ? 'active' : ''}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          {/* <Link to="/profile">Profile</Link> */}
-        </nav>
-        <div className="user-profile">
-          <Link to="/profile" className="profile-link">
-            <div className="user-initials">{getUserInitials(user?.name)}</div>
-            <span className="user-name">{user?.name}</span>
-          </Link>
-          <button onClick={handleLogout} className="logout-btn-header" aria-label="Logout">
-            <ArrowRight size={20} />
-          </button>
-        </div>
-      </header>
+      <header className="admin-header">
+  <div className="admin-header-left">
+    <div className="admin-logo">
+      <img src="/images/logo.png" alt="Clean Street" className="admin-logo-img" />
+      <div className="admin-logo-text">
+        <div className="admin-logo-title">Clean Street</div>
+        <div className="admin-logo-subtitle">Civic Platform</div>
+      </div>
+    </div>
+
+    <nav className="admin-nav">
+      <Link to="/admin-dashboard" className="admin-nav-link">
+        <LayoutDashboard size={18} />
+        Dashboard
+      </Link>
+      <Link to="/admin-all-issues" className="admin-nav-link">
+        <AlertCircle size={18} />
+        All Issues
+      </Link>
+      <Link to="/admin-users-volunteers" className="admin-nav-link">
+        <Users size={18} />
+        Users & Volunteers
+      </Link>
+      <Link to="/admin-requests" className="admin-nav-link active">
+        <FileText size={18} />
+        Admin Requests
+      </Link>
+      <Link to="/admin-issues-updates" className="admin-nav-link">
+        <Clock size={18} />
+        Issue Updates
+      </Link>
+    </nav>
+  </div>
+
+  <div className="user-profile">
+    <Link to="/AdminProfile" className="profile-link">
+      <div className="user-initials">{getUserInitials(user?.name)}</div>
+      <span className="user-name">{user?.name}</span>
+    </Link>
+    <button onClick={handleLogout} className="logout-btn-header">
+      <ArrowRight size={20} />
+    </button>
+  </div>
+</header>
+
 
       {/* Main Content */}
       <main className="admin-requests-container">

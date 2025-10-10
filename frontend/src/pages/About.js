@@ -74,7 +74,6 @@ const About = () => {
           <Link to="/">Home</Link>
           <Link to="/help">Help</Link>
           <Link to="/about" className="active">About</Link>
-          <Link to="/contactpage">Contact</Link>
         </nav>
         <div className="auth-buttons">
           {user ? (

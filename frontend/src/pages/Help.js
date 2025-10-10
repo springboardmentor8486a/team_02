@@ -84,7 +84,6 @@ const Help = () => {
           <Link to="/">Home</Link>
           <Link to="/help" className="active">Help</Link>
           <Link to="/about">About</Link>
-          <Link to="/contactpage">Contact</Link>
         </nav>
         <div className="auth-buttons">
           {user ? (

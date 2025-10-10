@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, AlertCircle, Users, FileText, 
   Clock, CheckCircle, TrendingUp, Timer, ThumbsUp,
-  Bell, LogOut, Settings
+  Bell, LogOut, Settings,ArrowRight
 } from 'lucide-react';
 import './AdminDashboard.css';
 
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       signOut();
-      navigate('/login');
+      navigate('/');
     }
   };
 
@@ -163,26 +163,15 @@ const AdminDashboard = () => {
             </Link>
           </nav>
         </div>
-        <div className="admin-header-right">
-          <button className="admin-icon-btn">
-            <Bell size={20} />
-          </button>
-          <button className="admin-icon-btn">
-            <Settings size={20} />
-          </button>
-          <div className="admin-user-info">
-            <div className="admin-user-avatar">
-              {getUserInitials(user?.name || 'Michael Johnson')}
-            </div>
-            <div className="admin-user-details">
-              <span className="admin-user-name">{user?.name || 'Michael Johnson'}</span>
-              <span className="admin-user-role">(admin)</span>
-            </div>
-          </div>
-          <button className="admin-icon-btn logout" onClick={handleLogout}>
-            <LogOut size={20} />
-          </button>
-        </div>
+        <div className="user-profile">
+                    <Link to="/AdminProfile" className="profile-link">
+                        <div className="user-initials">{getUserInitials(user.name)}</div>
+                        <span className="user-name">{user.name}</span>
+                    </Link>
+                    <button onClick={handleLogout} className="logout-btn-header">
+                        <ArrowRight size={20} />
+                    </button>
+                </div>
       </header>
 
       {/* Hero Section */}

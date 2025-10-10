@@ -1,226 +1,181 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+// All necessary icons imported
 import { 
-  User, Mail, Phone, MapPin, Edit, Award, Heart, Users, LogOut
-} from 'lucide-react';
-import './VolunteerProfile.css';
+    User, Mail, MapPin, Clock, Briefcase, Award, Heart, CheckCircle, LogOut, Phone, Globe, ArrowRight, Edit3 
+} from 'lucide-react'; 
+import './VolunteerProfile.css'; // Note: Ensure this CSS file has the necessary styles from the Citizen Profile
 
 const VolunteerProfile = () => {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+    const { user, signOut } = useAuth();
+    const navigate = useNavigate();
+    
+    // --- Mock User Data for Volunteer ---
+    const profileData = {
+        name: user?.name || 'Sarah Wilson',
+        username: user?.username || 'sarah.wilson',
+        email: user?.email || 'sarah.wilson@cleanstreet.org',
+        phone: '+1 (555) 234 5678',
+        district: 'North District',
+        joinDate: '2023-08-10T10:00:00Z', // Mock date
+        role: 'Volunteer',
+        bio: 'I am a dedicated volunteer covering the North District. I specialize in infrastructure and safety issues, aiming for rapid resolution of reported problems.',
+        totalResolved: 47,
+        activeAssignments: 3,
+        isPremium: true,
+    };
+    // -----------------------------------------------------
 
-  const profileData = {
-    name: user?.name || 'Sarah Wilson',
-    username: user?.username || 'sarah.wilson',
-    email: user?.email || 'sarah.wilson@cleanstreet.org',
-    phone: '+1 (555) 234 5678',
-    district: 'North District',
-    joinDate: '2/17/2024',
-    role: 'volunteer',
-    bio: 'Active community member passionate about improving our neighborhoods. I believe in working together to create cleaner, safer spaces for everyone.',
-    badges: [
-      { id: 1, name: 'Verified Member', active: true },
-      { id: 2, name: 'Community Helper', active: true },
-      { id: 3, name: 'Local Champion', active: false }
-    ],
-    stats: [
-      { icon: Award, label: 'Trusted Member' },
-      { icon: Heart, label: 'Community Love' },
-      { icon: Users, label: 'Top Contributor' }
-    ]
-  };
+    const handleLogout = () => {
+        // In a real app, use axios for API logout before signOut()
+        if (window.confirm('Are you sure you want to log out?')) {
+            signOut(); 
+            navigate('/');
+        }
+    };
 
-  const getUserInitials = (name) => {
-    if (!name) return 'SW';
-    return name.split(' ').map(part => part[0]).join('').toUpperCase();
-  };
+    const getUserInitials = (name) => {
+        if (!name) return 'SW'; 
+        const nameParts = name.split(' ');
+        const initials = nameParts.map(part => part[0]).join('');
+        return initials.toUpperCase();
+    };
 
-  const handleLogout = () => {
-    signOut();
-    navigate('/login');
-  };
+    const getJoinedDate = (dateString) => {
+        if (!dateString) return 'Joined unknown date';
+        const date = new Date(dateString);
+        if (isNaN(date)) return 'Joined unknown date'; 
+        return `Joined ${date.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+    };
 
-  const handleUpdateProfile = () => {
-    alert('Update profile functionality coming soon!');
-  };
-
-  return (
-    <div className="volunteer-profile-page">
-      {/* Header */}
-      <header className="vp-header">
-        <div className="vp-header-content">
-          <div className="vp-logo-section">
-            <img src="/images/logo.png" alt="Clean Street" className="vp-logo-img" />
-            <span className="vp-logo-text">Clean Street</span>
-          </div>
-          <nav className="vp-nav">
-            <button onClick={() => navigate('/volunteer')} className="vp-nav-link">Dashboard</button>
-            <button onClick={() => navigate('/MyAssignedIssues')} className="vp-nav-link">My Assigned Issues</button>
-            <button onClick={() => navigate('/volunteer-browser-issues')} className="vp-nav-link">Browse Issues</button>
-          </nav>
-          <div className="vp-user-section">
-            <div className="vp-user-avatar">{getUserInitials(profileData.name)}</div>
-            <span className="vp-user-name">{profileData.name} <span className="vp-user-role">(volunteer)</span></span>
-            <button className="vp-logout-btn" onClick={handleLogout}>⚙️</button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="vp-hero">
-        <div className="vp-hero-bg"></div>
-        <div className="vp-hero-content">
-          <div className="vp-avatar-large">{getUserInitials(profileData.name)}</div>
-          <h1 className="vp-hero-name">{profileData.name}</h1>
-          <p className="vp-hero-username">@{profileData.username}</p>
-          <p className="vp-hero-meta">
-            <User size={14} />
-            Joined {profileData.joinDate} • {profileData.role}
-          </p>
-          <div className="vp-hero-actions">
-            <button className="vp-btn-update" onClick={handleUpdateProfile}>
-              <Edit size={16} />
-              Update Profile
-            </button>
-            <button className="vp-btn-logout" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-          <div className="vp-badges">
-            {profileData.badges.map(badge => (
-              <span key={badge.id} className={`vp-badge ${badge.active ? 'active' : ''}`}>
-                {badge.active && '✓'} {badge.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Tabs */}
-      <div className="vp-tabs-container">
-        <div className="vp-tabs">
-          <button 
-            className={`vp-tab ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <User size={18} />
-            Profile Information
-          </button>
-          <button 
-            className={`vp-tab ${activeTab === 'badges' ? 'active' : ''}`}
-            onClick={() => setActiveTab('badges')}
-          >
-            <Award size={18} />
-            Verified Volunteer
-          </button>
-        </div>
-        <div className="vp-premium-badge">
-          🛡️ Premium Member
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="vp-main">
-        {activeTab === 'profile' && (
-          <>
-            {/* Profile Information Card */}
-            <div className="vp-card">
-              <div className="vp-card-header">
-                <div>
-                  <h2 className="vp-card-title">
-                    <User size={20} />
-                    Profile Information
-                  </h2>
-                  <p className="vp-card-subtitle">Your personal information and details</p>
-                </div>
-              </div>
-              <div className="vp-info-grid">
-                <div className="vp-info-item">
-                  <div className="vp-info-icon">
-                    <User size={18} />
-                  </div>
-                  <div className="vp-info-content">
-                    <p className="vp-info-label">{profileData.name}</p>
-                    <p className="vp-info-sublabel">sarah.wilson</p>
-                  </div>
-                </div>
-                <div className="vp-info-item">
-                  <div className="vp-info-icon">
-                    <Phone size={18} />
-                  </div>
-                  <div className="vp-info-content">
-                    <p className="vp-info-label">{profileData.phone}</p>
-                  </div>
-                </div>
-                <div className="vp-info-item">
-                  <div className="vp-info-icon">
-                    <Mail size={18} />
-                  </div>
-                  <div className="vp-info-content">
-                    <p className="vp-info-label">{profileData.email}</p>
-                  </div>
-                </div>
-                <div className="vp-info-item">
-                  <div className="vp-info-icon">
-                    <MapPin size={18} />
-                  </div>
-                  <div className="vp-info-content">
-                    <p className="vp-info-label">{profileData.district}</p>
-                  </div>
-                </div>
-              </div>
+    // Helper component to format the info item cleanly (copied from Citizen Profile)
+    const InfoField = ({ icon: Icon, label, value }) => (
+        <div className="info-item">
+            <Icon size={20} />
+            <div className="info-text-inline">
+                <span className="info-label">{label}:</span>
+                <strong className="info-value">{value}</strong>
             </div>
+        </div>
+    );
 
-            {/* About Me Card */}
-            <div className="vp-card">
-              <h2 className="vp-card-title">
-                <Award size={20} />
-                About Me
-              </h2>
-              <p className="vp-about-text">{profileData.bio}</p>
-            </div>
+    return (
+        <>
+            {/* Standard Header for Navigating to other Volunteer pages */}
+            <header className="header-top">
+                <div className="logo-section">
+                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+                    <div className="logo-text">Clean Street</div>
+                </div>
+                {/* Updated Navigation links for Volunteer */}
+                <nav className="nav-links">
+                    <Link to="/volunteer">Dashboard</Link>
+                    <Link to="/MyAssignedIssues">My Assigned Issues</Link>
+                    <Link to="/volunteer-browser-issues">Browse Issues</Link>
+                </nav>
+                {/* Profile Link in Header (active on this page) */}
+                <div className="user-profile">
+                    <Link to="/volunteer-profile" className="profile-link active">
+                        <div className="user-initials">{getUserInitials(profileData.name)}</div>
+                        <span className="user-name">{profileData.name}</span>
+                    </Link>
+                    <button onClick={handleLogout} className="logout-btn-header">
+                        <ArrowRight size={20} />
+                    </button>
+                </div>
+            </header>
 
-            {/* Stats Cards */}
-            <div className="vp-stats-grid">
-              {profileData.stats.map((stat, idx) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={idx} className="vp-stat-card">
-                    <div className="vp-stat-icon">
-                      <Icon size={28} />
+            {/* Main Profile Layout: Adopting Citizen Profile's structure */}
+            <div className="profile-page-container">
+                
+                {/* Sidebar */}
+                <div className="profile-sidebar">
+                    <div className="profile-avatar-large">
+                        <span>{getUserInitials(profileData.name)}</span>
                     </div>
-                    <p className="vp-stat-label">{stat.label}</p>
-                  </div>
-                );
-              })}
+                    <h2 className="profile-name">{profileData.name}</h2>
+                    <p className="profile-username">@{profileData.username}</p>
+                    <p className="profile-joined">{getJoinedDate(profileData.joinDate)}</p>
+
+                    <div className="profile-actions">
+                        <button className="update-profile-btn" onClick={() => navigate('/edit-volunteer-profile')}>
+                            <Edit3 size={16} /> Edit Profile
+                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>
+                            <LogOut size={16} /> Logout
+                        </button>
+                    </div>
+
+                    <div className="profile-badges">
+                        <div className="badge verified">
+                            <CheckCircle size={16} /> Verified Volunteer
+                        </div>
+                        <div className="badge community-helper">
+                            <Award size={16} /> Top Resolver
+                        </div>
+                        <div className="badge local-champion">
+                            <MapPin size={16} /> {profileData.district} Expert
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="profile-main-content">
+                    
+                    {/* Panel 1: Contact and Role Information */}
+                    <div className="profile-panel">
+                        <div className="panel-header-details">
+                            <div>
+                                <h3>Volunteer Contact Details</h3>
+                                <p>Your primary contact and assigned work area information</p>
+                            </div>
+                            {profileData.isPremium && <span className="premium-badge">Priority Access</span>}
+                        </div>
+                        <div className="profile-info-grid">
+                            <InfoField icon={User} label="Full Name" value={profileData.name} />
+                            <InfoField icon={Briefcase} label="Role" value={profileData.role} />
+                            <InfoField icon={Mail} label="Email Address" value={profileData.email} />
+                            <InfoField icon={Phone} label="Phone Number" value={profileData.phone} />
+                            <InfoField icon={MapPin} label="Assigned District" value={profileData.district} />
+                            <InfoField icon={Globe} label="Member Since" value={new Date(profileData.joinDate).toLocaleDateString()} />
+                        </div>
+                    </div>
+                    
+                    {/* Panel 2: Stats */}
+                    <div className="profile-panel">
+                         <div className="panel-header-details">
+                            <div>
+                                <h3>Performance Metrics</h3>
+                                <p>Your impact and efficiency in resolving community issues</p>
+                            </div>
+                        </div>
+                        <div className="profile-info-grid">
+                            <InfoField icon={CheckCircle} label="Total Resolved" value={profileData.totalResolved} />
+                            <InfoField icon={Heart} label="Active Assignments" value={profileData.activeAssignments} />
+                            <InfoField icon={Award} label="Completion Rate" value="96%" />
+                            <InfoField icon={Clock} label="Avg Resolution Time" value="1.8 days" />
+                        </div>
+                    </div>
+
+                    {/* Panel 3: About Me */}
+                    <div className="profile-panel about-me-panel">
+                        <h3>About Me</h3>
+                        <p>{profileData.bio}</p>
+                    </div>
+                </div>
             </div>
-          </>
-        )}
 
-        {activeTab === 'badges' && (
-          <div className="vp-card">
-            <h2 className="vp-card-title">
-              <Award size={20} />
-              Verified Volunteer
-            </h2>
-            <p className="vp-about-text">Official volunteer helping improve the community</p>
-          </div>
-        )}
-
-        {/* CTA Banner */}
-        <div className="vp-cta-banner">
-          <div className="vp-cta-overlay"></div>
-          <div className="vp-cta-content">
-            <h2>Building Better Communities Together</h2>
-            <p>Every report makes our neighborhood cleaner and safer</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+            {/* The footer must also be included if it's part of the global layout */}
+            <footer className="footer">
+                {/* Footer content goes here... copied from Profile.js for structure */}
+                <div className="footer-column footer-logo-section">...</div>
+                <div className="footer-column">...</div>
+                <div className="footer-column">...</div>
+                <div className="footer-column">...</div>
+            </footer>
+        </>
+    );
 };
 
 export default VolunteerProfile;
