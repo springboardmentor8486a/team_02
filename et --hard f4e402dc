@@ -1,0 +1,45 @@
+[33m1abc8d2a[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/sakshi[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: pull origin sakshi --rebase (start): checkout 1abc8d2adb3c7da0889848d93d37d90bde8f5083
+[33mf4e402dc[m[33m ([m[1;32msakshi[m[33m)[m HEAD@{1}: commit: small small changes in frontend
+[33me8d35c68[m HEAD@{2}: commit: Add .gitignore to ignore node_modules
+[33me3b5104f[m HEAD@{3}: commit: small small changes in frontend
+[33m6e70eab4[m HEAD@{4}: commit: Milestone 2 is completed
+[33m243de8ca[m HEAD@{5}: checkout: moving from pr-10 to sakshi
+[33mcd0b9cbd[m[33m ([m[1;32mpr-10[m[33m)[m HEAD@{6}: checkout: moving from sakshi to pr-10
+[33m243de8ca[m HEAD@{7}: pull: Fast-forward
+[33m3d9fb521[m[33m ([m[1;31morigin/tanuja[m[33m)[m HEAD@{8}: commit: Updated SignUp.jsx file
+[33m781b51db[m[33m ([m[1;31morigin/sandeep[m[33m)[m HEAD@{9}: pull origin sakshi: Fast-forward
+[33mdd19bbb7[m HEAD@{10}: checkout: moving from pr-7 to sakshi
+[33mea6b76ed[m[33m ([m[1;32mpr-7[m[33m)[m HEAD@{11}: reset: moving to HEAD
+[33mea6b76ed[m[33m ([m[1;32mpr-7[m[33m)[m HEAD@{12}: checkout: moving from sakshi to pr-7
+[33mdd19bbb7[m HEAD@{13}: checkout: moving from sakshi to sakshi
+[33mdd19bbb7[m HEAD@{14}: commit: Remove backend/.env from repository for security
+[33m916cffed[m HEAD@{15}: commit: Milestone 1 is completed
+[33m747a3c7f[m[33m ([m[1;31morigin/krishna[m[33m)[m HEAD@{16}: checkout: moving from sakshi to sakshi
+[33m747a3c7f[m[33m ([m[1;31morigin/krishna[m[33m)[m HEAD@{17}: commit: Replace frontend with Mounika's version
+[33ma8dfab8f[m HEAD@{18}: checkout: moving from sakshi to sakshi
+[33ma8dfab8f[m HEAD@{19}: checkout: moving from sakshi to sakshi
+[33ma8dfab8f[m HEAD@{20}: checkout: moving from sakshi to sakshi
+[33ma8dfab8f[m HEAD@{21}: commit: Add Mounika's frontend manually
+[33me12983b5[m HEAD@{22}: checkout: moving from mounika-pr to sakshi
+[33mf3b6ba43[m HEAD@{23}: checkout: moving from sakshi to mounika-pr
+[33me12983b5[m HEAD@{24}: reset: moving to HEAD
+[33me12983b5[m HEAD@{25}: checkout: moving from sakshi to sakshi
+[33me12983b5[m HEAD@{26}: merge mounika-pr: Merge made by the 'ort' strategy.
+[33medc33ff7[m HEAD@{27}: checkout: moving from mounika-pr to sakshi
+[33mf3b6ba43[m HEAD@{28}: commit: Remove old frontend to prepare for mounika-pr merge
+[33m8aaf4280[m[33m ([m[1;31morigin/mounika[m[33m, [m[1;32mmounika-pr[m[33m)[m HEAD@{29}: reset: moving to HEAD
+[33m8aaf4280[m[33m ([m[1;31morigin/mounika[m[33m, [m[1;32mmounika-pr[m[33m)[m HEAD@{30}: checkout: moving from sakshi to mounika-pr
+[33medc33ff7[m HEAD@{31}: reset: moving to HEAD
+[33medc33ff7[m HEAD@{32}: commit: Revert "Add files via upload"
+[33m35728ee7[m HEAD@{33}: checkout: moving from sakshi to sakshi
+[33m35728ee7[m HEAD@{34}: pull origin sakshi: Fast-forward
+[33md1b7eee4[m HEAD@{35}: checkout: moving from sakshi to sakshi
+[33md1b7eee4[m HEAD@{36}: pull origin sakshi: Fast-forward
+[33m41bafc4a[m HEAD@{37}: checkout: moving from sakshi to sakshi
+[33m41bafc4a[m HEAD@{38}: checkout: moving from sandeep-branch to sakshi
+[33m23859a23[m[33m ([m[1;32msandeep-branch[m[33m)[m HEAD@{39}: commit (merge): My local changes before switching branch
+[33ma027b92e[m HEAD@{40}: checkout: moving from tanuja-branch to sandeep-branch
+[33m23dcf074[m[33m ([m[1;32mtanuja-test[m[33m, [m[1;32mtanuja-branch[m[33m)[m HEAD@{41}: checkout: moving from om-branch to tanuja-branch
+[33mb1407a11[m[33m ([m[1;32mom-branch[m[33m)[m HEAD@{42}: checkout: moving from mounika-branch to om-branch
+[33mc206ff4d[m[33m ([m[1;32mmounika-branch[m[33m)[m HEAD@{43}: checkout: moving from sakshi to mounika-branch
+[33m41bafc4a[m HEAD@{44}: commit (initial): Initial commit with frontend and backend folders
