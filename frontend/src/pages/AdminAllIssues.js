@@ -297,9 +297,9 @@ const AllIssuesAdmin = () => {
                         <Link to="/admin-requests" className="admin-nav-link">
                             <FileText size={18} /> Admin Requests
                         </Link>
-                        <Link to="/admin-issues-updates" className="admin-nav-link">
+                        {/* <Link to="/admin-issues-updates" className="admin-nav-link">
                             <Clock size={18} /> Issue Updates
-                        </Link>
+                        </Link> */}
                     </nav>
                 </div>
                 <div className="user-profile">

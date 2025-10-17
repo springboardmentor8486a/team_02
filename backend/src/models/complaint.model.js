@@ -1,3 +1,5 @@
+// complaint.model.js
+
 import mongoose, { Mongoose } from "mongoose";
 
 const complaintSchema = new mongoose.Schema({
@@ -40,9 +42,27 @@ const complaintSchema = new mongoose.Schema({
 
     status: {
         type: String, 
-        enum: ["recived", "inReview", "resolved"],
+        enum: ["recived", "inReview", "resolved", "in progress"], // Added "in progress"
         default: "recived"
     },
+
+    // ✅ ADDED FIELDS for Volunteer Updates and Admin Review
+    pendingUpdate: {
+        type: Boolean,
+        default: false // Set to true by Volunteer, reset by Admin
+    },
+
+    workNotes: {
+        type: String,
+        default: "" // Volunteer's notes on the work done
+    },
+    
+    // Admin rejection note (optional)
+    rejectionNote: { 
+        type: String,
+        default: "" 
+    },
+    // --------------------------------------------------------
 
     comments: [
         {

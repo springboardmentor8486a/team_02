@@ -1,26 +1,29 @@
-import mongoose ,{ Schema } from "mongoose";
+// Comment.model.js
+import mongoose, { Schema } from "mongoose";
 
 let commentSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         ref: "User",
-        reuired: true
+        required: true
+    },
+    complaintId: {
+        type: Schema.Types.ObjectId,
+        ref: "Complaint",
+        required: true
     },
     content: {
         type: String,
-        requred: true,
+        required: true,
     },
-    
     createdAt: {
         type: Date,
-        default: new Date(Date.now())
+        default: () => new Date()
     },
-
     updatedAt: {
         type: Date,
-        default: new Date(Date.now())
+        default: () => new Date()
     },
 });
 
 export const Comment = mongoose.model("Comment", commentSchema);
- 

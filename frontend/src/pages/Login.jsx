@@ -29,7 +29,7 @@ const Login = () => {
       );
 
       const user = res.data.data.user;
-      localStorage.setItem('token', res.data.data.accessToken);
+      localStorage.setItem('accessToken', res.data.data.accessToken);
       signIn(user);
 
       alert('Login Successful!');
@@ -47,6 +47,9 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+  navigate("/forgot-password"); // your Forgot Password route
+};
   // Google OAuth login
   const handleGoogleLogin = () => {
     window.location.href = 'http://localhost:3000/api/v1/auth/google';
@@ -133,9 +136,13 @@ const Login = () => {
                   <input type="checkbox" className="checkbox-input" />
                   Remember me
                 </label>
-                <Link to="/forgot-password" className="forgot-password-link">
-                  Forgot password?
-                </Link>
+                <button type="button"
+        className="link-button"
+  onClick={handleForgotPassword}
+>
+  Forgot Password?
+</button>
+
               </div>
 
               {/* Submit Button */}

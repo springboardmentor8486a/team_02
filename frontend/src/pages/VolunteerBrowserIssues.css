@@ -36,11 +36,6 @@
     font-size: 1.2rem;
 }
 
-.nav-links {
-    display: flex;
-    gap: 1.5rem;
-}
-
 .nav-links a {
     color: #4a5568;
     text-decoration: none;
@@ -64,24 +59,7 @@
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.profile-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-    padding: 0.5rem 0.875rem;
-    border-radius: 0.75rem;
-    background-color: #f9fafb;
-    transition: all 0.2s ease;
-}
-
-.profile-link:hover {
-    background-color: #e5e7eb;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    gap: 0.5rem;
 }
 
 .user-initials {
@@ -95,7 +73,6 @@
     align-items: center;
     font-weight: bold;
     font-size: 0.875rem;
-    flex-shrink: 0;
 }
 
 .user-name {
@@ -109,16 +86,11 @@
     cursor: pointer;
     padding: 0.5rem;
     color: #4a5568;
-    border-radius: 0.5rem;
     transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .logout-btn-header:hover {
-    color: #dc2626;
-    background-color: #fee2e2;
+    color: #2c5292;
 }
 
 /* Enhanced Hero Section */
@@ -338,8 +310,8 @@
 }
 
 .category-item.active .category-count {
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .category-icon-title {
@@ -425,6 +397,49 @@
     font-size: 0.8rem;
     color: #718096;
     margin-top: 0.25rem;
+}
+
+/* Quick Actions */
+.quick-actions .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #2c5292, #4c66e4);
+    color: white;
+    box-shadow: 0 4px 15px rgba(44, 82, 146, 0.3);
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 82, 146, 0.4);
+}
+
+.action-btn.secondary {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+.action-btn.secondary:hover {
+    background: #edf2f7;
+    transform: translateY(-2px);
 }
 
 /* Enhanced Main Content Area */
@@ -908,35 +923,17 @@
     color: #4a5568;
 }
 
-.vote-btn:hover {
+.vote-btn:hover:not(:disabled) {
     background: #f7fafc;
     border-color: #2c5292;
     color: #2c5292;
     transform: translateY(-1px);
 }
 
-.vote-btn.upvote:hover {
+.vote-btn.upvote:hover:not(.voted):not(:disabled) {
     background: #fff5f5;
     border-color: #e53e3e;
     color: #e53e3e;
-}
-
-.vote-btn.voted {
-    background: #e53e3e; 
-    color: white;
-    border-color: #e53e3e;
-    box-shadow: 0 4px 10px rgba(229, 62, 62, 0.4);
-}
-
-.vote-btn.voted:hover {
-    background: #c53030;
-    color: white;
-    border-color: #c53030;
-    transform: translateY(-1px);
-}
-
-.vote-btn.voted svg {
-    color: white;
 }
 
 .status-badge {
@@ -948,11 +945,20 @@
     letter-spacing: 0.5px;
 }
 
-.status-badge.status-pending { background: #feebc8; color: #744210; }
-.status-badge.status-inprogress { background: #bee3f8; color: #2c5282; }
-.status-badge.status-resolved { background: #c6f6d5; color: #276749; }
-.status-badge.status-urgent { background: #fee2e2; color: #991b1b; } 
+.status-badge.status-pending {
+    background: #feebc8;
+    color: #744210;
+}
 
+.status-badge.status-inprogress {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.status-badge.status-resolved {
+    background: #c6f6d5;
+    color: #276749;
+}
 
 /* Enhanced Loading State */
 .loading-state {
@@ -982,9 +988,10 @@
 
 
 .loading-state p {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-size: 16px;
+    color: #555;
+    margin: 0;
+    text-align: center;
 }
 
 .loading-subtitle {
@@ -1214,4 +1221,283 @@
         width: 100%;
         justify-content: center;
     }
+}
+/* -------------------------------------- */
+/* --- VOTE SPECIFIC STYLES (UPDATED) --- */
+/* -------------------------------------- */
+
+.vote-btn.downvote {
+    /* Inherit base styles from .vote-btn */
+    margin-left: 0.5rem; /* Space between upvote/downvote */
+}
+
+/* Base style when either button is voted (upvote or downvote) */
+.vote-btn.voted {
+    /* Base color for Voted state - this will be overridden by .voted.upvote or .voted.downvote */
+    background: white; 
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+/* 💚 Upvote Voted State (Heart) */
+.vote-btn.upvote.voted {
+    background: #e53e3e; /* Use a red/heart color for upvote */
+    color: white;
+    border-color: #e53e3e;
+    box-shadow: 0 4px 10px rgba(229, 62, 62, 0.4);
+}
+
+.vote-btn.upvote.voted:hover:not(:disabled) {
+    /* Darker Red on hover for active state */
+    background: #c53030; 
+    border-color: #c53030;
+    transform: translateY(-1px);
+}
+
+.vote-btn.downvote.voted {
+    background: #4c66e4; /* Use a blue/neutral color for downvote */
+    color: white;
+    border-color: #4c66e4;
+    box-shadow: 0 4px 10px rgba(76, 102, 228, 0.4);
+}
+.vote-btn.downvote.voted:hover:not(:disabled) {
+    background: #2c5292;
+    border-color: #2c5292;
+    transform: translateY(-1px);
+}
+
+/* When a button is disabled */
+.vote-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* Crucial for preventing interaction while busy */
+}
+
+/* Ensure the heart/thumbs-down icon inside the voted button is white */
+.vote-btn.voted svg {
+    color: white;
+}
+/* Ensure the icon inside the default button uses the primary color */
+.vote-btn:not(.voted) svg {
+    color: #4a5568; 
+}
+.vote-btn:not(.voted):hover:not(:disabled) svg {
+    color: inherit; /* Inherit the hover color from the button */
+}
+
+/* -------------------------------------- */
+/* --- COMMENTS SECTION STYLES (UPDATED) --- */
+/* -------------------------------------- */
+
+.comments-toggle {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.comments-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    font-size: 0.85rem; /* 14px equivalent */
+    cursor: pointer;
+    padding: 4px 0;
+    color: #4a5568; 
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.comments-open-btn:hover {
+    color: #2c5292;
+    text-decoration: underline;
+}
+
+/* --- Comments Panel --- */
+.comments-panel {
+    margin-top: 12px;
+    padding: 1.5rem;
+    background: #fdfdfd;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+/* --- Add Comment Box --- */
+.add-comment {
+    margin-bottom: 1.5rem;
+}
+
+.add-comment textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    resize: vertical;
+    outline: none;
+    background: #f9fafb;
+}
+
+.add-comment textarea:focus {
+    border-color: #4c66e4;
+    background: white;
+}
+
+.comment-actions {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.comment-actions button {
+    background-color: #4c66e4;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.comment-actions button:hover:not(:disabled) {
+    background-color: #3f55c4;
+}
+
+.comment-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* --- Single Comment Item --- */
+.comment-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0; 
+    border-top: 1px dashed #edf2f7; /* Subtle separation */
+}
+
+.comments-panel .comment-item:first-child {
+    border-top: none; 
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    background: #e2e8f0;
+    color: #2c5292;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.comment-body {
+    flex: 1;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 4px;
+}
+
+.comment-author {
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.comment-time {
+    margin-left: 0.5rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: #a0aec0;
+}
+
+.comment-content {
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+/* Owner Actions (Edit/Delete) */
+.comment-owner-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.edit-comment-btn, .delete-comment-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #718096;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.edit-comment-btn:hover {
+    color: #2c5292;
+}
+
+.delete-comment-btn {
+    color: #e53e3e;
+}
+
+/* Edit Mode Styling */
+.edit-comment-area {
+    width: 100%;
+}
+.edit-comment-area textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #4c66e4; /* Highlight border for editing */
+    resize: vertical;
+    outline: none;
+    background: #fff;
+    margin-bottom: 8px;
+}
+
+.edit-comment-area .comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 0; /* Override default margin-top */
+}
+
+.edit-comment-area .comment-actions button {
+    padding: 6px 12px;
+}
+
+.cancel-edit-btn {
+    background: #cbd5e0 !important;
+    color: #4a5568 !important;
+}
+
+.cancel-edit-btn:hover:not(:disabled) {
+    background: #a0aec0 !important;
+}
+
+.btn-upvote.active, .btn-downvote.active {
+    /* These styles are intentionally redundant based on the final React component structure, 
+    but are kept to honor the original merged code structure if needed elsewhere. */
+    background: transparent;
+    color: inherit;
+}
+button.disabled {
+    /* This generic class is not used; styles rely on the :disabled pseudo-class */
+    opacity: 1;
 }

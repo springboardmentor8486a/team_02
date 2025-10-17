@@ -1,11 +1,19 @@
-import {Router} from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { complaintViseVotes, deleteVote, vote } from "../controllers/vote.controller.js";
+// routes/vote.router.js
+import { Router } from "express";
+// Assuming verifyJWT is available in your middleware directory
+import { verifyJWT } from "../middlewares/auth.middleware.js"; 
+import { vote, complaintViseVotes, getUserVotes } from "../controllers/vote.controller.js";
 
-let voteRouter = Router();
+const voteRouter = Router();
 
-voteRouter.route("/:complaintId").post(verifyJWT, vote);   //?category=up/down
-voteRouter.route("/:complaintId").get(verifyJWT, complaintViseVotes);  // complaint vise votes
-voteRouter.route("/:complaintId").delete(verifyJWT, deleteVote)
+// Endpoint for fetching the current user's vote status across multiple issues
+// This is the endpoint the frontend calls on load.
+voteRouter.route("/user-votes").get(verifyJWT, getUserVotes);
+
+// Endpoint for creating/changing a vote
+voteRouter.route("/:complaintId").post(verifyJWT, vote);   
+
+// Endpoint for getting total vote counts for a single complaint
+voteRouter.route("/:complaintId").get(verifyJWT, complaintViseVotes); 
 
 export default voteRouter;

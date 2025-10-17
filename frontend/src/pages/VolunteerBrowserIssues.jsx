@@ -2,28 +2,27 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, Home, LogOut, Filter as FilterIcon } from 'lucide-react';
-import './VolunteerBrowserIssues.css'; // The new, consolidated CSS
+import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, ChevronsDown, ThumbsDown, Edit, Save, Trash2 } from 'lucide-react';
 
-// --- Constants & Utility Functions ---
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+// Assuming you have a CSS file for styling:
+import './VolunteerBrowserIssues.css';
 
-// Utility function for calculating relative time
+const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
+
+// --- Time utility ---
 const getRelativeTime = (isoDateString) => {
     const reportDate = new Date(isoDateString);
     const today = new Date();
-    
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const startOfReportDay = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
-
     const diffTime = startOfToday.getTime() - startOfReportDay.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
         const hoursDiff = Math.floor((today.getTime() - reportDate.getTime()) / (1000 * 60 * 60));
         if (hoursDiff === 0) return 'Just now';
         if (hoursDiff < 24) return `${hoursDiff} hours ago`;
-        return 'Today'; 
+        return 'Today';
     }
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -31,12 +30,26 @@ const getRelativeTime = (isoDateString) => {
     return `${Math.floor(diffDays / 30)} months ago`;
 };
 
-// --- Component Definition ---
-const VolunteerBrowseIssues = () => {
+const getUserInitials = (name) => {
+    if (!name) return 'JD';
+    // Handle names that might include multiple spaces or other non-letter characters
+    const cleanedName = name.replace(/[^a-zA-Z\s]/g, '').trim();
+    const nameParts = cleanedName.split(/\s+/).filter(Boolean);
+
+    if (nameParts.length === 0) return 'JD';
+
+    // Get the first letter of the first and last part
+    const firstInitial = nameParts[0][0];
+    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
+
+    return (firstInitial + lastInitial).toUpperCase();
+};
+
+const UserBrowseIssue = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
-    const [authChecked, setAuthChecked] = useState(false); 
+    const [authChecked, setAuthChecked] = useState(false);
     const [issues, setIssues] = useState([]);
     const [filteredIssues, setFilteredIssues] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -46,16 +59,25 @@ const VolunteerBrowseIssues = () => {
         status: 'All Statuses',
         sort: 'Newest First'
     });
-    const [userVotes, setUserVotes] = useState({}); 
+    // userVotes state is crucial for persistent coloring
+    const [userVotes, setUserVotes] = useState({});
+    const [commentsOpen, setCommentsOpen] = useState({});
+    const [commentsStore, setCommentsStore] = useState({});
+    const [commentDrafts, setCommentDrafts] = useState({});
+    const [busyComments, setBusyComments] = useState({});
+    // State to manage voting action busy status
+    const [busyVotes, setBusyVotes] = useState({});
 
-    // Memos for filter/category options
+    // Consistent state name
+    const [editingComment, setEditingComment] = useState(null);
+
     const categories = useMemo(() => [
         'All Categories', 'Garbage & Waste', 'Potholes', 'Water Issues', 'Street Lights', 'Vandalism', 'Other'
     ], []);
 
     const statusOptions = useMemo(() => [
-        'All Statuses', 'Pending', 'In Progress', 'Resolved', 'Urgent'
-    ], []); 
+        'All Statuses', 'Pending', 'In Progress', 'Resolved'
+    ], []);
 
     const sortOptions = useMemo(() => [
         'Newest First', 'Oldest First', 'Most Voted', 'Most Viewed', 'Priority'
@@ -69,88 +91,121 @@ const VolunteerBrowseIssues = () => {
         { category: 'Vandalism', count: 0, icon: '🎨', color: '#805AD5' },
         { category: 'Other', count: 0, icon: '📋', color: '#718096' },
     ], []);
-    
+
     const communityImpact = {
         issuesResolved: '89+',
         responseTime: '2.3 days avg',
         communityScore: '95%',
         activeUsers: '1.2k',
-        totalReports: '2.8k',
-        assigned: '12'
+        totalReports: '2.8k'
     };
 
-    // --- API Fetch Function ---
     const fetchIssues = useCallback(async () => {
         if (!user) return;
-
         setLoading(true);
-        
+
+        // Map frontend categories to potential backend 'assignedTo' values for filtering,
+        // using 'Other' or a custom value for 'All Categories'. Assuming backend handles filtering.
+        const categoryMap = {
+            'Garbage & Waste': 'Municipal sanitation and public health',
+            'Potholes': 'Roads and street infrastructure',
+            'Street Lights': 'Street lighting and electrical assets',
+            'Water Issues': 'Water, sewerage, and stormwater',
+            'Vandalism': 'Ward/zone office and central admin', // Using one of the existing backend categories for Vandalism/Other
+            'Other': 'Other', // Placeholder for "Other"
+            'All Categories': undefined // Or handle on backend
+        };
+
+        const statusMap = {
+            'Pending': 'recived',
+            'In Progress': 'inReview',
+            'Resolved': 'resolved',
+            'All Statuses': undefined
+        };
+
+
         const params = {
             search: searchTerm.trim(),
-            category: filters.category,
-            status: filters.status,
+            category: filters.category !== 'All Categories' ? categoryMap[filters.category] : undefined,
+            status: filters.status !== 'All Statuses' ? statusMap[filters.status] : undefined,
             sort: filters.sort,
         };
-        
+
         try {
             const response = await axios.get(`${API_BASE_URL}/complaints/all`, {
                 params: params,
-                withCredentials: true,
-                headers: { 
-                    'X-User-Role': 'Volunteer' 
-                }
+                withCredentials: true
             });
-            
+
             const fetchedIssues = response.data.data.map(comp => {
                 const statusText = comp.status === 'recived' ? 'Pending' : comp.status === 'inReview' ? 'In Progress' : comp.status === 'resolved' ? 'Resolved' : 'Pending';
-                const locationText = comp.address?.[0] || 'Unknown Location'; 
-                const userName = comp.userId?.name || 'Anonymous User';
-                const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
-                
+                const locationText = comp.address?.[0] || 'Unknown Location';
+
+                const userName = typeof comp.userId === 'object' && comp.userId?.name
+                    ? comp.userId.name
+                    : 'Anonymous User';
+
                 const reverseCategoryMap = {
                     'Municipal sanitation and public health': 'Garbage & Waste',
                     'Roads and street infrastructure': 'Potholes',
                     'Street lighting and electrical assets': 'Street Lights',
                     'Water, sewerage, and stormwater': 'Water Issues',
                     'Ward/zone office and central admin': 'Vandalism'
+                    // Add more mappings if known
                 };
                 const displayCategory = reverseCategoryMap[comp.assignedTo] || 'Other';
-                
-                const mockVotes = Math.floor(Math.random() * 30) + 1;
-                const mockViews = Math.floor(Math.random() * 200);
-                const mockPriority = ['high', 'medium', 'low'][Math.floor(Math.random() * 3)];
 
                 return {
                     id: comp._id,
                     title: comp.title,
-                    description: comp.description.substring(0, 100) + '...',
+                    description: comp.description,
                     location: locationText,
                     category: displayCategory,
                     status: statusText,
-                    createdAt: comp.createdAt, 
-                    
-                    votes: mockVotes, 
-                    comments: comp.comments.length || 0, 
-                    views: mockViews,
-                    priority: mockPriority,
-                    urgency: mockPriority === 'high' ? 'High Concern' : 'Community Concern',
-                    
+                    createdAt: comp.createdAt,
+                    // These are placeholders, actual counts will be fetched below
+                    votes: 0,
+                    comments: comp.comments?.length || 0,
+                    views: Math.floor(Math.random() * 200), // Mocked for display
+                    priority: ['high', 'medium', 'low'][Math.floor(Math.random() * 3)], // Mocked for display
+                    urgency: 'Community Concern', // Mocked for display
                     user: userName,
-                    userAvatar: userInitials,
-                    // REMOVED: isAssigned: Math.random() > 0.7, 
+                    userAvatar: getUserInitials(userName),
+                    counts: { upvote: 0, downVote: 0 }
                 };
             });
 
-            setIssues(fetchedIssues);
-            setFilteredIssues(fetchedIssues);
-            
-            const initialUserVotes = {};
-            fetchedIssues.forEach(issue => {
-                if (Math.random() > 0.8) { 
-                    initialUserVotes[issue.id] = 'voted';
+            // --- CRUCIAL: Fetch user-specific vote status ---
+            const issueIds = fetchedIssues.map(i => i.id).join(',');
+            let userVotesMap = {};
+            if (issueIds.length > 0) {
+                try {
+                    const userVotesResp = await axios.get(`${API_BASE_URL}/votes/user-votes`, {
+                        params: { issues: issueIds },
+                        withCredentials: true
+                    });
+                    // Assuming response data is an object like { issueId: 'upvote' | 'downvote' | undefined }
+                    userVotesMap = userVotesResp.data.data || {};
+                } catch (err) {
+                    // console.warn("Failed to fetch user votes on load:", err.response?.data || err.message);
                 }
-            });
-            setUserVotes(initialUserVotes);
+            }
+            // Set the userVotes state to correctly highlight buttons
+            setUserVotes(userVotesMap); 
+
+            // Fetch overall vote counts
+            const countsPromises = fetchedIssues.map(i =>
+                axios.get(`${API_BASE_URL}/votes/${i.id}`, { withCredentials: true })
+                    .then(r => ({ id: i.id, counts: r.data.data }))
+                    .catch(() => ({ id: i.id, counts: { upvote: 0, downVote: 0 } }))
+            );
+
+            const countsResults = await Promise.all(countsPromises);
+            const countsMap = countsResults.reduce((acc, item) => { acc[item.id] = item.counts; return acc; }, {});
+            const issuesWithCounts = fetchedIssues.map(i => ({ ...i, counts: countsMap[i.id] || { upvote: 0, downVote: 0 } }));
+
+            setIssues(issuesWithCounts);
+            setFilteredIssues(issuesWithCounts);
 
         } catch (error) {
             console.error("Failed to fetch issues:", error.response?.data || error.message);
@@ -159,85 +214,295 @@ const VolunteerBrowseIssues = () => {
         } finally {
             setLoading(false);
         }
-    }, [user, searchTerm, filters]); 
+    }, [user, searchTerm, filters]);
 
-    // --- VOTE Handler (Used for community interaction) ---
-    const handleVote = async (issueId) => {
-        const isCurrentlyVoted = userVotes[issueId] === 'voted';
-        const endpoint = `${API_BASE_URL}/votes/${issueId}?category=upvote`;
-        
-        let newVoteStatus;
-        let voteChange;
-        let originalVotes;
-
-        try {
-            const issueToUpdate = issues.find(i => i.id === issueId);
-            if (!issueToUpdate) throw new Error("Issue not found for voting.");
-            originalVotes = issueToUpdate.votes;
-            
-            if (!isCurrentlyVoted) {
-                newVoteStatus = 'voted';
-                voteChange = 1;
-                await axios.post(endpoint, {}, { withCredentials: true });
-            } else {
-                newVoteStatus = null;
-                voteChange = -1;
-                await axios.delete(`${API_BASE_URL}/votes/${issueId}`, { withCredentials: true });
-            }
-
-            // Optimistic Update
-            setUserVotes(prev => ({ 
-                ...prev, 
-                [issueId]: newVoteStatus 
-            }));
-            
-            const updatedIssues = issues.map(issue => {
-                if (issue.id === issueId) {
-                    return { ...issue, votes: issue.votes + voteChange };
-                }
-                return issue;
-            });
-            
-            setIssues(updatedIssues);
-            setFilteredIssues(updatedIssues.filter(i => filteredIssues.map(f => f.id).includes(i.id)));
-
-        } catch (error) {
-            console.error("Vote action failed:", error.response?.data || error.message);
-            alert(`Vote action failed: ${error.response?.data?.message || 'Check network/server logic.'}`);
-            
-            // Rollback optimistic update
-            setUserVotes(prev => ({ 
-                ...prev, 
-                [issueId]: isCurrentlyVoted ? 'voted' : null 
-            }));
-            if (originalVotes !== undefined) {
-                setIssues(issues.map(i => i.id === issueId ? {...i, votes: originalVotes} : i));
-                setFilteredIssues(filteredIssues.map(i => i.id === issueId ? {...i, votes: originalVotes} : i));
-            }
-        }
-    };
-    
-    // --- Lifecycle and Handlers ---
     useEffect(() => {
         const checkAuthStatus = async () => {
-             await new Promise(resolve => setTimeout(resolve, 50)); 
-             setAuthChecked(true); 
+            // Wait briefly for AuthContext to resolve the user state on refresh
+            await new Promise(resolve => setTimeout(resolve, 50));
+            setAuthChecked(true);
         };
         checkAuthStatus();
-    }, []); 
+    }, []);
 
+    // FIX 1: Corrected useEffect logic for authentication and page reload
     useEffect(() => {
-        if (!authChecked) {
-            return;
-        }
+        if (!authChecked) return;
 
+        // If user object is null/undefined after auth check, redirect to login
         if (!user) {
             navigate('/login');
         } else {
+            // If user object exists, stay on the page and fetch data
             fetchIssues();
         }
     }, [user, navigate, fetchIssues, authChecked]);
-    
+
+    // --- VOTE Handler (Upvote & Downvote) ---
+    const handleVote = async (issueId, voteType) => {
+        if (!user) {
+            alert("Please login to vote.");
+            return;
+        }
+
+        const currentUserVote = userVotes[issueId];
+
+        // Prevent rapid clicks
+        if (busyVotes[issueId]) return;
+
+        let endpoint = `${API_BASE_URL}/votes/${issueId}?category=${voteType}`;
+
+        setBusyVotes(prev => ({ ...prev, [issueId]: true }));
+
+        // Optimistic Update: Calculate new counts and new user vote state immediately
+        const issueToUpdate = issues.find(issue => issue.id === issueId);
+        if (!issueToUpdate) {
+            setBusyVotes(prev => ({ ...prev, [issueId]: false }));
+            return;
+        }
+
+        let newCounts = { ...issueToUpdate.counts };
+        let newUserVote;
+
+        if (currentUserVote === voteType) {
+            // Case 1: Toggling off (Deleting existing vote)
+            if (voteType === 'upvote') newCounts.upvote = Math.max(0, newCounts.upvote - 1);
+            else newCounts.downVote = Math.max(0, newCounts.downVote - 1);
+            newUserVote = undefined;
+        } else {
+            // Case 2: Changing vote (Remove old, add new) or initial vote (Add new)
+            // Remove previous vote if it existed
+            if (currentUserVote === 'upvote') newCounts.upvote = Math.max(0, newCounts.upvote - 1);
+            if (currentUserVote === 'downvote') newCounts.downVote = Math.max(0, newCounts.downVote - 1);
+
+            // Add new vote
+            if (voteType === 'upvote') newCounts.upvote = (newCounts.upvote || 0) + 1;
+            else newCounts.downVote = (newCounts.downVote || 0) + 1;
+            newUserVote = voteType;
+        }
+
+        // Apply the optimistic update to main state
+        setIssues(prevIssues => prevIssues.map(issue =>
+            issue.id === issueId ? { ...issue, counts: newCounts } : issue
+        ));
+        setFilteredIssues(prevIssues => prevIssues.map(issue =>
+            issue.id === issueId ? { ...issue, counts: newCounts } : issue
+        ));
+
+        // Apply the new user vote state permanently
+        setUserVotes(prevVotes => ({ ...prevVotes, [issueId]: newUserVote }));
+
+        try {
+            const resp = await axios.post(endpoint, {}, { withCredentials: true });
+
+            // Re-fetch only the counts to ensure absolute server truth (or rely on response data)
+            const returnedCounts = resp.data.data?.counts || resp.data.data;
+
+            if (returnedCounts && (returnedCounts.upvote !== newCounts.upvote || returnedCounts.downVote !== newCounts.downVote)) {
+                // If server-returned counts differ, update the issues state
+                setIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
+                setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
+            }
+
+        } catch (error) {
+            console.error("Vote action failed:", error.response?.data || error.message);
+            // Rollback visual state by re-fetching on error
+            fetchIssues();
+            alert(`Vote action failed: ${error.response?.data?.message || 'Check network/server logic.'}`);
+        } finally {
+            // Restore busy state regardless of success/failure
+            setBusyVotes(prev => ({ ...prev, [issueId]: false }));
+        }
+    };
+
+
+    // --- Comments: fetch for a single complaint ---
+    const fetchComments = async (complaintId) => {
+        // Prevent re-fetch if data is already present, but always open the view
+        setCommentsOpen(prev => ({ ...prev, [complaintId]: true }));
+        if (commentsStore[complaintId]) return;
+
+        try {
+            const resp = await axios.get(`${API_BASE_URL}/comments/${complaintId}`, { withCredentials: true });
+            setCommentsStore(prev => ({ ...prev, [complaintId]: resp.data.data }));
+        } catch (err) {
+            console.error("Failed to fetch comments", err.response?.data || err.message);
+            setCommentsStore(prev => ({ ...prev, [complaintId]: [] }));
+        }
+    };
+
+    const toggleComments = (complaintId) => {
+        const isOpen = !!commentsOpen[complaintId];
+        if (!isOpen) {
+            fetchComments(complaintId);
+        } else {
+            setCommentsOpen(prev => ({ ...prev, [complaintId]: false }));
+        }
+    };
+
+    const handleCommentChange = (issueId, value) => {
+        setCommentDrafts(prev => ({ ...prev, [issueId]: value }));
+    };
+
+    const deleteComment = async (issueId, commentId) => {
+        if (!window.confirm("Are you sure you want to delete this comment?")) return;
+
+        const prevComments = commentsStore[issueId] || [];
+
+        // Optimistic removal
+        setCommentsStore(prev => ({
+            ...prev,
+            [issueId]: (prev[issueId] || []).filter(c => c._id !== commentId)
+        }));
+
+        // Decrement comment count optimistically
+        setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
+        setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
+
+
+        try {
+            await axios.delete(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { withCredentials: true });
+
+            // If successful, optimistic update remains
+        } catch (err) {
+            console.error("Failed to delete comment:", err.response?.data || err.message);
+            alert("Failed to delete comment");
+            // rollback comments list
+            setCommentsStore(prev => ({ ...prev, [issueId]: prevComments }));
+            // rollback comment count
+            setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+        }
+    };
+
+    // --- Start Editing Comment (Corrected to use 'editingComment') ---
+    const startEditComment = (comment) => {
+        setEditingComment({
+            commentId: comment._id,
+            content: comment.content
+        });
+    };
+
+    // Handler for editing in the textarea
+    const handleEditChange = (e) => {
+        setEditingComment(prev => ({ ...prev, content: e.target.value }));
+    };
+
+    // --- Update Comment Handler ---
+    const updateComment = async (issueId, commentId, newContent) => {
+        const trimmedContent = newContent.trim();
+        const currentComment = commentsStore[issueId]?.find(c => c._id === commentId);
+
+        // Cancel if empty or unchanged
+        if (!currentComment || !trimmedContent || trimmedContent === currentComment.content) {
+            setEditingComment(null);
+            return;
+        }
+
+        setBusyComments(prev => ({ ...prev, [commentId]: true }));
+        const prevContent = currentComment.content;
+        const prevUpdatedAt = currentComment.updatedAt; // Capture original timestamp for rollback
+
+        // 1. Optimistic update
+        setCommentsStore(prev => ({
+            ...prev,
+            [issueId]: prev[issueId].map(c =>
+                c._id === commentId
+                    ? {
+                        ...c,
+                        content: trimmedContent,
+                        // Simulate an update timestamp. Use a new Date string.
+                        updatedAt: new Date().toISOString(),
+                        // Preserve the populated userId object
+                        userId: currentComment.userId
+                    }
+                    : c
+            )
+        }));
+        setEditingComment(null); // Exit edit mode immediately
+
+        try {
+            // 2. API call to update the comment
+            const resp = await axios.put(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { content: trimmedContent }, { withCredentials: true });
+            const updated = resp.data.data;
+
+            // 3. Final update from server response (atomic replacement)
+            setCommentsStore(prev => ({
+                ...prev,
+                [issueId]: prev[issueId].map(c => c._id === commentId ? updated : c)
+            }));
+        } catch (err) {
+            console.error("Failed to update comment", err.response?.data || err.message);
+            alert("Failed to update comment. Rolling back.");
+
+            // 4. Rollback on error
+            setCommentsStore(prev => ({
+                ...prev,
+                [issueId]: prev[issueId].map(c =>
+                    c._id === commentId ? { ...c, content: prevContent, updatedAt: prevUpdatedAt } : c
+                )
+            }));
+
+            // 5. Re-open edit state with old content for user to retry
+            setEditingComment({ commentId, content: prevContent });
+        } finally {
+            setBusyComments(prev => ({ ...prev, [commentId]: false }));
+        }
+    };
+
+
+    const postComment = useCallback(async (issueId) => {
+        const text = (commentDrafts[issueId] || '').trim();
+        if (!text) return alert("Comment can't be empty");
+
+        // Disable post button
+        setBusyComments(prev => ({ ...prev, [issueId]: true }));
+
+        const tempComment = {
+            _id: `temp-${Date.now()}`,
+            // Populate userId as an object so the comment item can display the name correctly
+            userId: { _id: user._id, name: user.name },
+            complaintId: issueId,
+            content: text,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        // Optimistic append and clear draft
+        setCommentsStore(prev => ({
+            ...prev,
+            [issueId]: [tempComment, ...(prev[issueId] || [])]
+        }));
+        setCommentDrafts(prev => ({ ...prev, [issueId]: "" }));
+
+
+        try {
+            const resp = await axios.post(`${API_BASE_URL}/comments/${issueId}`, { content: text }, { withCredentials: true });
+            const created = resp.data.data;
+
+            // Replace temp comment with actual
+            setCommentsStore(prev => ({
+                ...prev,
+                [issueId]: prev[issueId].map(c => c._id === tempComment._id ? created : c)
+            }));
+
+            // increment comment count on issue
+            setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+        } catch (err) {
+            console.error("Failed to post comment", err.response?.data || err.message);
+            // rollback optimistic append
+            setCommentsStore(prev => ({ ...prev, [issueId]: (prev[issueId] || []).filter(c => c._id !== tempComment._id) }));
+            // Re-populate draft
+            setCommentDrafts(prev => ({ ...prev, [issueId]: text }));
+            alert("Failed to post comment");
+        } finally {
+            setBusyComments(prev => ({ ...prev, [issueId]: false }));
+        }
+    }, [commentDrafts, user]);
+
+
+    // --- Other Handlers ---
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
             ...prev,
@@ -248,7 +513,16 @@ const VolunteerBrowseIssues = () => {
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
-    
+
+    const handleLogout = () => {
+        axios.post(`${API_BASE_URL}/users/logout`, {}, { withCredentials: true })
+            .catch(() => { })
+            .finally(() => {
+                signOut();
+                navigate('/');
+            });
+    };
+
     const clearFilters = () => {
         setSearchTerm('');
         setFilters({
@@ -258,136 +532,113 @@ const VolunteerBrowseIssues = () => {
         });
     };
 
-    const handleLogout = () => {
-        if (window.confirm('Are you sure you want to logout?')) {
-            axios.post(`${API_BASE_URL}/users/logout`, {}, { withCredentials: true })
-                .catch(() => {})
-                .finally(() => {
-                    signOut();
-                    navigate('/');
-                });
-        }
-    };
-
-    const getUserInitials = (name) => {
-        if (!name) return 'V';
-        const nameParts = name.split(' ');
-        const initials = nameParts.map(part => part[0]).join('');
-        return initials.toUpperCase();
-    };
-
-
     if (!authChecked) {
         return (
             <div className="loading-state full-page-loading">
                 <div className="loading-spinner"></div>
-                <p>Checking volunteer authentication status...</p>
+                <p>Checking authentication status...</p>
             </div>
         );
     }
-    
+
     if (!user) {
-        return null;
+        return null; // Should redirect to /login via useEffect
     }
 
     return (
         <>
-            {/* 1. Dashboard-style Header for Volunteer */}
-            <header className="header-top volunteer-header-top">
+            {/* Header */}
+            <header className="header-top">
                 <div className="logo-section">
                     <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
                     <div className="logo-text">Clean Street</div>
                 </div>
                 <nav className="nav-links">
-                    <Link to="/volunteer">Dashboard</Link>
-                    <Link to="/MyAssignedIssues">My Assigned Issues</Link>
-                    <Link to="/volunteer-browse-issues" className="active">Browse Issues</Link>
+                    <Link to="/volunteer" >Dashboard</Link>
+                                        <Link to="/MyAssignedIssues">My Assigned Issues</Link>
+                                        <Link to="/volunteer-browser-issues" className="active">Browse Issues</Link>
                 </nav>
                 <div className="user-profile">
-                    <Link to="/volunteer-profile" className="profile-link">
+                    <Link to="/profile" className="profile-link">
                         <div className="user-initials">{getUserInitials(user.name)}</div>
                         <span className="user-name">{user.name}</span>
                     </Link>
                     <button onClick={handleLogout} className="logout-btn-header">
-                        <LogOut size={20} />
+                        <ArrowRight size={20} />
                     </button>
                 </div>
             </header>
 
             <div className="dashboard-container">
-                {/* 2. Enhanced Hero Section */}
+                {/* Hero */}
                 <div className="dashboard-hero">
                     <div className="hero-background"></div>
                     <div className="hero-content-wrapper">
-                        <div className="hero-badge">Volunteer Portal</div>
-                        <h1>Browse & Prioritize Community Issues</h1>
-                        <p>Leverage the filtered view to identify and take ownership of the most urgent issues in your community.</p>
+                        <div className="hero-badge">Community Platform</div>
+                        <h1>Discover & Support Local Issues</h1>
+                        <p>Join thousands of community members in identifying, voting, and resolving neighborhood concerns. Together we build better communities.</p>
                         <div className="hero-stats">
                             <div className="hero-stat">
                                 <strong>{communityImpact.totalReports}</strong>
-                                <span>Total Issues</span>
+                                <span>Issues Reported</span>
                             </div>
                             <div className="hero-stat">
                                 <strong>{communityImpact.issuesResolved}</strong>
-                                <span>Resolved by Team</span>
+                                <span>Issues Resolved</span>
                             </div>
                             <div className="hero-stat">
-                                <strong>{communityImpact.assigned}</strong>
-                                <span>Issues Assigned to You</span>
+                                <strong>{communityImpact.activeUsers}</strong>
+                                <span>Active Members</span>
                             </div>
                         </div>
                         <div className="hero-buttons">
-                            <button className="hero-btn-primary" onClick={() => navigate('/MyAssignedIssues')}>
-                                <FileText size={18} /> 
-                                <span>View My Assignments</span>
+                            <button className="hero-btn-primary" onClick={() => navigate('/report-issue')}>
+                                <PlusCircle size={18} />
+                                <span>Report New Issue</span>
                             </button>
-                            <button className="hero-btn-secondary" onClick={() => navigate('/volunteer')}>
-                                <span>Volunteer Dashboard</span>
+                            <button className="hero-btn-secondary" onClick={() => navigate('/dashboard')}>
+                                <span>View Dashboard</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Main Content with Sidebar and Filters */}
                 <div className="browse-issues-main">
                     <div className="browse-sidebar">
-                        {/* Issue Categories Panel */}
+                        {/* Sidebar content */}
                         <div className="sidebar-panel">
                             <div className="panel-header">
                                 <BarChart3 size={20} className="panel-icon" />
                                 <h4>Issue Categories</h4>
                             </div>
-                            <p className="panel-subtitle">Filter by issue type</p>
+                            <p className="panel-subtitle">Browse by issue type</p>
                             <div className="categories-list">
-                                {/* Map through predefined categories */}
                                 {issueCategories.map((item, index) => (
-                                    <div 
-                                        key={index} 
+                                    <div
+                                        key={index}
                                         className={`category-item ${filters.category === item.category ? 'active' : ''}`}
                                         onClick={() => handleFilterChange('category', item.category)}
                                     >
                                         <div className="category-icon-title">
-                                            <span 
+                                            <span
                                                 className="category-icon"
-                                                style={{ backgroundColor: item.color }}
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                }}
                                             >
                                                 {item.icon}
                                             </span>
                                             <span className="category-title">{item.category}</span>
                                         </div>
-                                        <span 
+                                        <span
                                             className="category-count"
-                                            style={{ 
-                                                backgroundColor: filters.category === item.category ? 'rgba(255, 255, 255, 0.2)' : item.color + '20',
-                                                color: filters.category === item.category ? 'white' : item.color
-                                            }}
+                                            style={{ backgroundColor: item.color }}
                                         >
                                             {issues.filter(i => i.category === item.category).length}
                                         </span>
                                     </div>
                                 ))}
-                                {/* All Categories Item */}
-                                <div 
+                                <div
                                     className={`category-item ${filters.category === 'All Categories' ? 'active' : ''}`}
                                     onClick={() => handleFilterChange('category', 'All Categories')}
                                 >
@@ -399,32 +650,31 @@ const VolunteerBrowseIssues = () => {
                             </div>
                         </div>
 
-                        {/* Volunteer Impact Panel */}
                         <div className="sidebar-panel">
                             <div className="panel-header">
                                 <Users size={20} className="panel-icon" />
-                                <h4>Volunteer Impact</h4>
+                                <h4>Community Impact</h4>
                             </div>
                             <div className="impact-stats">
                                 <div className="impact-stat-item">
-                                    <div className="impact-icon">🛠️</div>
+                                    <div className="impact-icon">✅</div>
                                     <div className="impact-content">
-                                        <strong>1.5 days</strong>
-                                        <span>Avg Fix Time</span>
+                                        <strong>{communityImpact.issuesResolved}</strong>
+                                        <span>Issues Resolved</span>
                                     </div>
                                 </div>
                                 <div className="impact-stat-item">
-                                    <div className="impact-icon">🎯</div>
+                                    <div className="impact-icon">⚡</div>
                                     <div className="impact-content">
-                                        <strong>92%</strong>
-                                        <span>Success Rate</span>
+                                        <strong>{communityImpact.responseTime}</strong>
+                                        <span>Avg Response Time</span>
                                     </div>
                                 </div>
                                 <div className="impact-stat-item">
                                     <div className="impact-icon">⭐</div>
                                     <div className="impact-content">
-                                        <strong>4.8/5</strong>
-                                        <span>Citizen Rating</span>
+                                        <strong>{communityImpact.communityScore}</strong>
+                                        <span>Community Score</span>
                                     </div>
                                 </div>
                             </div>
@@ -432,23 +682,22 @@ const VolunteerBrowseIssues = () => {
                     </div>
 
                     <div className="browse-content">
-                        {/* Filter Controls Panel (Top) */}
                         <div className="content-panel filter-panel">
                             <div className="panel-header-main">
                                 <div className="panel-title">
-                                    <FilterIcon size={24} className="title-icon" />
+                                    <Filter size={24} className="title-icon" />
                                     <div>
-                                        <h3>Issue Filtering</h3>
-                                        <p>Refine the list of issues for efficient management</p>
+                                        <h3>Filter & Search Issues</h3>
+                                        <p>Find and engage with community concerns</p>
                                     </div>
                                 </div>
-                                {(searchTerm || filters.category !== 'All Categories' || filters.status !== 'All Statuses' || filters.sort !== 'Newest First') && (
+                                {(searchTerm || filters.category !== 'All Categories' || filters.status !== 'All Statuses') && (
                                     <button onClick={clearFilters} className="clear-filters-btn">
                                         <span>Clear All</span>
                                     </button>
                                 )}
                             </div>
-                            
+
                             <div className="search-section">
                                 <div className="search-bar">
                                     <Search size={20} className="search-icon" />
@@ -460,7 +709,7 @@ const VolunteerBrowseIssues = () => {
                                         className="search-input"
                                     />
                                     {searchTerm && (
-                                        <button 
+                                        <button
                                             className="clear-search-btn"
                                             onClick={() => setSearchTerm('')}
                                         >
@@ -476,7 +725,7 @@ const VolunteerBrowseIssues = () => {
                                         <span className="filter-label-icon">📁</span>
                                         Category
                                     </label>
-                                    <select 
+                                    <select
                                         value={filters.category}
                                         onChange={(e) => handleFilterChange('category', e.target.value)}
                                         className="filter-select"
@@ -494,7 +743,7 @@ const VolunteerBrowseIssues = () => {
                                         <span className="filter-label-icon">🔄</span>
                                         Status
                                     </label>
-                                    <select 
+                                    <select
                                         value={filters.status}
                                         onChange={(e) => handleFilterChange('status', e.target.value)}
                                         className="filter-select"
@@ -512,7 +761,7 @@ const VolunteerBrowseIssues = () => {
                                         <span className="filter-label-icon">📊</span>
                                         Sort By
                                     </label>
-                                    <select 
+                                    <select
                                         value={filters.sort}
                                         onChange={(e) => handleFilterChange('sort', e.target.value)}
                                         className="filter-select"
@@ -534,20 +783,20 @@ const VolunteerBrowseIssues = () => {
                                 <div className="community-engagement">
                                     <div className="engagement-badge">
                                         <span className="engagement-dot"></span>
-                                        Priority Assessment Mode
+                                        High Community Engagement
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Issues List Panel */}
+                        {/* Issues List */}
                         <div className="content-panel issues-panel">
                             <div className="panel-header-main">
                                 <div className="panel-title">
                                     <FileText size={24} className="title-icon" />
                                     <div>
-                                        <h3>Issues List</h3>
-                                        <p>Ready for review and prioritization</p>
+                                        <h3>Community Issues</h3>
+                                        <p>Recent reports from your neighborhood</p>
                                     </div>
                                 </div>
                                 <div className="active-filters">
@@ -562,19 +811,19 @@ const VolunteerBrowseIssues = () => {
                                     )}
                                 </div>
                             </div>
-                            
+
                             <div className="issues-list-container">
                                 {loading ? (
                                     <div className="loading-state">
                                         <div className="loading-spinner"></div>
-                                        <p>Loading issues for volunteer review...</p>
+                                        <p>Loading community issues...</p>
                                         <span className="loading-subtitle">Fetching the latest reports from the server</span>
                                     </div>
                                 ) : filteredIssues.length === 0 ? (
                                     <div className="empty-state">
-                                        <div className="empty-icon">🎉</div>
-                                        <h3>All Clear!</h3>
-                                        <p>No issues found matching your current filters. Great job!</p>
+                                        <div className="empty-icon">🔍</div>
+                                        <h3>No issues found</h3>
+                                        <p>We couldn't find any issues matching your search criteria.</p>
                                         <button onClick={clearFilters} className="clear-filters-btn large">
                                             Clear All Filters
                                         </button>
@@ -582,12 +831,12 @@ const VolunteerBrowseIssues = () => {
                                 ) : (
                                     <div className="issues-grid">
                                         {filteredIssues.map(issue => (
-                                            <div key={issue.id} className="issue-card" onClick={() => navigate(`/issue-details/${issue.id}`)}>
+                                            <div key={issue.id} className="issue-card">
                                                 <div className="issue-header">
                                                     <div className="issue-meta-left">
-                                                        <div 
+                                                        <div
                                                             className="issue-category-tag"
-                                                            style={{ 
+                                                            style={{
                                                                 backgroundColor: issueCategories.find(c => c.category === issue.category)?.color + '20',
                                                                 color: issueCategories.find(c => c.category === issue.category)?.color
                                                             }}
@@ -603,14 +852,18 @@ const VolunteerBrowseIssues = () => {
                                                         {issue.urgency}
                                                     </div>
                                                 </div>
-                                                
+
                                                 <h4 className="issue-title">{issue.title}</h4>
                                                 <p className="issue-description">{issue.description}</p>
-                                                
+
                                                 <div className="issue-meta">
                                                     <div className="meta-item">
                                                         <MapPin size={16} />
                                                         <span>{issue.location}</span>
+                                                    </div>
+                                                    <div className="meta-item">
+                                                        <Clock size={16} />
+                                                        <span>{getRelativeTime(issue.createdAt)}</span>
                                                     </div>
                                                 </div>
 
@@ -620,42 +873,133 @@ const VolunteerBrowseIssues = () => {
                                                             {issue.userAvatar}
                                                         </div>
                                                         <div className="user-details">
-                                                            <span className="user-name">Reported by {issue.user}</span>
+                                                            <span className="user-name">{issue.user}</span>
                                                             <span className="report-time">{getRelativeTime(issue.createdAt)}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="issue-stats">
-                                                        <div className="stat-item">
-                                                            <Eye size={14} />
-                                                            <span>{issue.views}</span>
-                                                        </div>
-                                                        <div className="stat-item">
-                                                            <MessageSquare size={14} />
-                                                            <span>{issue.comments}</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 <div className="issue-actions">
                                                     <div className="vote-section">
-                                                        <button 
-                                                            className={`vote-btn upvote ${userVotes[issue.id] === 'voted' ? 'voted' : ''}`}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation(); // Prevent card navigation
-                                                                handleVote(issue.id);
-                                                            }}
-                                                            disabled={loading} 
+                                                        {/* Upvote */}
+                                                        <button
+                                                            className={`vote-btn upvote ${userVotes[issue.id] === 'upvote' ? 'voted' : ''}`}
+                                                            onClick={() => handleVote(issue.id, 'upvote')}
+                                                            // Logic: Disable if they downvoted OR button is busy, UNLESS the current vote is 'upvote' (allowing toggle-off)
+                                                            
                                                         >
-                                                            <Heart size={16} fill={userVotes[issue.id] === 'voted' ? 'currentColor' : 'none'} />
-                                                            <span>{issue.votes} Votes</span>
+                                                            <Heart size={16} />
+                                                            <span>{issue.counts?.upvote || 0}</span>
+                                                        </button>
+                                                        {/* Downvote */}
+                                                        <button
+                                                            className={`vote-btn downvote ${userVotes[issue.id] === 'downvote' ? 'voted' : ''}`}
+                                                            onClick={() => handleVote(issue.id, 'downvote')}
+                                                            // Logic: Disable if they upvoted OR button is busy, UNLESS the current vote is 'downvote' (allowing toggle-off)
+                                                            
+                                                        >
+                                                            <ThumbsDown size={16} />
+                                                            <span>{issue.counts?.downVote || 0}</span>
                                                         </button>
                                                     </div>
-                                                    {/* REMOVED: Assign to Me Button */}
+
                                                     <div className={`status-badge status-${issue.status.replace(' ', '').toLowerCase()}`}>
                                                         {issue.status}
                                                     </div>
                                                 </div>
+
+                                                {/* Comments toggle */}
+                                                <div className="comments-toggle">
+                                                    <button className="comments-open-btn" onClick={() => toggleComments(issue.id)}>
+                                                        <ChevronsDown size={14} /> {commentsOpen[issue.id] ? 'Hide' : 'Show'} Comments ({issue.comments || 0})
+                                                    </button>
+                                                </div>
+
+                                                {/* Comments panel */}
+
+                                                {commentsOpen[issue.id] && (
+                                                    <div className="comments-panel">
+                                                        {/* Add Comment */}
+                                                        <div className="add-comment">
+                                                            <textarea
+                                                                placeholder="Write your comment..."
+                                                                value={commentDrafts[issue.id] || ''}
+                                                                onChange={(e) => handleCommentChange(issue.id, e.target.value)}
+                                                                rows={2}
+                                                            />
+                                                            <div className="comment-actions">
+                                                                <button onClick={() => postComment(issue.id)} disabled={busyComments[issue.id] || (commentDrafts[issue.id] || '').trim().length === 0}>
+                                                                    {busyComments[issue.id] ? 'Posting...' : 'Post Comment'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Comments List */}
+                                                        {(commentsStore[issue.id] || []).map(c => {
+                                                            // --- Use user name from populated userId object/temp object ---
+                                                            // Fallback to a placeholder name if userId is not fully populated (e.g., during optimistic update rollback fail)
+                                                            const commenterName = c.userId?.name || 'User';
+                                                            const isOwner = (c.userId?._id || c.userId) === user._id;
+                                                            const isEditing = editingComment?.commentId === c._id;
+
+                                                            return (
+                                                                <div key={c._id} className="comment-item">
+                                                                    <div className="comment-avatar">{getUserInitials(commenterName)}</div>
+                                                                    <div className="comment-body">
+                                                                        {isEditing ? (
+                                                                            <div className="edit-comment-area">
+                                                                                <textarea
+                                                                                    // Use the content from the editing state
+                                                                                    value={editingComment.content}
+                                                                                    onChange={handleEditChange}
+                                                                                    rows={3}
+                                                                                />
+                                                                                <div className="comment-actions">
+                                                                                    <button
+                                                                                        // Pass content from the editing state
+                                                                                        onClick={() => updateComment(issue.id, c._id, editingComment.content)}
+                                                                                        disabled={busyComments[c._id] || !editingComment.content.trim()}
+                                                                                    >
+                                                                                        <Save size={14} /> {busyComments[c._id] ? 'Saving...' : 'Save'}
+                                                                                    </button>
+                                                                                    <button className="cancel-edit-btn" onClick={() => setEditingComment(null)}>Cancel</button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <>
+                                                                                <div className="comment-meta">
+                                                                                    <span className="comment-author">{commenterName}</span>
+                                                                                    <span className="comment-time">
+                                                                                        {getRelativeTime(c.createdAt)}
+                                                                                        {/* Check if updatedAt is later than createdAt and looks like a valid date */}
+                                                                                        {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
+                                                                                    </span>
+                                                                                    {isOwner && (
+                                                                                        <div className="comment-owner-actions">
+                                                                                            <button
+                                                                                                className="edit-comment-btn"
+                                                                                                onClick={() => startEditComment(c)}
+                                                                                            >
+                                                                                                <Edit size={14} />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                className="delete-comment-btn"
+                                                                                                onClick={() => deleteComment(issue.id, c._id)}
+                                                                                            >
+                                                                                                <Trash2 size={14} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="comment-content">{c.content}</div>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -666,7 +1010,6 @@ const VolunteerBrowseIssues = () => {
                 </div>
             </div>
 
-            {/* 4. Footer (Copied for style consistency) */}
             <footer className="footer">
                 <div className="footer-content">
                     <div className="footer-section">
@@ -713,4 +1056,4 @@ const VolunteerBrowseIssues = () => {
     );
 };
 
-export default VolunteerBrowseIssues;
+export default UserBrowseIssue;

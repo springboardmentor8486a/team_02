@@ -20,6 +20,15 @@
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+.link-button {
+  background: none;
+  border: none;
+  color: #2c5292;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 1rem;
+  padding: 0;
+}
 
 .logo-section {
   display: flex;

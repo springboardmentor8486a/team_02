@@ -1,6 +1,6 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { Complaint } from "../models/complaint.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
@@ -14,6 +14,19 @@ const allowedDepartments = [
     "Ward/zone office and central admin"
 ];
 // ------------------------------------------------------------------------------------------
+
+// ================= Get Pending Requests for Admin =================
+const getPendingRequests = asyncHandler(async (req, res) => {
+    if (req.user.role !== 'admin') {
+        throw new ApiError(403, "Access forbidden. Only admins can view pending requests.");
+    }
+
+    const pendingComplaints = await Complaint.find({ pendingUpdate: 'true' })
+        .populate("userId", "name profilePhoto")
+        .sort({ updatedAt: -1 });
+
+    res.status(200).json(new ApiResponse(200, pendingComplaints, "Pending requests fetched successfully."));
+});
 
 // ================= Complaint Registration =================
 const registerComplaint = asyncHandler(async (req, res, next)=>{
@@ -218,70 +231,55 @@ const getAllComplaints = asyncHandler(async (req, res) => {
 
 // ================= Get Issues Assigned to Volunteer =================
 const getAssignedIssues = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'volunteer') {
-        throw new ApiError(403, "Access forbidden. Only volunteers can view assigned issues.");
-    }
+   if (req.user.role !== 'volunteer') {
+  throw new ApiError(403, "Access forbidden. Only volunteers can view assigned issues.");
+}
 
-    const volunteerName = req.user.name;
+const volunteerName = req.user.name;
 
-    const assignedIssues = await Complaint.find({
-        // CRITICAL: Query by the logged-in user's name (Volunteer Name)
-        assignedTo: volunteerName 
-    }).populate('userId', 'name').sort({ priority: -1, createdAt: 1 });
+const assignedIssues = await Complaint.find({
+  assignedTo: { $regex: `^${volunteerName}$`, $options: 'i' }
+})
+.populate('userId', 'name').sort({ priority: -1, createdAt: 1 });
+
 
     res.status(200).json(new ApiResponse(200, assignedIssues, "Assigned issues fetched successfully."));
 });
 
-
-// ================= Volunteer Update Status =================
+// Volunteer submits status update
 const volunteerUpdateStatus = asyncHandler(async (req, res) => {
     const { complaintId } = req.params;
     const { status, workNotes } = req.body;
-    
-    // In a real app, proofPhoto (file) would be uploaded via multer middleware 
-    // before this controller runs.
-    
-    if (!complaintId || !status || !workNotes) {
-        throw new ApiError(400, "Complaint ID, status, and work notes are required.");
-    }
-    if (req.user.role !== 'volunteer') {
-        throw new ApiError(403, "Access forbidden. Only volunteers can update status.");
+
+    if (!complaintId) {
+        throw new ApiError(400, "Complaint ID is required");
     }
 
-    // 1. Find the complaint and ensure it's assigned to the current user
     const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
-        throw new ApiError(404, "Complaint not found.");
+        throw new ApiError(404, "Complaint not found");
     }
 
-    if (complaint.assignedTo !== req.user.name) {
-        throw new ApiError(403, "You are not assigned to this issue.");
+    // ✅ Update only the selected complaint
+    complaint.status = status || complaint.status;
+    complaint.updatedAt = new Date();
+    
+    // Optional: Add notes and files if you store them
+    if (workNotes) {
+        complaint.workNotes = workNotes;
     }
 
-    // 2. Set the status based on the action
-    let newDbStatus;
-    if (status === 'Completed') {
-        // Change status to 'inReview' pending Admin approval
-        newDbStatus = 'inReview'; 
-    } else if (status === 'In Progress') {
-         // Volunteer should still push to inReview so admin knows to re-evaluate notes
-        newDbStatus = 'inReview';
-    } else {
-        newDbStatus = 'inReview'; // Default safety measure
+    if (req.file) {
+        // Upload photo if sent
+        const imageUpload = await uploadOnCloudinary(req.file.path);
+        complaint.photo = imageUpload?.url || complaint.photo;
     }
 
-    // 3. Update the complaint status
-    const updatedComplaint = await Complaint.findByIdAndUpdate(
-        complaintId,
-        {
-            $set: { status: newDbStatus },
-            // Add note to description/comments (simplified)
-            $push: { comments: { userId: req.user._id, content: `Volunteer Update: ${workNotes}` } }
-        },
-        { new: true }
+    await complaint.save();
+
+    res.status(200).json(
+        new ApiResponse(200, complaint, "Status updated successfully")
     );
-
-    res.status(200).json(new ApiResponse(200, updatedComplaint, "Status update submitted for admin review."));
 });
 
 
@@ -293,5 +291,6 @@ export {
     getAllComplaints,
     updateComplaintAssignment,
     getAssignedIssues,
-    volunteerUpdateStatus
+    volunteerUpdateStatus,
+    getPendingRequests 
 };

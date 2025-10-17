@@ -1,107 +1,96 @@
+// controllers/vote.controller.js
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { Complaint } from "../models/complaint.model.js";
-import {Vote} from "../models/vote.model.js"
+import { Vote } from "../models/vote.model.js";
+import mongoose from "mongoose";
 
-//====================== create vote ====================
-// backend\conteollers\vote.conteoller.js
+// Assuming you have an existing Complaint model imported elsewhere for context validation, 
+// though not strictly necessary for the Vote logic itself.
 
-//====================== create vote ====================
-const vote = asyncHandler(async (req, res)=>{
-    let complaintId = req.params?.complaintId;
-    let category = req.query?.category; // Expected: "upvote" or "downvote"
+//=================== Helper: Compute Vote Counts ===============
+async function computeCounts(complaintId) {
+    const counts = await Vote.aggregate([
+        { $match: { complaintId: new mongoose.Types.ObjectId(complaintId) } },
+        { 
+            $group: {
+                _id: '$voteType',
+                count: { $sum: 1 }
+            }
+        }
+    ]);
 
-    if(category !== "upvote" && category !== "downvote"){
-        throw new ApiError("User opinion vote required", 400);
-    }
+    const upvote = counts.find(c => c._id === 'upvote')?.count || 0;
+    const downVote = counts.find(c => c._id === 'downvote')?.count || 0;
 
-    let complaint = await Complaint.findById(complaintId);
-    if(!complaint){
-        throw new ApiError("Complaint not found while generating vote", 404);
-    };
+    return { upvote, downVote };
+}
 
-    let existingVote = await Vote.findOne({
-        complaintId: complaintId, 
-        userId: req.user._id
-    });
+//=================== Create / Update / Delete Vote ===============
+export const vote = asyncHandler(async (req, res) => {
+    const { complaintId } = req.params;
+    const category = req.query?.category; // Expects 'upvote' or 'downvote'
 
-    if(existingVote){
-        if(existingVote.voteType === category){
-            // SCENARIO 1: User is clicking the SAME vote type (e.g., upvote again). This means TOGGLE OFF (delete).
-            let deletedVote = await Vote.findByIdAndDelete(existingVote._id);
-            
-            // NOTE: Must also remove the vote reference from the Complaint model 
-            // (Your current Complaint model doesn't explicitly store vote references, only comments. 
-            // The logic below assumes you want to track the total score correctly via separate counting).
+    if (!["upvote", "downvote"].includes(category)) throw new ApiError(400, "Vote category required: must be 'upvote' or 'downvote'");
 
-            return res.status(200).json(new ApiResponse(200, deletedVote, "Vote removed successfully (Toggled off)"));
-            
+    let existingVote = await Vote.findOne({ complaintId, userId: req.user._id });
+
+    if (existingVote) {
+        if (existingVote.voteType === category) {
+            // Case 1: Same vote type exists -> Toggle off (Delete vote)
+            await Vote.findByIdAndDelete(existingVote._id);
         } else {
-            // SCENARIO 2: User is clicking the OPPOSITE vote type (e.g., changing from downvote to upvote). This means UPDATE.
-            let updatedVote = await Vote.findByIdAndUpdate(
-                existingVote._id, 
-                { voteType: category }, 
-                { new: true }
-            );
-            return res.status(200).json(new ApiResponse(200, updatedVote, "Vote changed successfully"));
+            // Case 2: Different vote type exists -> Change vote
+            existingVote.voteType = category;
+            await existingVote.save();
         }
+    } else {
+        // Case 3: No vote exists -> Create new vote
+        await Vote.create({ complaintId, userId: req.user._id, voteType: category });
     }
 
-    // SCENARIO 3: No existing vote found. Create a NEW vote.
-    let createdVote = await Vote.create({
-        complaintId,
-        userId: req.user._id,
-        voteType: category
+    const counts = await computeCounts(complaintId);
+    return res.status(200).json({ 
+        success: true, 
+        message: "Vote processed successfully",
+        data: { counts } 
     });
-
-    res.status(200).json(new ApiResponse(200, createdVote, "Vote created successfully"));
 });
 
-// ... rest of the file (complaintViseVotes, deleteVote, export)
-
-//================ Complaint vise votes ===============
-const complaintViseVotes = asyncHandler(async(req, res)=>{
-    let complaintId = req.params?.complaintId;   // Required complaint id 
-
-    let complaint = await Complaint.findById(complaintId);
-    if(!complaint){
-        throw new ApiError(500, "complaint not found while counting vote")
-    };
-
-    let votes = await Vote.find({complaintId});
-    let upvote = votes.reduce((accu, el)=> {
-        if(el.voteType == "upvote"){
-            return accu+=1
-        }
-        else{ return accu}
-    }, 0);
-
-    let downVote = votes.reduce((accu, el)=> {
-        if(el.voteType == "downvote"){
-            return accu+=1
-        }
-        else{ return accu}
-    }, 0);
-
-    res.status(200).json(new ApiResponse(200, {upvote, downVote}, "complaint votes fetched successfully"))
+//=================== Get Vote Counts for a Complaint ===============
+export const complaintViseVotes = asyncHandler(async (req, res) => {
+    const { complaintId } = req.params;
+    const counts = await computeCounts(complaintId);
+    return res.status(200).json({ success: true, data: counts });
 });
 
+//=================== Get User Votes on Multiple Issues (CORE PERSISTENCE LOGIC) ===================
+export const getUserVotes = asyncHandler(async (req, res) => {
+    const { issues } = req.query; // e.g., "id1,id2,id3"
+    
+    if (!issues) return res.status(200).json({ success: true, data: {} });
 
-//==================== Delete vote =======================
-const deleteVote = asyncHandler(async (req, res)=>{
-    let complaintId = req.params?.complaintId;   // Required complaint id 
+    // Convert comma-separated string of IDs to an array of Mongoose ObjectIds
+    const issueIds = issues.split(",").map(id => {
+        return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
+    }).filter(id => id !== null); 
 
-    let complaint = await Complaint.findById(complaintId);
-    if(!complaint){
-        throw new ApiError(500, "complaint not found while deleting vote")
-    };
+    if (issueIds.length === 0) {
+        return res.status(200).json({ success: true, data: {} });
+    }
 
-    let vote = await Vote.findOne({$and: [{complaintId: complaintId}, {userId: req.user._id}]});
-    let deletedVote = await Vote.findByIdAndDelete(vote._id, {new: true});
+    // Query the database for the current user's votes on the specified complaints
+    const votes = await Vote.find({ 
+        userId: req.user._id, 
+        complaintId: { $in: issueIds } 
+    }).select("complaintId voteType -_id"); // Optimized query
 
-    res.status(200).json(new ApiResponse(200, deletedVote, "vote deleted successfully"));
-})
+    
+    // Map the results to the format the frontend expects: { complaintId_string: "upvote" | "downvote" }
+    const voteMap = votes.reduce((acc, v) => {
+        // Use toString() to ensure the key matches the frontend's issue.id string format
+        acc[v.complaintId.toString()] = v.voteType; 
+        return acc;
+    }, {});
 
-
-export {vote, complaintViseVotes, deleteVote}
+    return res.status(200).json({ success: true, data: voteMap });
+});

@@ -29,6 +29,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '', // Link to profile image
   },
+  resetPasswordToken: String,
+resetPasswordExpires: Date,
+
   createdAt: {
     type: Date,
     default: Date.now,

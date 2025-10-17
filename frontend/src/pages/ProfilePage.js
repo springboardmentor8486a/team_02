@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,13 +10,12 @@ const Profile = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     
-    // --- Mock User Data Enhancement (for demonstration) ---
-    // In a real app, this data would come from the backend.
+    // --- User Data from Auth Context ---
     const mockUser = {
         ...user,
-        phone: user.phone || '987-654-3210', 
-        location: user.location || 'Maharashtra, India',
-        about: user.about || 'Active community member passionate about improving our neighborhood. I believe in working together to create cleaner, safer streets for everyone.',
+        phone: user?.phone || '987-654-3210',
+        location: user?.location || 'Maharashtra, India',
+        about: user?.bio || 'Active community member passionate about improving our neighborhood. I believe in working together to create cleaner, safer streets for everyone.',
         isPremium: true,
     };
     // -----------------------------------------------------

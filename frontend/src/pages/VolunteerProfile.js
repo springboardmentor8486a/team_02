@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 // All necessary icons imported
@@ -11,16 +11,16 @@ const VolunteerProfile = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     
-    // --- Mock User Data for Volunteer ---
+    // --- User Data from Auth Context ---
     const profileData = {
         name: user?.name || 'Sarah Wilson',
         username: user?.username || 'sarah.wilson',
         email: user?.email || 'sarah.wilson@cleanstreet.org',
-        phone: '+1 (555) 234 5678',
-        district: 'North District',
-        joinDate: '2023-08-10T10:00:00Z', // Mock date
-        role: 'Volunteer',
-        bio: 'I am a dedicated volunteer covering the North District. I specialize in infrastructure and safety issues, aiming for rapid resolution of reported problems.',
+        phone: user?.phone || '+1 (555) 234 5678',
+        district: user?.location || 'North District',
+        joinDate: user?.createdAt || '2023-08-10T10:00:00Z',
+        role: user?.role || 'Volunteer',
+        bio: user?.bio || 'I am a dedicated volunteer covering the North District. I specialize in infrastructure and safety issues, aiming for rapid resolution of reported problems.',
         totalResolved: 47,
         activeAssignments: 3,
         isPremium: true,
