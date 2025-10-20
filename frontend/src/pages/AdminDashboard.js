@@ -1,26 +1,103 @@
 // AdminDashboard.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, AlertCircle, Users, FileText, 
   Clock, CheckCircle, TrendingUp, Timer, ThumbsUp,
-  Bell, LogOut, Settings,ArrowRight
+  Settings, ArrowRight, Download, Printer, Calendar, 
+  BarChart3, PieChart as PieChartIcon
 } from 'lucide-react';
+import {
+  BarChart, Bar, PieChart, Pie, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, Cell
+} from 'recharts';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [dateRange, setDateRange] = useState('all');
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
     if (!user) {
       navigate('/login');
     } else if (user.role !== 'admin') {
-      navigate('/dashboard'); // Redirect non-admin users
+      navigate('/dashboard');
     }
   }, [user, navigate]);
+
+  // Mock data for demonstration/fallback
+  const getMockReportData = useCallback(() => ({
+    issuesOverview: [
+      { name: 'Total Issues', value: 156, color: '#3b82f6' },
+      { name: 'Pending', value: 23, color: '#f97316' },
+      { name: 'In Progress', value: 41, color: '#8b5cf6' },
+      { name: 'Resolved', value: 92, color: '#22c55e' }
+    ],
+    statusDistribution: [
+      { name: 'Resolved', value: 59, color: '#22c55e' },
+      { name: 'In Progress', value: 26, color: '#8b5cf6' },
+      { name: 'Pending', value: 15, color: '#f97316' }
+    ],
+    monthlyTrend: [
+      { month: 'Jan', issues: 45 },
+      { month: 'Feb', issues: 52 },
+      { month: 'Mar', issues: 48 },
+      { month: 'Apr', issues: 61 },
+      { month: 'May', issues: 75 },
+      { month: 'Jun', issues: 82 },
+      { month: 'Jul', issues: 95 },
+      { month: 'Aug', issues: 118 },
+      { month: 'Sep', issues: 134 },
+      { month: 'Oct', issues: 156 }
+    ],
+    usersVolunteers: [
+      { category: 'Total Users', count: 1247 },
+      { category: 'Volunteers', count: 189 },
+      { category: 'Active Today', count: 342 },
+      { category: 'New This Month', count: 67 }
+    ],
+    systemMetrics: {
+      resolutionRate: 89,
+      avgResponseTime: '2.3h',
+      pendingReviews: 5
+    }
+  }), []);
+
+  // Fetch report data from API
+  const fetchReportData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/v1/admin/reports?range=${dateRange}`,
+        {
+          credentials: 'include'
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setReportData(result.data); // Access the 'data' property from ApiResponse
+      } else {
+        console.error('Failed to fetch reports');
+        setReportData(getMockReportData());
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      setReportData(getMockReportData());
+    } finally {
+      setLoading(false);
+    }
+  }, [dateRange, getMockReportData]);
+
+  useEffect(() => {
+    fetchReportData();
+  }, [fetchReportData]);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -34,33 +111,71 @@ const AdminDashboard = () => {
     return name.split(' ').map(part => part[0]).join('').toUpperCase();
   };
 
-  // Dashboard stats
+  // Export functions
+  const handleExportPDF = () => {
+    window.print();
+  };
+
+  const handleExportCSV = () => {
+    if (!reportData) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Report Type,Category,Value\n";
+
+    reportData.issuesOverview.forEach(item => {
+      csvContent += `Issues Overview,${item.name},${item.value}\n`;
+    });
+
+    reportData.statusDistribution.forEach(item => {
+      csvContent += `Status Distribution,${item.name},${item.value}%\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `clean_street_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportExcel = () => {
+    alert('Excel export: Install xlsx library for full functionality\nnpm install xlsx');
+  };
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  const data = reportData || getMockReportData();
+
+  // Dashboard stats (using real data if available)
   const stats = [
-    { 
-      label: 'Total Issues', 
-      value: '156', 
-      icon: AlertCircle, 
+    {
+      label: 'Total Issues',
+      value: data.issuesOverview[0]?.value || '156',
+      icon: AlertCircle,
       color: '#3b82f6',
       bgColor: '#dbeafe'
     },
-    { 
-      label: 'Pending Review', 
-      value: '23', 
-      icon: Clock, 
+    {
+      label: 'Pending Review',
+      value: data.issuesOverview[1]?.value || '23',
+      icon: Clock,
       color: '#f97316',
       bgColor: '#ffedd5'
     },
-    { 
-      label: 'Resolved', 
-      value: '92', 
-      icon: CheckCircle, 
+    {
+      label: 'Resolved',
+      value: data.issuesOverview[3]?.value || '92',
+      icon: CheckCircle,
       color: '#22c55e',
       bgColor: '#dcfce7'
     },
-    { 
-      label: 'Active Users', 
-      value: '1247', 
-      icon: Users, 
+    {
+      label: 'Active Users',
+      value: data.usersVolunteers[0]?.count || '1247',
+      icon: Users,
       color: '#a855f7',
       bgColor: '#f3e8ff'
     }
@@ -70,13 +185,13 @@ const AdminDashboard = () => {
   const systemMetrics = [
     {
       label: 'Resolution Rate',
-      value: '89%',
+      value: data.systemMetrics?.resolutionRate ? `${data.systemMetrics.resolutionRate}%` : '89%',
       icon: TrendingUp,
       iconColor: '#22c55e'
     },
     {
       label: 'Avg Response',
-      value: '2.3h',
+      value: data.systemMetrics?.avgResponseTime || '2.3h',
       icon: Timer,
       iconColor: '#3b82f6'
     },
@@ -96,7 +211,7 @@ const AdminDashboard = () => {
       icon: AlertCircle,
       bgColor: '#dbeafe',
       iconColor: '#3b82f6',
-      route: '/admin/all-issues'
+      route: '/admin-all-issues'
     },
     {
       title: 'Users & Volunteers',
@@ -104,7 +219,7 @@ const AdminDashboard = () => {
       icon: Users,
       bgColor: '#dcfce7',
       iconColor: '#22c55e',
-      route: '/admin/users-volunteers'
+      route: '/admin-users-volunteers'
     },
     {
       title: 'Admin Requests',
@@ -112,7 +227,7 @@ const AdminDashboard = () => {
       icon: FileText,
       bgColor: '#f3e8ff',
       iconColor: '#a855f7',
-      route: '/admin/requests'
+      route: '/admin-requests'
     },
     {
       title: 'Issue Updates',
@@ -120,13 +235,9 @@ const AdminDashboard = () => {
       icon: Clock,
       bgColor: '#ffedd5',
       iconColor: '#f97316',
-      route: '/admin/issue-updates'
+      route: '/admin-issues-updates'
     }
   ];
-
-  if (!user || user.role !== 'admin') {
-    return null;
-  }
 
   return (
     <div className="admin-dashboard">
@@ -157,28 +268,24 @@ const AdminDashboard = () => {
               <FileText size={18} />
               Admin Requests
             </Link>
-            <Link to="/admin-issues-updates" className="admin-nav-link">
-              <Clock size={18} />
-              Issue Updates
-            </Link>
           </nav>
         </div>
         <div className="user-profile">
-                    <Link to="/AdminProfile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
+          <Link to="/admin-profile" className="profile-link">
+            <div className="user-initials">{getUserInitials(user.name)}</div>
+            <span className="user-name">{user.name}</span>
+          </Link>
+          <button onClick={handleLogout} className="logout-btn-header">
+            <ArrowRight size={20} />
+          </button>
+        </div>
       </header>
 
       {/* Hero Section */}
       <div className="admin-hero">
         <div className="admin-hero-content">
-          <h1>Welcome back, {user?.name || 'Michael Johnson'}!</h1>
-          <p>Overseeing Municipal Services operations and managing community improvements across the city.</p>
+          <h1>Welcome back, {user?.name}!</h1>
+          <p>Comprehensive system performance metrics</p>
         </div>
       </div>
 
@@ -202,6 +309,144 @@ const AdminDashboard = () => {
         })}
       </div>
 
+      {/* Report Controls */}
+      <div className="report-controls">
+        <div className="report-filters">
+          <Calendar size={20} />
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="date-range-select"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+        </div>
+
+        <div className="report-actions">
+          <button onClick={handleExportPDF} className="report-btn">
+            <Printer size={18} />
+            <span>Print</span>
+          </button>
+          <button onClick={handleExportCSV} className="report-btn">
+            <Download size={18} />
+            <span>CSV</span>
+          </button>
+          <button onClick={handleExportExcel} className="report-btn">
+            <Download size={18} />
+            <span>Excel</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="reports-section">
+        <h2 className="reports-title">
+          <BarChart3 size={24} />
+          Analytics & Reports
+        </h2>
+
+        {loading ? (
+          <div className="loading-reports">Loading reports...</div>
+        ) : (
+          <div className="charts-grid">
+            {/* Issues Overview - Bar Chart */}
+            <div className="chart-card">
+              <div className="chart-header">
+                <BarChart3 size={20} />
+                <h3>Issues Overview</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.issuesOverview}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {data.issuesOverview.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Issue Status Distribution - Pie Chart */}
+            <div className="chart-card">
+              <div className="chart-header">
+                <PieChartIcon size={20} />
+                <h3>Issue Status Distribution</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={data.statusDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {data.statusDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Monthly Trend - Line Chart */}
+            <div className="chart-card chart-card-wide">
+              <div className="chart-header">
+                <TrendingUp size={20} />
+                <h3>Monthly Trend</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.monthlyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="issues"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: '#3b82f6', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Users & Volunteers - Bar Chart */}
+            <div className="chart-card">
+              <div className="chart-header">
+                <Users size={20} />
+                <h3>Users & Volunteers</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.usersVolunteers}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="category" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#a855f7" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* System Overview */}
       <div className="admin-system-overview">
         <div className="admin-section-header">
@@ -209,10 +454,10 @@ const AdminDashboard = () => {
           <h2>System Overview</h2>
         </div>
         <p className="admin-section-description">
-          Monitor and manage the entire Clean Street platform. Track community engagement, oversee issue resolution, 
+          Monitor and manage the entire Clean Street platform. Track community engagement, oversee issue resolution,
           and ensure efficient operations across all departments.
         </p>
-        
+
         <div className="admin-metrics-grid">
           {systemMetrics.map((metric, idx) => {
             const Icon = metric.icon;
@@ -232,9 +477,9 @@ const AdminDashboard = () => {
 
         {/* Admin Profile Image */}
         <div className="admin-profile-section">
-          <img 
-            src="/images/admin-profile.jpg" 
-            alt="Admin Profile" 
+          <img
+            src="/images/admin-profile.jpg"
+            alt="Admin Profile"
             className="admin-profile-img"
             onError={(e) => {
               e.target.style.display = 'none';
@@ -250,8 +495,8 @@ const AdminDashboard = () => {
           {adminTools.map((tool, idx) => {
             const Icon = tool.icon;
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="admin-tool-card"
                 onClick={() => navigate(tool.route)}
               >
