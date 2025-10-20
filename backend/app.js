@@ -28,12 +28,14 @@ import userRouter from './src/routes/userRoute.js';
 import complaintRouter from './src/routes/complaintRouter.js';
 import commentRouter from './src/routes/commentRoute.js';
 import voteRouter from './src/routes/voteRoute.js';
+import adminRouter from './src/routes/adminRouter.js';
 
 // Use routes
 app.use('/api/v1/users', userRouter);
 app.use("/api/v1/complaints", complaintRouter);
 app.use("/api/v1/comments", commentRouter);
 app.use("/api/v1/votes", voteRouter)
+app.use('/api/v1/admin', adminRouter);
 
 export { app };
 
