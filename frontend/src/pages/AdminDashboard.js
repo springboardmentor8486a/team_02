@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import * as XLSX from 'xlsx';
 import { 
   LayoutDashboard, AlertCircle, Users, FileText, 
   Clock, CheckCircle, TrendingUp, Timer, ThumbsUp,
   Settings, ArrowRight, Download, Printer, Calendar, 
-  BarChart3, PieChart as PieChartIcon
+  BarChart3, PieChart as PieChartIcon, Home
 } from 'lucide-react';
 import {
   BarChart, Bar, PieChart, Pie, LineChart, Line,
@@ -140,7 +141,52 @@ const AdminDashboard = () => {
   };
 
   const handleExportExcel = () => {
-    alert('Excel export: Install xlsx library for full functionality\nnpm install xlsx');
+    if (!reportData) return;
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+
+    // Issues Overview Sheet
+    const issuesData = reportData.issuesOverview.map(item => ({
+      'Category': item.name,
+      'Count': item.value
+    }));
+    const issuesSheet = XLSX.utils.json_to_sheet(issuesData);
+    XLSX.utils.book_append_sheet(workbook, issuesSheet, 'Issues Overview');
+
+    // Status Distribution Sheet
+    const statusData = reportData.statusDistribution.map(item => ({
+      'Status': item.name,
+      'Percentage': `${item.value}%`
+    }));
+    const statusSheet = XLSX.utils.json_to_sheet(statusData);
+    XLSX.utils.book_append_sheet(workbook, statusSheet, 'Status Distribution');
+
+    // Monthly Trend Sheet
+    const trendSheet = XLSX.utils.json_to_sheet(reportData.monthlyTrend);
+    XLSX.utils.book_append_sheet(workbook, trendSheet, 'Monthly Trend');
+
+    // Users & Volunteers Sheet
+    const usersSheet = XLSX.utils.json_to_sheet(reportData.usersVolunteers);
+    XLSX.utils.book_append_sheet(workbook, usersSheet, 'Users & Volunteers');
+
+    // System Metrics Sheet
+    const metricsData = [
+      { 'Metric': 'Resolution Rate', 'Value': `${reportData.systemMetrics.resolutionRate}%` },
+      { 'Metric': 'Average Response Time', 'Value': reportData.systemMetrics.avgResponseTime },
+      { 'Metric': 'Pending Reviews', 'Value': reportData.systemMetrics.pendingReviews }
+    ];
+    const metricsSheet = XLSX.utils.json_to_sheet(metricsData);
+    XLSX.utils.book_append_sheet(workbook, metricsSheet, 'System Metrics');
+
+    // Generate filename with current date
+    const filename = `Clean_Street_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(workbook, filename);
+    
+    // Show success message
+    alert('Excel report downloaded successfully!');
   };
 
   if (!user || user.role !== 'admin') {
@@ -252,6 +298,10 @@ const AdminDashboard = () => {
             </div>
           </div>
           <nav className="admin-nav">
+            <Link to="/" className="admin-nav-link">
+              <Home size={18} />
+              Home
+            </Link>
             <Link to="/admin-dashboard" className="admin-nav-link active">
               <LayoutDashboard size={18} />
               Dashboard
