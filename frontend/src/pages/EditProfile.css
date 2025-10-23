@@ -62,7 +62,7 @@
 }
 
 /* --- Edit Form Panel Styles --- */
-.edit-form-panel {
+.edit-profile-page .edit-form-panel {
     background-color: #ffffff;
     padding: 2.5rem;
     border-radius: 12px;
@@ -71,13 +71,13 @@
     max-width: 650px;
 }
 
-.edit-form-panel h2 {
+.edit-profile-page .edit-form-panel h2 {
     color: #2c5292;
     margin-bottom: 0.5rem;
     font-size: 1.8rem;
 }
 
-.edit-form-panel .subtitle {
+.edit-profile-page .edit-form-panel .subtitle {
     color: #666;
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
@@ -86,45 +86,45 @@
 }
 
 /* Status Messages */
-.status-message {
+.edit-profile-page .status-message {
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 6px;
     font-weight: 500;
 }
 
-.status-message.success {
+.edit-profile-page .status-message.success {
     background-color: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
 }
 
-.status-message.error {
+.edit-profile-page .status-message.error {
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
 
 /* Form Styling */
-.edit-form {
+.edit-profile-page .edit-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
-.form-group {
+.edit-profile-page .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.form-group label {
+.edit-profile-page.form-group label {
     font-weight: 600;
     color: #333;
     font-size: 0.95rem;
 }
 
-.form-group input {
+.edit-profile-page .form-group input {
     padding: 0.75rem 1rem;
     border: 1px solid #ccc;
     border-radius: 6px;
@@ -132,40 +132,40 @@
     transition: border-color 0.2s;
 }
 
-.form-group input:focus {
+.edit-profile-page .form-group input:focus {
     border-color: #2c5292;
     outline: none;
     box-shadow: 0 0 0 3px rgba(44, 82, 146, 0.2);
 }
 
 /* Read-Only Fields */
-.form-group.read-only-group input {
+.edit-profile-page .form-group.read-only-group input {
     background-color: #e9ecef;
     color: #6c757d;
     cursor: not-allowed;
 }
 
-.form-group.read-only-group small {
+.edit-profile-page .form-group.read-only-group small {
     font-size: 0.85rem;
     color: #888;
 }
 
 /* Avatar Upload Specific Styles */
-.avatar-upload-section {
+.edit-profile-page .avatar-upload-section {
     border: 1px solid #eee;
     padding: 1.5rem;
     border-radius: 8px;
     background-color: #fafafa;
 }
 
-.avatar-preview-wrapper {
+.edit-profile-page .avatar-preview-wrapper {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
 }
 
-.profile-photo-preview {
+.edit-profile-page .profile-photo-preview {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -174,7 +174,7 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.user-initials-fallback {
+.edit-profile-page .user-initials-fallback {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -188,11 +188,11 @@
     border: 3px solid #ddd;
 }
 
-.file-input {
+.edit-profile-page .file-input {
     display: none; 
 }
 
-.upload-btn, .remove-photo-btn {
+.edit-profile-page .upload-btn, .edit-profile-page .remove-photo-btn {
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
@@ -206,26 +206,26 @@
     text-align: center;
 }
 
-.upload-btn {
+.edit-profile-page .upload-btn {
     background-color: #4CAF50; /* Green */
     color: white;
 }
 
-.upload-btn:hover {
+.edit-profile-page .upload-btn:hover {
     background-color: #45a049;
 }
 
-.remove-photo-btn {
+.edit-profile-page .remove-photo-btn {
     background-color: #f44336; /* Red */
     color: white;
     padding: 0.5rem 1rem;
 }
-.remove-photo-btn:hover {
+.edit-profile-page .remove-photo-btn:hover {
     background-color: #da190b;
 }
 
 /* Save Button */
-.save-btn {
+.edit-profile-page .save-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -242,31 +242,31 @@
     font-weight: bold;
 }
 
-.save-btn:hover:not(:disabled) {
+.edit-profile-page .save-btn:hover:not(:disabled) {
     background-color: #1a3b6f;
 }
 
-.save-btn:disabled {
+.edit-profile-page .save-btn:disabled {
     background-color: #aeb4c0;
     cursor: not-allowed;
 }
 
 /* Password Link */
-.password-link {
+.edit-profile-page .password-link {
     text-align: center;
     margin-top: 1rem;
 }
-.password-link a {
+.edit-profile-page .password-link a {
     color: #2c5292;
     text-decoration: none;
     font-size: 0.9rem;
 }
-.password-link a:hover {
+.edit-profile-page .password-link a:hover {
     text-decoration: underline;
 }
 
 /* Footer (Simplified for Edit Page) */
-.footer {
+.edit-profile-page .footer {
     text-align: center;
     padding: 1rem;
     background-color: #e2e8f0;

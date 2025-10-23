@@ -24,6 +24,7 @@ import AdminRequests from "./pages/AdminRequests";
 import AdminIssuesUpdates from "./pages/AdminIssuesUpdates";
 import AdminProfile from "./pages/AdminProfile";
 import EditProfile from "./pages/EditProfile";
+import IssueDetailPage from "./pages/IssueDetailPage";
 
 function App() {
   return (
@@ -44,15 +45,14 @@ function App() {
           <Route path="/report-issue" element={<ReportIssuePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/edit-profile" element={<EditProfile />} />
-          
+                    <Route path="/issue-detail/:id" element={<IssueDetailPage />} />
+
           {/* Volunteer Routes */}
           <Route path="/volunteer" element={<Volunteer />} />
           <Route path="/volunteer-browser-issues" element={<VolunteerBrowserIssues />} />
           <Route path="/MyAssignedIssues" element={<MyAssignedIssues />} />
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
           <Route path="/edit-volunteer-profile" element={<EditProfile />} />
-          
-          
           {/* Admin Routes */}
           <Route path="/admin" element={<Dashboard />} />
 <Route path="/AdminProfile" element={<AdminProfile />} />

@@ -5,45 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, ChevronsDown, ThumbsDown, Edit, Save, Trash2 } from 'lucide-react';
 
 // Assuming you have a CSS file for styling:
-// import './IssuesBrowser.css';
+import { getRelativeTime, getUserInitials } from '../utils/timeUtils';
+import './IssuesBrowser.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
 
 // --- Time utility ---
-const getRelativeTime = (isoDateString) => {
-    const reportDate = new Date(isoDateString);
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfReportDay = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
-    const diffTime = startOfToday.getTime() - startOfReportDay.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        const hoursDiff = Math.floor((today.getTime() - reportDate.getTime()) / (1000 * 60 * 60));
-        if (hoursDiff === 0) return 'Just now';
-        if (hoursDiff < 24) return `${hoursDiff} hours ago`;
-        return 'Today';
-    }
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return `${Math.floor(diffDays / 30)} months ago`;
-};
-
-const getUserInitials = (name) => {
-    if (!name) return 'JD';
-    // Handle names that might include multiple spaces or other non-letter characters
-    const cleanedName = name.replace(/[^a-zA-Z\s]/g, '').trim();
-    const nameParts = cleanedName.split(/\s+/).filter(Boolean);
-
-    if (nameParts.length === 0) return 'JD';
-
-    // Get the first letter of the first and last part
-    const firstInitial = nameParts[0][0];
-    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
-
-    return (firstInitial + lastInitial).toUpperCase();
-};
 
 const UserBrowseIssue = () => {
     const { user, signOut } = useAuth();
@@ -831,7 +798,7 @@ const UserBrowseIssue = () => {
                                 ) : (
                                     <div className="issues-grid">
                                         {filteredIssues.map(issue => (
-                                            <div key={issue.id} className="issue-card">
+                                            <div key={issue.id} className="issue-card" onClick={() => navigate(`/issue-detail/${issue.id}`)}>
                                                 <div className="issue-header">
                                                     <div className="issue-meta-left">
                                                         <div

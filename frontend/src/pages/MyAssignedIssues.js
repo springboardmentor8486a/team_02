@@ -255,100 +255,100 @@ const activeIssues = issues; // Show everything
                 </div>
             </div>
 
-            {/* Update Modal */}
-            {showUpdateModal && selectedIssue && (
-                <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
-                    <div className="modal-container" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <div className="modal-title-section">
-                                <div className="modal-title-row">
-                                    <Edit size={24} className="modal-title-icon" /> {/* Added Edit icon */}
-                                    <h3>Update Issue Status</h3>
-                                </div>
-                                <span className="modal-subtitle">Submit a status update request for admin approval</span>
-                            </div>
-                            <button className="modal-close-btn" onClick={() => setShowUpdateModal(false)} disabled={isSubmitting}><X size={20} /></button>
-                        </div>
+            {/* Update Modal */}
+            {showUpdateModal && selectedIssue && (
+                <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
+                    <div className="modal-container" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div className="modal-title-section">
+                                <div className="modal-title-row">
+                                    {/* <Edit size={24} className="modal-title-icon" /> */}{/* Added Edit icon */}
+                                    <h3>Update Issue Status</h3>
+                                </div>
+                                <span className="modal-subtitle">Submit a status update request for admin approval</span>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setShowUpdateModal(false)} disabled={isSubmitting}><X size={20} /></button>
+                        </div>
 
-                        <form className="modal-body-wrapper" onSubmit={handleSubmitUpdate}> {/* Renamed class to modal-body-wrapper */}
-                            
-                            {/* 1. Issue Information (Top Section - Blue Background) */}
-                            <div className="modal-section issue-info-section">
-                                <div className="section-title-icon">
-                                    <Clock size={20} /> <h4>Issue Information</h4>
-                                </div>
-                                <div className="info-grid">
-                                    <div className="info-field">
-                                        <label>Issue Title</label>
-                                        <span className="info-value">{selectedIssue.title}</span>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>Category</label>
-                                        <span className="info-value">{selectedIssue.assignedTo}</span>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>Volunteer Name</label>
-                                        <span className="info-value">{user.name}</span>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>Current Status</label>
-                                        <span className="info-value">{selectedIssue.status}</span>
-                                    </div>
-                                    <div className="info-field full-width">
-                                        <label>Location</label>
-                                        <span className="info-value">{selectedIssue.address?.[0]}</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <form className="modal-body-wrapper" onSubmit={handleSubmitUpdate}> {/* Renamed class to modal-body-wrapper */}
+                            
+                            {/* 1. Issue Information (Top Section - Blue Background) */}
+                            <div className="modal-section issue-info-section">
+                                <div className="section-title-icon">
+                                    <Clock size={20} /> <h4>Issue Information</h4>
+                                </div>
+                                <div className="info-grid">
+                                    <div className="info-field">
+                                        <label>Issue Title</label>
+                                        <span className="info-value">{selectedIssue.title}</span>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>Category</label>
+                                        <span className="info-value">{selectedIssue.assignedTo}</span>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>Volunteer Name</label>
+                                        <span className="info-value">{user.name}</span>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>Current Status</label>
+                                        <span className="info-value">{selectedIssue.status}</span>
+                                    </div>
+                                    <div className="info-field full-width">
+                                        <label>Location</label>
+                                        <span className="info-value">{selectedIssue.address?.[0]}</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                            {/* 2. Status Update (Middle Section - White Background) */}
-                            <div className="modal-section status-update-section">
-                                <div className="section-title-icon">
-                                    <CheckCircle size={20} /> <h4>Status Update</h4>
-                                </div>
-                                <div className="form-field">
-                                    <label>New Status *</label>
-                                    <select
-                                        className="form-select" // Use class from original CSS to style select
-                                        value={updateForm.status}
-                                        onChange={e => setUpdateForm({ ...updateForm, status: e.target.value })}
-                                        required
-                                    >
-                                        <option value="recived">Received</option>
-                                        <option value="inReview">In Review</option>
-                                        <option value="resolved">Resolved</option>
-                                    </select>
-                                    <small>Choose the appropriate status for this issue</small>
-                                </div>
-                            </div>
+                            {/* 2. Status Update (Middle Section - White Background) */}
+                            <div className="modal-section status-update-section">
+                                <div className="section-title-icon">
+                                    <CheckCircle size={20} /> <h4>Status Update</h4>
+                                </div>
+                                <div className="form-field">
+                                    <label>New Status *</label>
+                                    <select
+                                        className="form-select" // Use class from original CSS to style select
+                                        value={updateForm.status}
+                                        onChange={e => setUpdateForm({ ...updateForm, status: e.target.value })}
+                                        required
+                                    >
+                                        <option value="recived">Received</option>
+                                        <option value="inReview">In Review</option>
+                                        <option value="resolved">Resolved</option>
+                                    </select>
+                                    <small>Choose the appropriate status for this issue</small>
+                                </div>
+                            </div>
 
-                            {/* 3. Documentation (Bottom Section - Light Green Background) */}
-                            <div className="modal-section documentation-section">
-                                <div className="section-title-icon">
-                                    <FileText size={20} /> <h4>Documentation</h4>
-                                </div>
-                                <div className="form-field">
-                                    <label>Proof Photo</label>
-                                    <input type="file" className="form-file-input" accept="image/*" onChange={e => setUpdateForm({ ...updateForm, proofPhoto: e.target.files[0] })} />
-                                    <small>Upload photo evidence of work completed (recommended)</small>
-                                </div>
-                                <div className="form-field">
-                                    <label>Work Notes *</label>
-                                    <textarea className="form-textarea" rows="4" value={updateForm.workNotes} onChange={e => setUpdateForm({ ...updateForm, workNotes: e.target.value })} required></textarea>
-                                    <small>Provide detailed information about the work completed</small>
-                                </div>
-                            </div>
+                            {/* 3. Documentation (Bottom Section - Light Green Background) */}
+                            <div className="modal-section documentation-section">
+                                <div className="section-title-icon">
+                                    <FileText size={20} /> <h4>Documentation</h4>
+                                </div>
+                                <div className="form-field">
+                                    <label>Proof Photo</label>
+                                    <input type="file" className="form-file-input" accept="image/*" onChange={e => setUpdateForm({ ...updateForm, proofPhoto: e.target.files[0] })} />
+                                    <small>Upload photo evidence of work completed (recommended)</small>
+                                </div>
+                                <div className="form-field">
+                                    <label>Work Notes *</label>
+                                    <textarea className="form-textarea" rows="4" value={updateForm.workNotes} onChange={e => setUpdateForm({ ...updateForm, workNotes: e.target.value })} required></textarea>
+                                    <small>Provide detailed information about the work completed</small>
+                                </div>
+                            </div>
 
-                            <div className="modal-actions">
-                                <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                                    {isSubmitting ? <><Loader2 size={20} className="spinner" /> 'Submitting...'</> : <><CheckCircle size={20} /> 'Submit for Approval'</>}
-                                </button>
-                                <button type="button" className="btn-cancel" onClick={() => setShowUpdateModal(false)}>Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                            <div className="modal-actions">
+                                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                                    {isSubmitting ? <><Loader2 size={20} className="spinner" /> 'Submitting...'</> : <><CheckCircle size={20} /> 'Submit for Approval'</>}
+                                </button>
+                                <button type="button" className="btn-cancel" onClick={() => setShowUpdateModal(false)}>Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
                         
 
