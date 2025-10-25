@@ -1,61 +1,157 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./pages/ProtectedRoute";
 
-// Import all your page components
+// Public Pages
 import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import ProfilePage from "./pages/ProfilePage";
-import IssuesBrowser from "./pages/IssuesBrowser";
-import VolunteerBrowserIssues from "./pages/VolunteerBrowserIssues";
-import ReportIssuePage from "./pages/ReportIssuePage";
 import Help from "./pages/Help";
 import About from "./pages/About";
+import ContactPage from "./pages/ContactPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AuthCallback from "./pages/AuthCallback";
+import MapPage from "./pages/MapPage";
+import IssueDetailPage from "./pages/IssueDetailPage";
+
+// User Pages
+import Dashboard from "./pages/Dashboard";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfile from "./pages/EditProfile";
+import IssuesBrowser from "./pages/IssuesBrowser";
+import ReportIssuePage from "./pages/ReportIssuePage";
+
+// Volunteer Pages
 import Volunteer from "./pages/Volunteer";
+import VolunteerBrowserIssues from "./pages/VolunteerBrowserIssues";
 import MyAssignedIssues from "./pages/MyAssignedIssues";
 import VolunteerProfile from "./pages/VolunteerProfile";
+import EditVolunteerProfile from "./pages/EditVolunteerProfile";
+
+// Admin Pages
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAllIssues from "./pages/AdminAllIssues";
 import AdminUsersVolunteers from "./pages/AdminUsersVolunteers";
 import AdminRequests from "./pages/AdminRequests";
 import AdminIssuesUpdates from "./pages/AdminIssuesUpdates";
 import AdminProfile from "./pages/AdminProfile";
-
+import EditAdminProfile from "./pages/EditAdminProfile";
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Public Routes */}
+          {/* ========== Public Routes ========== */}
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contactpage" element={<ContactPage />} />
+          <Route path="/mappage" element={<MapPage initialCenter={[40.7128, -74.006]} />} />
+          <Route path="/issue/:id" element={<IssueDetailPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
-          {/* User Routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/browse-issues" element={<IssuesBrowser />} />
-          <Route path="/report-issue" element={<ReportIssuePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          
-          {/* Volunteer Routes */}
-          <Route path="/volunteer" element={<Volunteer />} />
-          <Route path="/volunteer-browser-issues" element={<VolunteerBrowserIssues />} />
-          <Route path="/MyAssignedIssues" element={<MyAssignedIssues />} />
-          <Route path="/volunteer-profile" element={<VolunteerProfile />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<Dashboard />} /> 
-<Route path="/AdminProfile" element={<AdminProfile />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/admin-all-issues" element={<AdminAllIssues />} />
-          <Route path="/admin-users-volunteers" element={<AdminUsersVolunteers />} />
-          <Route path="/admin-requests" element={<AdminRequests />} />
-          <Route path="/admin-issues-updates" element={<AdminIssuesUpdates />} />
+          {/* ========== User Routes ========== */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute allowedRoles={['user', 'volunteer', 'admin']}>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/browse-issues" element={
+            <ProtectedRoute allowedRoles={['user', 'volunteer', 'admin']}>
+              <IssuesBrowser />
+            </ProtectedRoute>
+          } />
+          <Route path="/report-issue" element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <ReportIssuePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/edit-profile" element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <EditProfile />
+            </ProtectedRoute>
+          } />
+
+          {/* ========== Volunteer Routes ========== */}
+          <Route path="/volunteer" element={
+            <ProtectedRoute allowedRoles={['volunteer']}>
+              <Volunteer />
+            </ProtectedRoute>
+          } />
+          <Route path="/volunteer-browser-issues" element={
+            <ProtectedRoute allowedRoles={['volunteer']}>
+              <VolunteerBrowserIssues />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-assigned-issues" element={
+            <ProtectedRoute allowedRoles={['volunteer']}>
+              <MyAssignedIssues />
+            </ProtectedRoute>
+          } />
+          <Route path="/volunteer-profile" element={
+            <ProtectedRoute allowedRoles={['volunteer']}>
+              <VolunteerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/edit-volunteer-profile" element={
+            <ProtectedRoute allowedRoles={['volunteer']}>
+              <EditVolunteerProfile />
+            </ProtectedRoute>
+          } />
+
+          {/* ========== Admin Routes ========== */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-profile" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-all-issues" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminAllIssues />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-users-volunteers" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminUsersVolunteers />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-requests" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminRequests />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-issues-updates" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminIssuesUpdates />
+            </ProtectedRoute>
+          } />
+          <Route path="/edit-admin-profile" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <EditAdminProfile />
+            </ProtectedRoute>
+          } />
         </Routes>
       </AuthProvider>
     </Router>
