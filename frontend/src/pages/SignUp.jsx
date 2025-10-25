@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './SignUp.css';
-import { ArrowRight } from "lucide-react";
-
+import { ArrowRight, User, Mail, Phone, Lock, MapPin, AlertCircle, CheckCircle } from "lucide-react";
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -15,6 +14,7 @@ const SignUp = () => {
     const [form, setForm] = useState({
         name: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: '',
         location: '',
@@ -23,6 +23,9 @@ const SignUp = () => {
     });
 
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
     const [passwordStrength, setPasswordStrength] = useState({
         length: false,
         uppercase: false,
@@ -33,6 +36,8 @@ const SignUp = () => {
     // Handle input changes
     const handleChange = (e) => {
         const { name, value, files } = e.target;
+        
+        if (error) setError('');
 
         if (name === 'profilePhoto') {
             const file = files[0];
@@ -63,31 +68,40 @@ const SignUp = () => {
     // Step navigation
     const handleNextStep = (e) => {
         e.preventDefault();
+        setError('');
+        
         if (step === 1) {
-            if (form.name && form.email) setStep(2);
-            else alert('Please fill in all required fields.');
-        } else if (step === 2) {
-            if (
-                form.password === form.confirmPassword &&
-                passwordStrength.length &&
-                passwordStrength.uppercase &&
-                passwordStrength.lowercase &&
-                passwordStrength.number
-            )
-                setStep(3);
-            else alert('Passwords must match and meet strength requirements.');
-        } else if (step === 3) {
-            if (form.role) {
-                handleSubmit(e);
-            } else {
-                alert('Please select a role.');
+            if (!form.name || !form.email) {
+                setError('Please fill in all required fields.');
+                return;
             }
+            setStep(2);
+        } else if (step === 2) {
+            if (form.password !== form.confirmPassword) {
+                setError('Passwords do not match.');
+                return;
+            }
+            if (!passwordStrength.length || !passwordStrength.uppercase || 
+                !passwordStrength.lowercase || !passwordStrength.number) {
+                setError('Password must meet all strength requirements.');
+                return;
+            }
+            setStep(3);
+        } else if (step === 3) {
+            if (!form.role) {
+                setError('Please select a role.');
+                return;
+            }
+            handleSubmit(e);
         }
     };
 
     // Submit registration with role-based redirect
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setIsLoading(true);
+        
         try {
             const formData = new FormData();
             formData.append('name', form.name);
@@ -95,17 +109,14 @@ const SignUp = () => {
             formData.append('password', form.password);
             formData.append('location', form.location);
             formData.append('role', form.role);
+            if (form.phone) formData.append('phone', form.phone);
             if (form.profilePhoto) formData.append('profilePhoto', form.profilePhoto);
-
-            console.log('Submitting formData:', formData);
 
             const res = await axios.post(
                 'http://localhost:3000/api/v1/users/register',
                 formData,
                 { withCredentials: true }
             );
-
-            console.log('Registration response:', res.data);
             
             // Store user data in localStorage
             localStorage.setItem('userRole', form.role);
@@ -113,33 +124,27 @@ const SignUp = () => {
             localStorage.setItem('userEmail', form.email);
             localStorage.setItem('userLocation', form.location);
             
-            // Optional: Store token if backend sends it
             if (res.data.token) {
                 localStorage.setItem('authToken', res.data.token);
             }
-
-            alert(res.data.message || 'Registration Successful!');
             
             // Redirect based on role
             if (form.role === 'volunteer') {
-                navigate('/login');
+                navigate('/volunteer');
             } else if (form.role === 'admin') {
-                navigate('/login');
+                navigate('/admin');
             } else if (form.role === 'user') {
-                navigate('/login');
+                navigate('/dashboard');
             } else {
-                // Default fallback
-                navigate('/');
+                navigate('/dashboard');
             }
             
         } catch (err) {
             const serverData = err.response?.data;
-            const serverMessage =
-                typeof serverData === 'string' ? serverData : serverData?.message;
-            console.error('Registration error:', serverData || err);
-            alert(
-                serverMessage || err.message || 'Error occurred during registration'
-            );
+            const serverMessage = typeof serverData === 'string' ? serverData : serverData?.message;
+            setError(serverMessage || err.message || 'Error occurred during registration');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -151,7 +156,7 @@ const SignUp = () => {
                     <>
                         <div className="form-step">
                             <div className="input-group">
-                                <i className="input-icon">👤</i>
+                                <User size={20} className="input-icon" />
                                 <input
                                     type="text"
                                     name="name"
@@ -160,10 +165,11 @@ const SignUp = () => {
                                     placeholder="Full Name"
                                     required
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
                             </div>
                             <div className="input-group">
-                                <i className="input-icon">✉️</i>
+                                <Mail size={20} className="input-icon" />
                                 <input
                                     type="email"
                                     name="email"
@@ -172,15 +178,19 @@ const SignUp = () => {
                                     placeholder="Email Address"
                                     required
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
                             </div>
                             <div className="input-group">
-                                <i className="input-icon">📞</i>
+                                <Phone size={20} className="input-icon" />
                                 <input
                                     type="tel"
                                     name="phone"
+                                    value={form.phone}
+                                    onChange={handleChange}
                                     placeholder="Phone Number (Optional)"
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -188,22 +198,35 @@ const SignUp = () => {
                             type="button"
                             onClick={handleNextStep}
                             className="button-primary"
+                            disabled={isLoading}
                         >
                             Continue to Security
+                            <ArrowRight size={18} />
                         </button>
                     </>
                 );
             case 2:
                 const passwordStrengthProgress = (Object.values(passwordStrength).filter(Boolean).length / 4) * 100;
                 let strengthLabel = 'Weak';
-                if (passwordStrengthProgress > 25) strengthLabel = 'Fair';
-                if (passwordStrengthProgress > 75) strengthLabel = 'Strong';
+                let strengthColor = '#ef4444';
+                if (passwordStrengthProgress >= 50) {
+                    strengthLabel = 'Fair';
+                    strengthColor = '#f59e0b';
+                }
+                if (passwordStrengthProgress >= 75) {
+                    strengthLabel = 'Good';
+                    strengthColor = '#10b981';
+                }
+                if (passwordStrengthProgress === 100) {
+                    strengthLabel = 'Strong';
+                    strengthColor = '#10b981';
+                }
                 
                 return (
                     <>
                         <div className="form-step">
                             <div className="input-group">
-                                <i className="input-icon">🔐</i>
+                                <Lock size={20} className="input-icon" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
@@ -212,49 +235,72 @@ const SignUp = () => {
                                     placeholder="Create Password"
                                     required
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
                                 <button
                                     type="button"
                                     className="password-toggle"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
                                 >
                                     {showPassword ? '👁️' : '🔒'}
                                 </button>
                             </div>
                             <div className="password-strength-container">
-                                <div className="strength-bar-label">Password Strength</div>
                                 <div className="strength-bar">
-                                    <div className="strength-bar-fill" style={{ width: `${passwordStrengthProgress}%` }}></div>
+                                    <div 
+                                        className="strength-bar-fill" 
+                                        style={{ 
+                                            width: `${passwordStrengthProgress}%`,
+                                            backgroundColor: strengthColor
+                                        }}
+                                    ></div>
                                 </div>
-                                <div className="strength-label" style={{ color: passwordStrengthProgress < 50 ? '#e53e3e' : '#38a169' }}>
-                                    {strengthLabel}
+                                <div className="strength-info">
+                                    <span className="strength-label">Password Strength</span>
+                                    <span className="strength-value" style={{ color: strengthColor }}>
+                                        {strengthLabel}
+                                    </span>
                                 </div>
                             </div>
                             <div className="password-strength-checks">
-                                <p className={passwordStrength.length ? 'met' : 'unmet'}>
-                                    <i className="check-icon">{passwordStrength.length ? '✔' : '⚪'}</i>8+ characters
-                                </p>
-                                <p className={passwordStrength.uppercase ? 'met' : 'unmet'}>
-                                    <i className="check-icon">{passwordStrength.uppercase ? '✔' : '⚪'}</i>Uppercase
-                                </p>
-                                <p className={passwordStrength.lowercase ? 'met' : 'unmet'}>
-                                    <i className="check-icon">{passwordStrength.lowercase ? '✔' : '⚪'}</i>Lowercase
-                                </p>
-                                <p className={passwordStrength.number ? 'met' : 'unmet'}>
-                                    <i className="check-icon">{passwordStrength.number ? '✔' : '⚪'}</i>Number/Symbol
-                                </p>
+                                <div className={`check-item ${passwordStrength.length ? 'met' : ''}`}>
+                                    <CheckCircle size={16} className="check-icon" />
+                                    <span>8+ characters</span>
+                                </div>
+                                <div className={`check-item ${passwordStrength.uppercase ? 'met' : ''}`}>
+                                    <CheckCircle size={16} className="check-icon" />
+                                    <span>Uppercase letter</span>
+                                </div>
+                                <div className={`check-item ${passwordStrength.lowercase ? 'met' : ''}`}>
+                                    <CheckCircle size={16} className="check-icon" />
+                                    <span>Lowercase letter</span>
+                                </div>
+                                <div className={`check-item ${passwordStrength.number ? 'met' : ''}`}>
+                                    <CheckCircle size={16} className="check-icon" />
+                                    <span>Number or symbol</span>
+                                </div>
                             </div>
                             <div className="input-group">
-                                <i className="input-icon">🔐</i>
+                                <Lock size={20} className="input-icon" />
                                 <input
-                                    type="password"
+                                    type={showConfirmPassword ? 'text' : 'password'}
                                     name="confirmPassword"
                                     value={form.confirmPassword}
                                     onChange={handleChange}
                                     placeholder="Confirm Password"
                                     required
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex="-1"
+                                >
+                                    {showConfirmPassword ? '👁️' : '🔒'}
+                                </button>
                             </div>
                         </div>
                         <div className="button-group">
@@ -262,6 +308,7 @@ const SignUp = () => {
                                 type="button"
                                 onClick={() => setStep(1)}
                                 className="button-secondary"
+                                disabled={isLoading}
                             >
                                 Back
                             </button>
@@ -269,8 +316,10 @@ const SignUp = () => {
                                 type="button"
                                 onClick={handleNextStep}
                                 className="button-primary"
+                                disabled={isLoading}
                             >
                                 Continue to Location
+                                <ArrowRight size={18} />
                             </button>
                         </div>
                     </>
@@ -280,7 +329,7 @@ const SignUp = () => {
                     <>
                         <div className="form-step">
                             <div className="input-group">
-                                <i className="input-icon">📍</i>
+                                <MapPin size={20} className="input-icon" />
                                 <input
                                     type="text"
                                     name="location"
@@ -289,49 +338,51 @@ const SignUp = () => {
                                     placeholder="Your City/Location"
                                     required
                                     className="input-field"
+                                    disabled={isLoading}
                                 />
                             </div>
+                            <div className="role-label">Select Your Role</div>
                             <div className="role-container">
                                 <div
                                     className={`role-option ${form.role === 'user' ? 'active' : ''}`}
-                                    onClick={() => setForm((prev) => ({ ...prev, role: 'user' }))}
+                                    onClick={() => !isLoading && setForm((prev) => ({ ...prev, role: 'user' }))}
                                 >
                                     <div className="role-info">
-                                        <i className="role-icon">👤</i>
+                                        <div className="role-icon">👤</div>
                                         <div className="role-text">
                                             <h3>Citizen</h3>
                                             <p>Report issues and vote on community problems</p>
                                         </div>
                                     </div>
-                                    {form.role === 'user' && <i className="check-icon-active">✔️</i>}
+                                    {form.role === 'user' && <CheckCircle size={24} className="check-icon-active" />}
                                 </div>
 
                                 <div
                                     className={`role-option ${form.role === 'volunteer' ? 'active' : ''}`}
-                                    onClick={() => setForm((prev) => ({ ...prev, role: 'volunteer' }))}
+                                    onClick={() => !isLoading && setForm((prev) => ({ ...prev, role: 'volunteer' }))}
                                 >
                                     <div className="role-info">
-                                        <i className="role-icon">💪</i>
+                                        <div className="role-icon">💪</div>
                                         <div className="role-text">
                                             <h3>Volunteer</h3>
                                             <p>Help resolve issues and assist the community</p>
                                         </div>
                                     </div>
-                                    {form.role === 'volunteer' && <i className="check-icon-active">✔️</i>}
+                                    {form.role === 'volunteer' && <CheckCircle size={24} className="check-icon-active" />}
                                 </div>
                                 
                                 <div
                                     className={`role-option ${form.role === 'admin' ? 'active' : ''}`}
-                                    onClick={() => setForm((prev) => ({ ...prev, role: 'admin' }))}
+                                    onClick={() => !isLoading && setForm((prev) => ({ ...prev, role: 'admin' }))}
                                 >
                                     <div className="role-info">
-                                        <i className="role-icon">👑</i>
+                                        <div className="role-icon">👑</div>
                                         <div className="role-text">
                                             <h3>Administrator</h3>
                                             <p>Manage the platform and oversee operations</p>
                                         </div>
                                     </div>
-                                    {form.role === 'admin' && <i className="check-icon-active">✔️</i>}
+                                    {form.role === 'admin' && <CheckCircle size={24} className="check-icon-active" />}
                                 </div>
                             </div>
                             <div className="terms-checkbox">
@@ -347,11 +398,27 @@ const SignUp = () => {
                                 type="button"
                                 onClick={() => setStep(2)}
                                 className="button-secondary"
+                                disabled={isLoading}
                             >
                                 Back
                             </button>
-                            <button type="submit" onClick={handleNextStep} className="button-primary">
-                                Register
+                            <button 
+                                type="submit" 
+                                onClick={handleNextStep} 
+                                className="button-primary"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="spinner"></div>
+                                        Creating Account...
+                                    </>
+                                ) : (
+                                    <>
+                                        Create Account
+                                        <CheckCircle size={18} />
+                                    </>
+                                )}
                             </button>
                         </div>
                     </>
@@ -364,35 +431,56 @@ const SignUp = () => {
     return (
         <>
             <div className="header-top">
-                <div className="logo-section">
-                   <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+                <div className="logo-section" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
                     <span className="logo-text">Clean Street</span>
                 </div>
                 <div className="nav-links">
                     <Link to="/">Home</Link>
                     <Link to="/help">Help</Link>
                     <Link to="/about">About</Link>
+                    <Link to="/contactpage">Contact</Link>
                 </div>
                 <div className="auth-buttons">
                     <button onClick={handleSignIn} className="sign-in-btn">
                         Sign In <ArrowRight size={16} />
                     </button>
-                    <button onClick={handleGetStarted} className="get-started-btn">Get Started</button>
+                    <button onClick={handleGetStarted} className="get-started-btn active-btn">
+                        Get Started
+                    </button>
                 </div>
             </div>
             <div className="signup-page">
                 <div className="signup-panel-left">
                     <div className="form-card">
-                        <h1 className="form-title">Join CleanStreet</h1>
-                        <p className="form-subtitle">Help make your community cleaner and better</p>
+                        <div className="form-header-section">
+                            <h1 className="form-title">Join CleanStreet</h1>
+                            <p className="form-subtitle">Help make your community cleaner and better</p>
+                        </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="error-alert">
+                                <AlertCircle size={18} />
+                                <span>{error}</span>
+                            </div>
+                        )}
 
                         <div className="progress-bar-container">
-                            <div className="progress-line-fill" style={{ width: `${(step - 1) * 50}%` }}></div>
-                            <div className={`progress-step ${step >= 1 ? 'active' : ''}`}></div>
-                            <div className={`progress-step ${step >= 2 ? 'active' : ''}`}></div>
-                            <div className={`progress-step ${step >= 3 ? 'active' : ''}`}></div>
+                            <div className="progress-line-fill" style={{ width: `${(step / 3) * 100}%` }}></div>
+                            <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>
+                                <span className="step-number">1</span>
+                            </div>
+                            <div className={`progress-step ${step >= 2 ? 'active' : ''}`}>
+                                <span className="step-number">2</span>
+                            </div>
+                            <div className={`progress-step ${step >= 3 ? 'active' : ''}`}>
+                                <span className="step-number">3</span>
+                            </div>
                         </div>
-                        <p className="step-label">Step {step} of 3: {step === 1 ? 'Personal Information' : step === 2 ? 'Account Security' : 'Location & Role'}</p>
+                        <p className="step-label">
+                            Step {step} of 3: {step === 1 ? 'Personal Information' : step === 2 ? 'Account Security' : 'Location & Role'}
+                        </p>
                         <form onSubmit={handleSubmit}>
                             {renderStep()}
                         </form>
@@ -403,20 +491,42 @@ const SignUp = () => {
                 </div>
                 <div className="signup-panel-right">
                     <div className="right-panel-content">
+                        <div className="illustration-container">
+                            <div className="floating-card card-1">
+                                <div className="card-icon">📍</div>
+                                <div className="card-text">Report Issues</div>
+                            </div>
+                            <div className="floating-card card-2">
+                                <div className="card-icon">📊</div>
+                                <div className="card-text">Track Progress</div>
+                            </div>
+                            <div className="floating-card card-3">
+                                <div className="card-icon">🤝</div>
+                                <div className="card-text">Join Community</div>
+                            </div>
+                        </div>
+                        
                         <h2 className="right-panel-title">Join Our Community!</h2>
                         <p className="right-panel-subtitle">
                             Sign up today to start reporting issues, tracking progress, and helping
                             your community thrive.
                         </p>
+                        
                         <div className="stats-container">
                             <div className="stat-item">
                                 <div className="stat-value">15K+</div>
                                 <div className="stat-label">Community Members</div>
                             </div>
+                            <div className="stat-divider"></div>
                             <div className="stat-item">
                                 <div className="stat-value">3.2K+</div>
                                 <div className="stat-label">Issues Resolved</div>
                             </div>
+                        </div>
+
+                        <div className="trust-badges">
+                            <div className="trust-badge">✓ Free Forever</div>
+                            <div className="trust-badge">🔒 Secure & Private</div>
                         </div>
                     </div>
                 </div>
