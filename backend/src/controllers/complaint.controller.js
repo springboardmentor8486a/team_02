@@ -1,8 +1,10 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { Complaint } from "../models/complaint.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Comment } from "../models/comment.model.js";
+import { Vote } from "../models/vote.model.js";
 import mongoose from "mongoose";
 
 // --- Department List (Used for registration/editing by user for initial categorization) ---
@@ -15,34 +17,45 @@ const allowedDepartments = [
 ];
 // ------------------------------------------------------------------------------------------
 
-// ================= Complaint Registration =================
+// ================= Get Pending Requests for Admin =================
+const getPendingRequests = asyncHandler(async (req, res) => {
+    if (req.user.role !== 'admin') {
+        throw new ApiError(403, "Access forbidden. Only admins can view pending requests.");
+    }
+
+    const pendingComplaints = await Complaint.find({ pendingUpdate: 'true' })
+        .populate("userId", "name profilePhoto")
+        .sort({ updatedAt: -1 });
+
+    res.status(200).json(new ApiResponse(200, pendingComplaints, "Pending requests fetched successfully."));
+});
+
 const registerComplaint = asyncHandler(async (req, res, next)=>{
 
     const userId = req.user?._id;
-    let { title, description, address, assignedTo, locationCoords} = req.body; 
+    let { title, description, address, assignedTo, location } = req.body;
 
-    // --- CRITICAL FIX: Parse JSON strings for array/number fields sent via FormData ---
+    // --- Parse JSON strings for array/number fields sent via FormData ---
     try {
-        locationCoords = JSON.parse(locationCoords);
+        location = JSON.parse(location);
     } catch (e) {
-        // If parsing fails, assume it was never intended to be JSON (optional chaining handles null/undefined)
+        // If parsing fails, assume it was never intended to be JSON
     }
     
     try {
         address = JSON.parse(address);
     } catch (e) {
         if (typeof address === 'string') {
-            address = [address]; // Convert single address string to array
+            address = [address];
         }
     }
-    // ---------------------------------------------------------------------------------
 
     // Re-validate required fields after parsing
-    if (!userId || !title || !description || !address || address.length === 0 || !assignedTo || !locationCoords || locationCoords.length !== 2) {
+    if (!userId || !title || !description || !address || address.length === 0 || !assignedTo || !location || location.length !== 2) {
         throw new ApiError(400, "All required fields must be provided");
     }
 
-    // Validate assignedTo during initial registration against allowed departments
+    // Validate assignedTo during initial registration
     if (!allowedDepartments.includes(assignedTo)) {
         throw new ApiError(400, "Invalid department assigned");
     };
@@ -53,7 +66,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
         if (!uploadResult) {
             throw new ApiError(500, "complaint photo upload failed");
         }
-        complaintPhotoUrl = uploadResult.secure_url; // Cloudinary hosted URL
+        complaintPhotoUrl = uploadResult.secure_url;
     };
 
     let complaint = await Complaint.create({
@@ -63,7 +76,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
         address,
         photo: complaintPhotoUrl,
         assignedTo,
-        locationCoords
+        location
     });
 
     const createdComplaint = await Complaint.findById(complaint._id);
@@ -77,7 +90,7 @@ const registerComplaint = asyncHandler(async (req, res, next)=>{
 // ================= Update Complaint Assignment (Admin Tool) =================
 const updateComplaintAssignment = asyncHandler(async (req, res) => {
     const { complaintId } = req.params;
-    const { assignedTo } = req.body; // Contains the Volunteer Name (string)
+    const { assignedTo } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(complaintId)) {
         throw new ApiError(400, "Invalid Complaint ID");
@@ -91,11 +104,10 @@ const updateComplaintAssignment = asyncHandler(async (req, res) => {
         complaintId,
         {
             $set: {
-                assignedTo: assignedTo, // Stores the Volunteer Name (string)
+                assignedTo: assignedTo,
                 updatedAt: new Date(Date.now())
             }
         },
-        // Set runValidators to false to bypass the Mongoose enum check on 'assignedTo'
         { new: true, runValidators: false } 
     );
 
@@ -105,7 +117,6 @@ const updateComplaintAssignment = asyncHandler(async (req, res) => {
 
     res.status(200).json(new ApiResponse(200, updatedComplaint, "Complaint assigned successfully"));
 });
-
 
 // ================= Complaint List (User's own reports) =================
 const viewComplaint = asyncHandler(async (req, res)=>{
@@ -118,25 +129,18 @@ const editComplaint = asyncHandler(async (req, res, next) => {
     const { complaintId } = req.params;
     let { title, description, address, assignedTo, locationCoords, status } = req.body; 
 
-    // --- CRITICAL FIX: Parse JSON strings for array/number fields ---
     if (locationCoords && typeof locationCoords === 'string') {
-        try { locationCoords = JSON.parse(locationCoords); } catch (e) { 
-            // If parsing fails, it's not critical if the field isn't being updated, but log it. 
-        }
+        try { locationCoords = JSON.parse(locationCoords); } catch (e) { }
     }
     if (address && typeof address === 'string') {
-        try { address = JSON.parse(address); } catch (e) {
-            // If parsing fails, it's not critical.
-        }
+        try { address = JSON.parse(address); } catch (e) { }
     }
-    // -------------------------------------------------------------
 
     const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
         throw new ApiError(404, "Complaint not found");
     }
 
-    // Handle photo upload if new photo is provided
     let complaintPhotoUrl = complaint.photo;
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
@@ -146,7 +150,6 @@ const editComplaint = asyncHandler(async (req, res, next) => {
         complaintPhotoUrl = uploadResult.secure_url;
     }
 
-    // Update the complaint
     const updatedComplaint = await Complaint.findByIdAndUpdate(
         complaintId,
         {
@@ -154,15 +157,14 @@ const editComplaint = asyncHandler(async (req, res, next) => {
                 title: title || complaint.title,
                 description: description || complaint.description,
                 address: address || complaint.address, 
-                // Allow assignedTo to be updated with department OR volunteer name
                 assignedTo: assignedTo || complaint.assignedTo,
-                locationCoords: locationCoords || complaint.locationCoords, 
+                locationCoords: locationCoords || complaint.locationCoords,
                 photo: complaintPhotoUrl,
                 status: status || complaint.status,
                 updatedAt: new Date(Date.now())
             }
         },
-        { new: true, runValidators: false } // Set runValidators to false
+        { new: true, runValidators: false }
     ).populate("userId");
 
     if (!updatedComplaint) {
@@ -191,10 +193,6 @@ const getAllComplaints = asyncHandler(async (req, res) => {
     
     let query = {};
 
-    // Filter by Category (assignedTo) - Complex mapping removed for brevity, assume simple equality or skip
-    // ... filtering logic removed/simplified ...
-
-    // Search filter
     if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
         query.$or = [
@@ -225,65 +223,114 @@ const getAssignedIssues = asyncHandler(async (req, res) => {
     const volunteerName = req.user.name;
 
     const assignedIssues = await Complaint.find({
-        // CRITICAL: Query by the logged-in user's name (Volunteer Name)
-        assignedTo: volunteerName 
-    }).populate('userId', 'name').sort({ priority: -1, createdAt: 1 });
+        assignedTo: { $regex: `^${volunteerName}$`, $options: 'i' }
+    })
+    .populate('userId', 'name')
+    .sort({ priority: -1, createdAt: 1 });
 
     res.status(200).json(new ApiResponse(200, assignedIssues, "Assigned issues fetched successfully."));
 });
-
 
 // ================= Volunteer Update Status =================
 const volunteerUpdateStatus = asyncHandler(async (req, res) => {
     const { complaintId } = req.params;
     const { status, workNotes } = req.body;
-    
-    // In a real app, proofPhoto (file) would be uploaded via multer middleware 
-    // before this controller runs.
-    
-    if (!complaintId || !status || !workNotes) {
-        throw new ApiError(400, "Complaint ID, status, and work notes are required.");
-    }
-    if (req.user.role !== 'volunteer') {
-        throw new ApiError(403, "Access forbidden. Only volunteers can update status.");
+
+    if (!complaintId) {
+        throw new ApiError(400, "Complaint ID is required");
     }
 
-    // 1. Find the complaint and ensure it's assigned to the current user
     const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
-        throw new ApiError(404, "Complaint not found.");
+        throw new ApiError(404, "Complaint not found");
     }
 
-    if (complaint.assignedTo !== req.user.name) {
-        throw new ApiError(403, "You are not assigned to this issue.");
+    complaint.status = status || complaint.status;
+    complaint.updatedAt = new Date();
+    
+    if (workNotes) {
+        complaint.workNotes = workNotes;
     }
 
-    // 2. Set the status based on the action
-    let newDbStatus;
-    if (status === 'Completed') {
-        // Change status to 'inReview' pending Admin approval
-        newDbStatus = 'inReview'; 
-    } else if (status === 'In Progress') {
-         // Volunteer should still push to inReview so admin knows to re-evaluate notes
-        newDbStatus = 'inReview';
-    } else {
-        newDbStatus = 'inReview'; // Default safety measure
+    if (req.file) {
+        const imageUpload = await uploadOnCloudinary(req.file.path);
+        complaint.photo = imageUpload?.url || complaint.photo;
     }
 
-    // 3. Update the complaint status
-    const updatedComplaint = await Complaint.findByIdAndUpdate(
-        complaintId,
-        {
-            $set: { status: newDbStatus },
-            // Add note to description/comments (simplified)
-            $push: { comments: { userId: req.user._id, content: `Volunteer Update: ${workNotes}` } }
-        },
-        { new: true }
+    await complaint.save();
+
+    res.status(200).json(
+        new ApiResponse(200, complaint, "Status updated successfully")
     );
-
-    res.status(200).json(new ApiResponse(200, updatedComplaint, "Status update submitted for admin review."));
 });
 
+// ================= Get Single Complaint by ID with Full Details =================
+const getComplaintById = asyncHandler(async (req, res) => {
+    const { complaintId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(complaintId)) {
+        throw new ApiError(400, "Invalid Complaint ID");
+    }
+
+    // Fetch the complaint with user details
+    const complaint = await Complaint.findById(complaintId)
+        .populate("userId", "name email profilePhoto location")
+        .lean();
+
+    if (!complaint) {
+        throw new ApiError(404, "Complaint not found");
+    }
+
+    // Fetch comments for this complaint
+    const comments = await Comment.find({ complaintId: complaintId })
+        .populate('userId', 'name profilePhoto')
+        .sort({ createdAt: -1 })
+        .lean();
+
+    // Fetch votes for this complaint
+    const votes = await Vote.find({ complaintId: complaintId })
+        .populate('userId', 'name')
+        .lean();
+
+    // Calculate vote statistics
+    const upvotes = votes.filter(v => v.voteType === 'upvote').length;
+    const downvotes = votes.filter(v => v.voteType === 'downvote').length;
+
+    // Check if current user has voted (if authenticated)
+    let userVote = null;
+    if (req.user) {
+        const currentUserVote = votes.find(v => 
+            v.userId && v.userId._id && v.userId._id.toString() === req.user._id.toString()
+        );
+        userVote = currentUserVote ? currentUserVote.voteType : null;
+    }
+
+    // Construct response with all details
+    const complaintDetails = {
+        ...complaint,
+        comments: comments.map(comment => ({
+            _id: comment._id,
+            text: comment.text,
+            createdAt: comment.createdAt,
+            user: {
+                _id: comment.userId._id,
+                name: comment.userId.name,
+                profilePhoto: comment.userId.profilePhoto
+            }
+        })),
+        votesCount: {
+            upvotes,
+            downvotes,
+            total: upvotes - downvotes
+        },
+        userVote,
+        images: Array.isArray(complaint.photo) ? complaint.photo : (complaint.photo ? [complaint.photo] : [])
+    };
+
+    res.status(200).json(
+        new ApiResponse(200, complaintDetails, "Complaint details fetched successfully")
+    );
+});
 
 export {
     registerComplaint,
@@ -293,5 +340,7 @@ export {
     getAllComplaints,
     updateComplaintAssignment,
     getAssignedIssues,
-    volunteerUpdateStatus
+    volunteerUpdateStatus,
+    getPendingRequests,
+    getComplaintById 
 };
