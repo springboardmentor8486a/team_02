@@ -1,38 +1,45 @@
+import crypto from 'crypto';
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { User } from "../models/user.model.js";
-import { Complaint } from "../models/complaint.model.js"; // CRITICAL: Imported for stats
-import { uploadOnCloudinary } from "../utils/cloudinary.js"; // import cloudinary util
+import User from "../models/user.model.js";
+import { Complaint } from "../models/complaint.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // ================= Register =================
 const registerUser = asyncHandler(async (req, res, next) => {
-    const { name, email, password, location, role } = req.body;
+    // ✅ Accept both 'name' and 'fullName' for flexibility
+    const { name, fullName, email, password, location, role } = req.body;
+    const userName = fullName || name; // Use fullName if provided, otherwise name
 
-    if (!name || !email || !password || !location) {
+    // Validate required fields
+    if (!userName || !email || !password || !location) {
         throw new ApiError(400, "All required fields must be provided");
     }
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
         throw new ApiError(400, "User already exists");
     }
 
+    // Handle profile photo upload
     let profilePhotoUrl = "";
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
         if (!uploadResult) {
             throw new ApiError(500, "Profile photo upload failed");
         }
-        profilePhotoUrl = uploadResult.secure_url; // Cloudinary hosted URL
+        profilePhotoUrl = uploadResult.secure_url;
     }
 
+    // Create user with correct field name
     const user = await User.create({
-        name: name.trim(),
+        fullName: userName.trim(), // ✅ Changed to fullName
         email,
         password,
         location,
-        role,
+        role: role || 'user', // ✅ Default to 'user' if not provided
         profilePhoto: profilePhotoUrl
     });
 
@@ -64,7 +71,6 @@ const loginUser = asyncHandler(async (req, res, next) => {
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // save refresh token in DB
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -107,7 +113,7 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 
 // ================= Get User Details =================
 const getUserDetails = asyncHandler(async (req, res, next) => {
-    const user = req.user; // Attached by auth middleware
+    const user = req.user;
     if (!user) {
         throw new ApiError(404, "User not found");
     }
@@ -115,31 +121,41 @@ const getUserDetails = asyncHandler(async (req, res, next) => {
     res.status(200).json(new ApiResponse(200, user, "User details retrieved successfully"));
 });
 
-//Function to update user details in profile section
+// ================= Update User Details =================
 const updateUserDetails = asyncHandler(async (req, res, next) => {
-    const { name, location } = req.body;
-    if (!name || !location) {
+    // ✅ Accept both 'name' and 'fullName'
+    const { name, fullName, location } = req.body;
+    const userName = fullName || name;
+    
+    if (!userName || !location) {
         throw new ApiError(400, "Name and location are required");
     }
-    const updatedData = { name: name.trim(), location };
+    
+    const updatedData = { fullName: userName.trim(), location }; // ✅ Changed to fullName
+    
     if (req.file?.path) {
         const uploadResult = await uploadOnCloudinary(req.file.path);
         if (!uploadResult) {
             throw new ApiError(500, "Profile photo upload failed");
         }
-        updatedData.profilePhoto = uploadResult.secure_url; // Cloudinary hosted URL
+        updatedData.profilePhoto = uploadResult.secure_url;
     }
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, updatedData, { new: true, runValidators: true }).select("-password -refreshToken");
+    
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id, 
+        updatedData, 
+        { new: true, runValidators: true }
+    ).select("-password -refreshToken");
+    
     if (!updatedUser) {
         throw new ApiError(404, "User not found");
     }
+    
     res.status(200).json(new ApiResponse(200, updatedUser, "User details updated successfully"));
 });
 
-
-// ================= Get All Users and Stats (Admin/Volunteer View) =================
+// ================= Get All Users and Stats =================
 const getAllUsersAndStats = asyncHandler(async (req, res, next) => {
-    // SECURITY CHECK
     if (req.user.role === 'user') {
         throw new ApiError(403, "Access forbidden. Requires admin or volunteer role.");
     }
@@ -149,27 +165,19 @@ const getAllUsersAndStats = asyncHandler(async (req, res, next) => {
 
     try {
         allUsers = await User.find({}).select("-password -refreshToken");
-
-        // REPORTS COUNT AGGREGATION
         complaintStats = await Complaint.aggregate([
             { $group: { _id: "$userId", reportsCount: { $sum: 1 } } }
         ]);
-        
     } catch (dbError) {
         console.error("Database Aggregation Error:", dbError);
         throw new ApiError(500, "Error running database statistics query.");
     }
 
-    // DATA MAPPING AND COMBINING
     const responseData = allUsers.map(user => {
         const userObj = user.toObject();
-        
-        // Use toString() for reliable comparison between ObjectIds
         const reports = complaintStats.find(s => s._id.toString() === user._id.toString());
-        
         userObj.reportsCount = reports ? reports.reportsCount : 0;
 
-        // MOCKED VOLUNTEER STATS
         if (userObj.role === 'volunteer') {
             userObj.assigned = (user.location && user.location.includes('North')) ? 12 : 8;
             userObj.resolved = (user.location && user.location.includes('North')) ? 47 : 32;
@@ -181,11 +189,111 @@ const getAllUsersAndStats = asyncHandler(async (req, res, next) => {
     res.status(200).json(new ApiResponse(200, responseData, "Users and statistics fetched successfully"));
 });
 
+// ================= Forgot Password =================
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+        throw new ApiError(400, 'Email is required');
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        // Security: Don't reveal if user exists
+        return res.status(200).json(
+            new ApiResponse(200, null, 'If an account exists, a password reset link will be sent')
+        );
+    }
+
+    // Check if user signed up with Google
+    if (user.googleId) {
+        throw new ApiError(400, 'This account uses Google Sign-In. Please sign in with Google instead.');
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Hash it before saving to database
+    const resetTokenHash = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    // Save to user
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset URL (user will click this link)
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password/${resetToken}`;
+
+    // Log for testing (remove in production)
+    console.log('🔗 Reset URL:', resetUrl);
+
+    res.status(200).json(
+        new ApiResponse(
+            200, 
+            { resetUrl }, // Remove this in production
+            'Password reset link generated successfully'
+        )
+    );
+});
+
+// ================= Reset Password =================
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.params; // From URL
+    const { password, confirmPassword } = req.body; // New password
+
+    // Validate passwords
+    if (!password || !confirmPassword) {
+        throw new ApiError(400, 'Both password fields are required');
+    }
+
+    if (password !== confirmPassword) {
+        throw new ApiError(400, 'Passwords do not match');
+    }
+
+    if (password.length < 6) {
+        throw new ApiError(400, 'Password must be at least 6 characters');
+    }
+
+    // Hash the token to match with database
+    const resetTokenHash = crypto
+        .createHash('sha256')
+        .update(token)
+        .digest('hex');
+
+    // Find user with valid token
+    const user = await User.findOne({
+        resetPasswordToken: resetTokenHash,
+        resetPasswordExpires: { $gt: Date.now() } // Token not expired
+    });
+
+    if (!user) {
+        throw new ApiError(400, 'Invalid or expired token');
+    }
+
+    // Update password
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json(
+        new ApiResponse(200, null, 'Password reset successful. You can now login with your new password.')
+    );
+});
+
 export { 
     registerUser, 
     loginUser, 
     logoutUser, 
     getUserDetails,
     updateUserDetails,
-    getAllUsersAndStats // <<< CRITICAL: MUST BE EXPORTED
+    forgotPassword, 
+    resetPassword,
+    getAllUsersAndStats 
 };
