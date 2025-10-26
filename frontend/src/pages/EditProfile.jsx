@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowRight, Save, XCircle } from 'lucide-react';
+import { ArrowRight, Save, XCircle, Shield } from 'lucide-react';
 import './EditProfile.css';
 
 const EditProfile = () => {
-    const { user, updateUserContext, signOut } = useAuth(); // Added signOut for 401 handling
+    const { user, updateUserContext, signOut } = useAuth();
     const navigate = useNavigate();
 
     const [name, setName] = useState(user?.name || '');
     const [location, setLocation] = useState(user?.location || '');
-    const [profilePhoto, setProfilePhoto] = useState(null); 
+    const [profilePhoto, setProfilePhoto] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(user?.profilePhoto || '/images/default-avatar.png');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -51,7 +51,7 @@ const EditProfile = () => {
         formData.append('name', name);
         formData.append('location', location);
         if (profilePhoto) {
-            formData.append('profilePhoto', profilePhoto); 
+            formData.append('profilePhoto', profilePhoto);
         }
 
         try {
@@ -64,7 +64,6 @@ const EditProfile = () => {
                 }
             );
 
-            // FIX 1: This assumes the corrected backend response { data: { updatedUser: {...} } }
             updateUserContext(res.data.updatedUser);
             setMessage('Profile updated successfully! Redirecting...');
             setIsError(false);
@@ -77,15 +76,14 @@ const EditProfile = () => {
             let errorMsg = 'Failed to update profile. Please try again.';
             if (err.response) {
                 if (err.response.status === 401) {
-                    // FIX 2: If authentication fails, redirect and clear user data
                     errorMsg = 'Session expired. Please log in again.';
                     signOut();
-                    navigate('/login'); 
+                    navigate('/login');
                 } else {
                     errorMsg = err.response.data?.message || `Error: ${err.response.status}`;
                 }
             } else if (err.request) {
-                 errorMsg = 'Network error: Server is unreachable.';
+                errorMsg = 'Network error: Server is unreachable.';
             }
 
             setMessage(errorMsg);
@@ -95,7 +93,6 @@ const EditProfile = () => {
         }
     };
 
-    // Helper function to get initials
     const getUserInitials = (name) => {
         if (!name) return 'S';
         const nameParts = name.split(' ');
@@ -104,16 +101,21 @@ const EditProfile = () => {
     };
 
     if (!user) {
-        return null; 
+        return null;
     }
 
     return (
-        <>
+        // Use the main page wrapper from your new CSS
+        <div className="volunteer-edit-page">
             {/* --- Navigation Header --- */}
-            <header className="header-top">
+            <header className="volunteer-header-top">
                 <div className="logo-section" onClick={() => navigate('/')}>
                     <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
                     <div className="logo-text">Clean Street</div>
+                    <div className="user-badge">
+                    <Shield size={18} />
+                    <span>User</span>
+                    </div>
                 </div>
                 <div className="back-to-profile">
                     <button onClick={() => navigate('/profile')} className="back-btn">
@@ -123,10 +125,15 @@ const EditProfile = () => {
             </header>
 
             {/* --- Main Edit Profile Layout --- */}
-            <div className="edit-profile-container">
-                <div className="edit-form-panel">
-                    <h2>Edit Your Profile</h2>
-                    <p className="subtitle">Update your personal information and profile picture.</p>
+            <div className="volunteer-edit-container">
+                <div className="volunteer-edit-panel">
+                    
+                    {/* New panel-header wrapper */}
+                    <div className="panel-header">
+                        {/* Optional: You had a .header-icon class, you could add an icon here */}
+                        <h2>Edit Your Profile</h2>
+                        <p className="subtitle">Update your personal information and profile picture.</p>
+                    </div>
 
                     {message && (
                         <p className={`status-message ${isError ? 'error' : 'success'}`}>
@@ -134,11 +141,14 @@ const EditProfile = () => {
                         </p>
                     )}
 
-                    <form onSubmit={handleSubmit} className="edit-form">
-                        {/* Avatar Upload Section */}
-                        <div className="form-group avatar-upload-section">
+                    <form onSubmit={handleSubmit} className="volunteer-edit-form">
+                        
+                        {/* Avatar Upload Section - Restructured to match new CSS */}
+                        <div className="avatar-section">
                             <label className="avatar-label">Profile Photo</label>
-                            <div className="avatar-preview-wrapper">
+                            
+                            {/* Wrapper for the preview/initials */}
+                            <div className="avatar-wrapper">
                                 <img 
                                     src={photoPreview} 
                                     alt="Profile Preview" 
@@ -148,31 +158,34 @@ const EditProfile = () => {
                                         e.target.nextSibling.style.display = 'flex'; 
                                     }}
                                 />
-                                <div className="user-initials-fallback" style={{ display: photoPreview === user?.profilePhoto ? 'none' : 'flex' }}>
+                                {/* Updated class for initials fallback */}
+                                <div className="volunteer-initials" style={{ display: photoPreview === user?.profilePhoto ? 'none' : 'flex' }}>
                                     <span>{getUserInitials(name)}</span>
                                 </div>
-
-                                <input
-                                    type="file"
-                                    id="profilePhoto"
-                                    name="profilePhoto"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="file-input"
-                                />
-                                <label htmlFor="profilePhoto" className="upload-btn">
-                                    Change Photo
-                                </label>
-                                {profilePhoto && (
-                                    <button 
-                                        type="button" 
-                                        className="remove-photo-btn"
-                                        onClick={() => { setProfilePhoto(null); setPhotoPreview(user?.profilePhoto || '/images/default-avatar.png'); }}
-                                    >
-                                        <XCircle size={16} /> Remove Selection
-                                    </button>
-                                )}
                             </div>
+
+                            {/* File input and buttons (as siblings to avatar-wrapper) */}
+                            <input
+                                type="file"
+                                id="profilePhoto"
+                                name="profilePhoto"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="file-input" // This class is hidden by your CSS
+                            />
+                            {/* Updated class for the upload button label */}
+                            <label htmlFor="profilePhoto" className="volunteer-upload">
+                                Change Photo
+                            </label>
+                            {profilePhoto && (
+                                <button 
+                                    type="button" 
+                                    className="remove-photo-btn" // Class name was the same
+                                    onClick={() => { setProfilePhoto(null); setPhotoPreview(user?.profilePhoto || '/images/default-avatar.png'); }}
+                                >
+                                    <XCircle size={16} /> Remove Selection
+                                </button>
+                            )}
                         </div>
 
                         {/* Name Field */}
@@ -225,8 +238,8 @@ const EditProfile = () => {
                             />
                         </div>
 
-                        {/* Submit Button */}
-                        <button type="submit" disabled={loading} className="save-btn">
+                        {/* Submit Button - Updated class */}
+                        <button type="submit" disabled={loading} className="volunteer-save">
                             {loading ? 'Saving...' : <><Save size={18} /> Save Changes</>}
                         </button>
 
@@ -244,7 +257,7 @@ const EditProfile = () => {
             <footer className="footer">
                 <p>© 2025 Clean Street. All rights reserved.</p>
             </footer>
-        </>
+        </div>
     );
 };
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Camera, AlertCircle, ArrowRight, User, FileText, Map, Navigation, Mail, Phone, Globe, X, Search } from 'lucide-react';
-import MapComponent from './MapComponent'; // Assuming this component exists and works
+import MapPage from './MapPage'; // Assuming this component exists and works
 import './ReportIssue.css'; // Assuming you have the corresponding CSS file
 
 // --- Configuration Mapping for Backend Integration ---
@@ -768,7 +768,7 @@ const handleSubmit = async (e) => {
 
                             {/* Interactive Map */}
                             <div className="map-container">
-                                <MapComponent
+                                <MapPage
                                     onLocationSelect={handleMapLocationSelect}
                                     initialCenter={selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : null}
                                 />

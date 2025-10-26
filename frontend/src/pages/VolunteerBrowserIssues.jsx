@@ -555,7 +555,7 @@ const UserBrowseIssue = () => {
                 </div>
                 <nav className="nav-links">
                     <Link to="/volunteer" >Dashboard</Link>
-                                        <Link to="/MyAssignedIssues">My Assigned Issues</Link>
+<Link to="/my-assigned-issues" >My Assigned Issues</Link>
                                         <Link to="/volunteer-browser-issues" className="active">Browse Issues</Link>
                 </nav>
                 <div className="user-profile">

@@ -100,7 +100,7 @@ const Volunteer = () => {
                 </div>
                 <nav className="nav-links">
                     <Link to="/volunteer-dashboard" className="active">Dashboard</Link>
-                    <Link to="/MyAssignedIssues">My Assigned Issues</Link>
+<Link to="/my-assigned-issues">My Assigned Issues</Link>
                     <Link to="/volunteer-browser-issues">Browse Issues</Link>
                 </nav>
                 <div className="user-profile">

@@ -98,20 +98,14 @@ const AdminProfile = () => {
                 {/* FIX: Integrated Admin Navigation Links */}
                 <nav className="nav-links">
                     <Link to="/admin-dashboard" className="admin-nav-link">
-                        <LayoutDashboard size={18} /> Dashboard
-                    </Link>
-                    <Link to="/admin-all-issues" className="admin-nav-link">
-                        <AlertCircle size={18} /> All Issues
-                    </Link>
-                    <Link to="/admin-users-volunteers" className="admin-nav-link">
-                        <Users size={18} /> Users & Volunteers
-                    </Link>
-                    <Link to="/admin-requests" className="admin-nav-link">
-                        <FileText size={18} /> Admin Requests
-                    </Link>
-                    <Link to="/admin-issues-updates" className="admin-nav-link">
-                        <Clock size={18} /> Issue Updates
-                    </Link>
+                                                <LayoutDashboard size={18} /> Dashboard
+                                            </Link>
+                                            <Link to="/admin-all-issues" className="admin-nav-link">
+                                                <AlertCircle size={18} /> All Issues
+                                            </Link>
+                                            <Link to="/admin-users-volunteers" className="admin-nav-link">
+                                                <Users size={18} /> Users & Volunteers
+                                            </Link>
                 </nav>
                 
                 <div className="user-profile">

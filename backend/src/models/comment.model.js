@@ -1,29 +1,30 @@
-// Comment.model.js
+// src/models/comment.model.js
 import mongoose, { Schema } from "mongoose";
 
-let commentSchema = new Schema({
-    userId: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+const commentSchema = new Schema(
+  {
     complaintId: {
-        type: Schema.Types.ObjectId,
-        ref: "Complaint",
-        required: true
+      type: Schema.Types.ObjectId,
+      ref: "Complaint",
+      required: true,
+      index: true, // Index for faster queries
     },
-    content: {
-        type: String,
-        required: true,
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    createdAt: {
-        type: Date,
-        default: () => new Date()
+    text: {
+      type: String,
+      required: [true, "Comment text is required"],
+      trim: true,
+      minlength: [1, "Comment cannot be empty"],
+      maxlength: [1000, "Comment cannot exceed 1000 characters"],
     },
-    updatedAt: {
-        type: Date,
-        default: () => new Date()
-    },
-});
+  },
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt
+  }
+);
 
 export const Comment = mongoose.model("Comment", commentSchema);

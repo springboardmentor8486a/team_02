@@ -154,16 +154,11 @@ const AdminIssueUpdates = () => {
                         <Link to="/admin-users-volunteers" className="admin-nav-link">
                             <Users size={18} /> Users & Volunteers
                         </Link>
-                        <Link to="/admin-requests" className="admin-nav-link">
-                            <FileText size={18} /> Admin Requests
-                        </Link>
-                        <Link to="/admin-issues-updates" className="admin-nav-link active">
-                            <Clock size={18} /> Issue Updates
-                        </Link>
+            
                     </nav>
                 </div>
                 <div className="user-profile">
-                    <Link to="/AdminProfile" className="profile-link">
+                    <Link to="/admin-profile" className="profile-link">
                         <div className="user-initials">{getUserInitials(user.name)}</div>
                         <span className="user-name">{user.name}</span>
                     </Link>

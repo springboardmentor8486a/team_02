@@ -311,10 +311,10 @@ const AdminDashboard = () => {
               <Users size={18} />
               Users & Volunteers
             </Link>
-            <Link to="/admin-requests" className="admin-nav-link">
+            {/* <Link to="/admin-requests" className="admin-nav-link">
               <FileText size={18} />
               Admin Requests
-            </Link>
+            </Link> */}
           </nav>
         </div>
         <div className="user-profile">

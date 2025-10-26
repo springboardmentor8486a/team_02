@@ -166,7 +166,7 @@ const activeIssues = issues; // Show everything
                 </div>
                 <nav className="nav-links">
                     <Link to="/volunteer">Dashboard</Link>
-                    <Link to="/MyAssignedIssues"className="active">My Assigned Issues</Link>
+<Link to="/my-assigned-issues" className="active">My Assigned Issues</Link>
                     <Link to="/volunteer-browser-issues">Browse Issues</Link>
                 </nav>
                 <div className="header-right">
