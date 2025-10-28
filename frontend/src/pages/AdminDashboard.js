@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 import { 
   LayoutDashboard, AlertCircle, Users, FileText, 
   Clock, CheckCircle, TrendingUp, Timer, ThumbsUp,
