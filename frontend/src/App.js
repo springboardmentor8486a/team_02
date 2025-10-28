@@ -13,7 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
 import MapPage from "./pages/MapPage";
-import IssueDetailPage from "./pages/IssueDetailPage";
+import IssueDetailPage from './pages/IssueDetailPage';
 
 // User Pages
 import Dashboard from "./pages/Dashboard";
@@ -48,7 +48,7 @@ function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<About />} />
           <Route path="/mappage" element={<MapPage initialCenter={[40.7128, -74.006]} />} />
-          <Route path="/issue/:id" element={<IssueDetailPage />} />
+<Route path="/issue-detail/:complaintId" element={<IssueDetailPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/auth/callback" element={<AuthCallback />} />

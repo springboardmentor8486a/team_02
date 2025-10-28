@@ -137,6 +137,9 @@
   flex-direction: column;
   gap: 1.75rem;
 }
+#aboutMe{
+    border: 2px solid red;
+}
 
 .form-group {
   display: flex;
@@ -193,6 +196,7 @@
   border: 2px dashed #d1d5db;
   border-radius: 12px;
   background-color: #f9fafb;
+  min-height: 200px;
 }
 
 .avatar-label {

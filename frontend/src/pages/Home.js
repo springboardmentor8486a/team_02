@@ -225,48 +225,11 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="footer">
-        <div className="footer-column footer-logo-section">
-          <div className="logo-section">
-            <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-            <div className="logo-text">Clean Street</div>
-          </div>
-          <p className="footer-tagline">Civic Engagement Platform</p>
-          <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
-          <div className="contact-info">
-            <p><Mail size={16} /> <a href="mailto:hello@cleanstreet.org">hello@cleanstreet.org</a></p>
-            <p><Phone size={16} /> <a href="tel:5551234567">(555) 123-4567</a></p>
-            <p><Globe size={16} /> <a href="http://www.cleanstreet.org" target="_blank" rel="noopener noreferrer">www.cleanstreet.org</a></p>
-          </div>
-        </div>
-        <div className="footer-column">
-          <h4>Platform</h4>
-          <ul>
-            <li><Link to="/how-it-works">How it Works</Link></li>
-            <li><Link to="/features">Features</Link></li>
-            <li><Link to="/pricing">Pricing</Link></li>
-            <li><Link to="/mobile-app">Mobile App</Link></li>
-          </ul>
-        </div>
-        <div className="footer-column">
-          <h4>Support</h4>
-          <ul>
-            <li><Link to="/help">Help Center</Link></li>
-            <li><Link to="/contactpage">Contact Us</Link></li>
-            <li><Link to="/user-guide">User Guide</Link></li>
-            <li><Link to="/community-forum">Community Forum</Link></li>
-          </ul>
-        </div>
-        <div className="footer-column">
-          <h4>Company</h4>
-          <ul>
-            <li><Link to="/about">About Us</Link></li>
-            <li><Link to="/careers">Careers</Link></li>
-            <li><Link to="/press">Press Kit</Link></li>
-            <li><Link to="/blog">Blog</Link></li>
-          </ul>
-        </div>
-      </footer>
+      <footer class="simple-footer">
+  © 2025 Clean Street | Civic Engagement Platform | 
+  <a href="mailto:hello@cleanstreet.org">hello@cleanstreet.org</a>
+</footer>
+
     </div>
   );
 };

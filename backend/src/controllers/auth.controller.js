@@ -76,7 +76,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
         let user = await User.findOne({ email: data.email });
 
         if (!user) {
-            console.log('🆕 Creating new user...');
+           // console.log('🆕 Creating new user...');
             user = await User.create({
                 fullName: data.name,
                 email: data.email,
@@ -86,7 +86,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
                 role: 'user'
             });
         } else {
-            console.log('👋 Existing user found');
+           // console.log('👋 Existing user found');
             // Update Google ID if not set
             if (!user.googleId) {
                 user.googleId = data.id;
@@ -102,7 +102,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
 
-        console.log('✅ User logged in:', user.email);
+       // console.log('✅ User logged in:', user.email);
 
         // Cookie options
         const options = {
@@ -113,7 +113,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
         };
 
         // Set cookies AND redirect with tokens in URL
-        console.log('🎉 Authentication complete! Redirecting to frontend...');
+       // console.log('🎉 Authentication complete! Redirecting to frontend...');
         res
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -127,8 +127,8 @@ export const googleCallback = asyncHandler(async (req, res) => {
 
 // Get current user
 export const getCurrentUser = asyncHandler(async (req, res) => {
-    console.log('📡 getCurrentUser called');
-    console.log('User from JWT:', req.user);
+  //  console.log('📡 getCurrentUser called');
+    //console.log('User from JWT:', req.user);
     
     return res.status(200).json(
         new ApiResponse(200, req.user, "User fetched successfully")

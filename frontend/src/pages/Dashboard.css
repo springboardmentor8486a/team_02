@@ -185,6 +185,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    color: #1a202c !important;
+
 }
 /* END FIX */
 
@@ -217,11 +219,11 @@
     font-size: 2rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
-    color: #1a202c;
+    color: #1a202c !important;
 }
 
 .stat-label {
-    color: #4a5568;
+    color: #191c21 !important;
     font-size: 0.875rem;
 }
 

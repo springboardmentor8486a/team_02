@@ -86,67 +86,29 @@ const ForgotPassword = () => {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       {/* Header Section */}
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 40px',
-        borderBottom: '1px solid #e5e7eb',
-        backgroundColor: 'white'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 'bold'
-          }}>CS</div>
-          <div style={{ fontSize: '20px', fontWeight: '600' }}>Clean Street</div>
-        </div>
+      <header className="header-top">
+  <div className="logo-section">
+    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+    <div className="logo-text">Clean Street</div>
+  </div>
 
-        <nav style={{ display: 'flex', gap: '32px' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: '#6b7280' }}>Home</Link>
-          <Link to="/help" style={{ textDecoration: 'none', color: '#6b7280' }}>Help</Link>
-          <Link to="/about" style={{ textDecoration: 'none', color: '#6b7280' }}>About</Link>
-          <Link to="/contactpage" style={{ textDecoration: 'none', color: '#6b7280' }}>Contact</Link>
-        </nav>
+  <nav className="nav-links">
+    <Link to="/">Home</Link>
+    <Link to="/help">Help</Link>
+    <Link to="/about">About</Link>
+  </nav>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button 
-            onClick={() => navigate('/login')}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              background: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            Sign In <ArrowRight size={16} />
-          </button>
-          <button 
-            onClick={() => navigate('/signup')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              cursor: 'pointer'
-            }}
-          >
-            Get Started
-          </button>
-        </div>
-      </header>
+  <div className="auth-buttons">
+    <button onClick={() => navigate('/login')} className="sign-in-btn">
+      Sign In <ArrowRight size={16} />
+    </button>
+    <button onClick={() => navigate('/signup')} className="get-started-btn">
+      Get Started
+    </button>
+  </div>
+</header>
+
+      
 
       {/* Main Content */}
       <div style={{

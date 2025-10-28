@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-// All necessary icons imported
 import { User, Mail, MapPin, Briefcase, Award, Heart, CheckCircle, LogOut, Phone, Globe, ArrowRight, Edit3 } from 'lucide-react'; 
 import './ProfilePage.css';
 
@@ -10,15 +9,7 @@ const Profile = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     
-    // --- User Data from Auth Context ---
-    const mockUser = {
-        ...user,
-        phone: user?.phone || '987-654-3210',
-        location: user?.location || 'Maharashtra, India',
-        about: user?.bio || 'Active community member passionate about improving our neighborhood. I believe in working together to create cleaner, safer streets for everyone.',
-        isPremium: true,
-    };
-    // -----------------------------------------------------
+    // --- Use 'user' properties directly ---
 
     useEffect(() => {
         if (!user) {
@@ -36,27 +27,36 @@ const Profile = () => {
     };
 
     const getUserInitials = (name) => {
+        // Use user?.fullName instead of user?.name
         if (!name) return 'S'; 
         const nameParts = name.split(' ');
-        const initials = nameParts.map(part => part[0]).join('');
+        const initials = nameParts.map(part => part.charAt(0)).join('');
         return initials.toUpperCase();
     };
 
     const getJoinedDate = (dateString) => {
         if (!dateString) return 'Joined unknown date';
         const date = new Date(dateString);
-        // Ensure date is valid before formatting
         if (isNaN(date)) return 'Joined unknown date'; 
         return `Joined ${date.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
     };
 
-    const username = mockUser.email ? mockUser.email.split('@')[0] : 'cleanstreeter';
+    // Use actual user data with safe fallbacks
+    const profileName = user?.fullName || 'Clean Streeter';
+    const profileLocation = user?.location || 'Unknown Location';
+    const profileAbout = user?.aboutMe || 'No "About Me" provided yet. Click "Edit Profile" to add one!'; // Use 'aboutMe'
+    const profilePhoto = user?.profilePhoto || '/images/default-avatar.png';
+    const joinedDateText = getJoinedDate(user?.createdAt);
+    
+    // Derived/Mocked fields
+    const username = user?.email ? user.email.split('@')[0] : 'cleanstreeter';
+    const mockPhone = '987-654-3210';
+    const isPremium = false; // Example mock/default value
 
     if (!user) {
         return null;
     }
     
-    // Helper component to format the info item cleanly
     const InfoField = ({ icon: Icon, label, value }) => (
         <div className="info-item">
             <Icon size={20} />
@@ -66,6 +66,8 @@ const Profile = () => {
             </div>
         </div>
     );
+                            console.log("Context User:", user);
+
 
     return (
         <>
@@ -82,8 +84,13 @@ const Profile = () => {
                 </nav>
                 <div className="user-profile">
                     <Link to="/profile" className="profile-link active">
-                        <div className="user-initials">{getUserInitials(mockUser.name)}</div>
-                        <span className="user-name">{mockUser.name}</span>
+                        {/* Use profilePhoto for the header avatar if available, otherwise initials */}
+                        {profilePhoto !== '/images/default-avatar.png' ? (
+                            <img src={profilePhoto} alt="Avatar" className="user-initials-img-header" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex';}} />
+                        ) : (
+                            <div className="user-initials">{getUserInitials(profileName)}</div>
+                        )}
+                        <span className="user-name">{profileName.split(' ')[0]}</span>
                     </Link>
                     <button onClick={handleLogout} className="logout-btn-header">
                         <ArrowRight size={20} />
@@ -97,11 +104,15 @@ const Profile = () => {
                 {/* --- Sidebar --- */}
                 <div className="profile-sidebar">
                     <div className="profile-avatar-large">
-                        <span>{getUserInitials(mockUser.name)}</span>
+                        {profilePhoto !== '/images/default-avatar.png' ? (
+                            <img src={profilePhoto} alt="Profile Avatar" className="profile-photo-img-sidebar" />
+                        ) : (
+                            <span>{getUserInitials(profileName)}</span>
+                        )}
                     </div>
-                    <h2 className="profile-name">{mockUser.name}</h2>
+                    <h2 className="profile-name">{profileName}</h2>
                     <p className="profile-username">@{username}</p>
-                    <p className="profile-joined">{getJoinedDate(mockUser.createdAt)}</p>
+                    <p className="profile-joined">{joinedDateText}</p>
 
                     <div className="profile-actions">
                         <button className="update-profile-btn" onClick={() => navigate('/edit-profile')}>
@@ -135,27 +146,25 @@ const Profile = () => {
                                 <h3>Contact Details</h3>
                                 <p>Your personal contact and geographic information</p>
                             </div>
-                            {mockUser.isPremium && <span className="premium-badge">Premium Member</span>}
+                            {isPremium && <span className="premium-badge">Premium Member</span>}
                         </div>
                         <div className="profile-info-grid">
-                            {/* Updated JSX structure */}
-                            <InfoField icon={User} label="Full Name" value={mockUser.name} />
-                            <InfoField icon={Briefcase} label="Role" value="Citizen Contributor" />
-                            <InfoField icon={Mail} label="Email Address" value={mockUser.email} />
-                            <InfoField icon={Phone} label="Phone Number" value={mockUser.phone} />
-                            <InfoField icon={MapPin} label="Primary Location" value={mockUser.location} />
-                            <InfoField icon={Globe} label="Member Since" value={getJoinedDate(mockUser.createdAt).replace('Joined ', '')} />
+                            <InfoField icon={User} label="Full Name" value={profileName} />
+                            <InfoField icon={Briefcase} label="Role" value={user.role} />
+                            <InfoField icon={Mail} label="Email Address" value={user.email} />
+                            <InfoField icon={Phone} label="Phone Number" value={mockPhone} />
+                            <InfoField icon={MapPin} label="Primary Location" value={profileLocation} />
+                            <InfoField icon={Globe} label="Member Since" value={joinedDateText.replace('Joined ', '')} />
                         </div>
                     </div>
 
                     {/* Panel 2: About Me */}
                     <div className="profile-panel about-me-panel">
                         <h3>About Me</h3>
-                        <p>{mockUser.about}</p>
+                        <p>{profileAbout}</p>
+
                     </div>
 
-                    {/* Panel 3: Contributor Badges (Activity Summary) */}
-                    
                 </div>
             </div>
 

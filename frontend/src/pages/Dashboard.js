@@ -333,26 +333,7 @@ const Dashboard = () => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        <div className="panel community-impact-panel">
-                            <h3><Users size={20} /> Community Impact</h3>
-                            <div className="impact-stats">
-                                <div className="impact-stat-item">
-                                    <span>Issues Resolved</span>
-                                    {/* Using resolvedIssues count for dynamic data */}
-                                    <strong>{resolvedIssues} <small>total</small></strong>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <span>Response Time</span>
-                                    <strong>N/A <small>avg</small></strong>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <span>Community Score</span>
-                                    <strong>N/A</strong>
-                                </div>
-                            </div>
-                        </div>
+                        </div>        
                     </aside>
 
                     <main className="dashboard-content-panels">
