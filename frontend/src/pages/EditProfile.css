@@ -1,33 +1,30 @@
-
-/* Base Layout */
-.edit-profile-page .edit-profile-container {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: calc(100vh - 120px); /* Adjust for header and footer height */
-    padding: 2rem;
+/* Edit Profile Page Styles */
+.edit-profile-page {
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background-color: #f5f7fa;
+    flex-direction: column;
+    background-color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Header (Shared styles, ensuring back button works) */
-/* NOTE: .header-top, .logo-section, .logo-image, .logo-text, and .footer 
-   must be globally defined (e.g., in index.css) or correctly styled here 
-   if they are not global, but they are defined globally in your other files. 
-   I will define them here to ensure completeness and self-containment for the EditPage.
-*/
-
+/* Header Styles - White Background */
 .edit-profile-page .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #2c5292;
-    color: #fff;
-    padding: 0.75rem 2rem;
+    background-color: #ffffff;
+    color: #1e293b;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.edit-profile-page .white-header {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
 }
 
 .edit-profile-page .logo-section {
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -40,236 +37,698 @@
 
 .edit-profile-page .logo-text {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
+    color: #2c5292;
 }
 
-.edit-profile-page .back-to-profile .back-btn {
+.edit-profile-page .nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.edit-profile-page .nav-links a {
+    color: #4b5563;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.edit-profile-page .nav-links a:hover {
+    background-color: #f1f5f9;
+    color: #2c5292;
+}
+
+.edit-profile-page .nav-links a.active {
+    background-color: #2c5292;
+    color: white;
+}
+
+.edit-profile-page .user-profile {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
+}
+
+.edit-profile-page .profile-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #4b5563;
+    text-decoration: none;
     padding: 0.5rem 1rem;
-    border: 1px solid #fff;
     border-radius: 6px;
-    background-color: transparent;
-    color: #fff;
-    font-size: 0.9rem;
-    cursor: pointer;
     transition: background-color 0.2s;
 }
 
-.edit-profile-page .back-to-profile .back-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.edit-profile-page .profile-link:hover {
+    background-color: #f1f5f9;
 }
 
-/* --- Edit Form Panel Styles --- */
-.edit-profile-page .edit-form-panel {
-    background-color: #ffffff;
-    padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.edit-profile-page .user-initials {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f7cc2, #2c5292);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.edit-profile-page .user-name {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.edit-profile-page .logout-btn-header {
+    background: none;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-profile-page .logout-btn-header:hover {
+    background-color: #f1f5f9;
+    border-color: #9ca3af;
+}
+
+/* Hero Section - Same as ReportIssue Page */
+.edit-profile-page .dashboard-hero {
+    background: linear-gradient(135deg, #2c5292 0%, #4f7cc2 100%);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.edit-profile-page .hero-content-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.edit-profile-page .dashboard-hero h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.edit-profile-page .dashboard-hero p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Main Content Layout */
+.edit-profile-page .edit-profile-main {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
     width: 100%;
-    max-width: 650px;
 }
 
-.edit-profile-page .edit-form-panel h2 {
-    color: #2c5292;
-    margin-bottom: 0.5rem;
-    font-size: 1.8rem;
+/* Form Container */
+.edit-profile-page .edit-form-container {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
 }
 
-.edit-profile-page .edit-form-panel .subtitle {
-    color: #666;
-    margin-bottom: 1.5rem;
+.edit-profile-page .form-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+}
+
+.edit-profile-page .form-title-section h3 {
+    color: #1e293b;
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.edit-profile-page .form-title-section p {
+    color: #64748b;
+    margin: 0;
     font-size: 0.95rem;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1rem;
+}
+
+.edit-profile-page .logout-btn-symbol {
+    background: none;
+    border: 1px solid #dc2626;
+    color: #dc2626;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-profile-page .logout-btn-symbol:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* Edit Form Panel */
+.edit-profile-page .edit-form-panel {
+    padding: 2rem;
 }
 
 /* Status Messages */
 .edit-profile-page .status-message {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
     font-weight: 500;
+    border-left: 4px solid;
 }
 
 .edit-profile-page .status-message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background-color: #f0fdf4;
+    color: #166534;
+    border-left-color: #22c55e;
 }
 
 .edit-profile-page .status-message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: #fef2f2;
+    color: #991b1b;
+    border-left-color: #ef4444;
 }
 
-/* Form Styling */
-.edit-profile-page .edit-form {
+/* Form Sections */
+.edit-profile-page .form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.edit-profile-page .form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.edit-profile-page .section-title {
+    color: #1e293b;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Profile Photo Section */
+.edit-profile-page .avatar-container {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.edit-profile-page .avatar-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-profile-page .profile-photo-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.edit-profile-page .user-initials-fallback {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2c5292, #4f7cc2);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    border: 4px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.edit-profile-page .photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.edit-profile-page .file-input {
+    display: none;
+}
+
+.edit-profile-page .change-photo-btn {
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #2c5292;
+    color: white;
+    text-align: center;
+    justify-content: center;
+}
+
+.edit-profile-page .change-photo-btn:hover {
+    background-color: #1a3b6f;
+    transform: translateY(-1px);
+}
+
+.edit-profile-page .remove-photo-btn {
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #6b7280;
+    color: white;
+    text-align: center;
+    justify-content: center;
+}
+
+.edit-profile-page .remove-photo-btn:hover {
+    background-color: #4b5563;
+    transform: translateY(-1px);
+}
+
+/* Form Grid */
+.edit-profile-page .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
 }
 
+/* Form Groups */
 .edit-profile-page .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.edit-profile-page.form-group label {
+.edit-profile-page .form-label {
     font-weight: 600;
-    color: #333;
+    color: #374151;
     font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.edit-profile-page .form-group input {
+.edit-profile-page .form-input,
+.edit-profile-page .form-textarea {
     padding: 0.75rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    background-color: #fff;
+    font-family: inherit;
 }
 
-.edit-profile-page .form-group input:focus {
+.edit-profile-page .form-input:focus,
+.edit-profile-page .form-textarea:focus {
     border-color: #2c5292;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(44, 82, 146, 0.2);
+    box-shadow: 0 0 0 3px rgba(44, 82, 146, 0.1);
 }
 
-/* Read-Only Fields */
-.edit-profile-page .form-group.read-only-group input {
-    background-color: #e9ecef;
-    color: #6c757d;
-    cursor: not-allowed;
+.edit-profile-page .form-input:hover,
+.edit-profile-page .form-textarea:hover {
+    border-color: #9ca3af;
 }
 
-.edit-profile-page .form-group.read-only-group small {
+/* Bio Textarea */
+.edit-profile-page .bio-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.edit-profile-page .input-hint {
     font-size: 0.85rem;
-    color: #888;
+    color: #6b7280;
+    margin-top: 0.25rem;
 }
 
-/* Avatar Upload Specific Styles */
-.edit-profile-page .avatar-upload-section {
-    border: 1px solid #eee;
-    padding: 1.5rem;
-    border-radius: 8px;
-    background-color: #fafafa;
-}
-
-.edit-profile-page .avatar-preview-wrapper {
+/* Form Actions - Same as ReportIssue Page */
+.edit-profile-page .form-actions {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
     gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
 }
 
-.edit-profile-page .profile-photo-preview {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.edit-profile-page .user-initials-fallback {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: #2c5292;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    font-weight: bold;
-    border: 3px solid #ddd;
-}
-
-.edit-profile-page .file-input {
-    display: none; 
-}
-
-.edit-profile-page .upload-btn, .edit-profile-page .remove-photo-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background-color 0.2s, color 0.2s;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-align: center;
-}
-
-.edit-profile-page .upload-btn {
-    background-color: #4CAF50; /* Green */
-    color: white;
-}
-
-.edit-profile-page .upload-btn:hover {
-    background-color: #45a049;
-}
-
-.edit-profile-page .remove-photo-btn {
-    background-color: #f44336; /* Red */
-    color: white;
-    padding: 0.5rem 1rem;
-}
-.edit-profile-page .remove-photo-btn:hover {
-    background-color: #da190b;
-}
-
-/* Save Button */
-.edit-profile-page .save-btn {
+.edit-profile-page .btn-primary {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 2rem;
     border: none;
-    border-radius: 6px;
-    background-color: #2c5292;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2c5292, #4f7cc2);
     color: #fff;
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
-    margin-top: 1rem;
-    font-weight: bold;
+    transition: all 0.3s ease;
+    min-width: 140px;
 }
 
-.edit-profile-page .save-btn:hover:not(:disabled) {
-    background-color: #1a3b6f;
+.edit-profile-page .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 82, 146, 0.3);
 }
 
-.edit-profile-page .save-btn:disabled {
-    background-color: #aeb4c0;
+.edit-profile-page .btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.edit-profile-page .btn-secondary {
+    padding: 0.75rem 2rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #374151;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.edit-profile-page .btn-secondary:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.edit-profile-page .btn-secondary:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* Password Link */
-.edit-profile-page .password-link {
-    text-align: center;
-    margin-top: 1rem;
+/* Loading Spinner */
+.edit-profile-page .loading-spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
-.edit-profile-page .password-link a {
-    color: #2c5292;
-    text-decoration: none;
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Sidebar Styles - Similar to ReportIssue Page */
+.edit-profile-page .edit-profile-sidebar {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.edit-profile-page .sidebar-panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+}
+
+.edit-profile-page .sidebar-panel h4 {
+    color: #1e293b;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.edit-profile-page .tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.edit-profile-page .tips-list li {
+    padding: 0.5rem 0;
+    color: #4b5563;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.edit-profile-page .tips-list li:last-child {
+    border-bottom: none;
+}
+
+.edit-profile-page .process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.edit-profile-page .process-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.edit-profile-page .step-number {
+    width: 24px;
+    height: 24px;
+    background: #2c5292;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.edit-profile-page .step-content {
+    flex: 1;
+}
+
+.edit-profile-page .step-content strong {
+    color: #1e293b;
     font-size: 0.9rem;
 }
-.edit-profile-page .password-link a:hover {
+
+.edit-profile-page .step-content p {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.edit-profile-page .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.edit-profile-page .contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: #4b5563;
+}
+
+.edit-profile-page .contact-info a {
+    color: #2c5292;
+    text-decoration: none;
+}
+
+.edit-profile-page .contact-info a:hover {
     text-decoration: underline;
 }
 
-/* Footer (Simplified for Edit Page) */
+/* Footer */
 .edit-profile-page .footer {
-    text-align: center;
-    padding: 1rem;
-    background-color: #e2e8f0;
-    font-size: 0.9rem;
-    color: #555;
+    background-color: #1e293b;
+    color: #fff;
+    padding: 3rem 2rem 2rem;
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.edit-profile-page .footer-column {
+    margin-bottom: 2rem;
+}
+
+.edit-profile-page .footer-logo-section .logo-section {
+    margin-bottom: 1rem;
+}
+
+.edit-profile-page .footer-tagline {
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.edit-profile-page .footer-column h4 {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.edit-profile-page .footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.edit-profile-page .footer-column ul li {
+    margin-bottom: 0.5rem;
+}
+
+.edit-profile-page .footer-column ul li a {
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.edit-profile-page .footer-column ul li a:hover {
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .edit-profile-page .header-top {
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .edit-profile-page .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .edit-profile-page .user-profile {
+        order: 2;
+    }
+    
+    .edit-profile-page .dashboard-hero {
+        padding: 2rem 1rem;
+    }
+    
+    .edit-profile-page .dashboard-hero h2 {
+        font-size: 2rem;
+    }
+    
+    .edit-profile-page .dashboard-hero p {
+        font-size: 1.1rem;
+    }
+    
+    .edit-profile-page .edit-profile-main {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+    
+    .edit-profile-page .edit-profile-sidebar {
+        width: 100%;
+    }
+    
+    .edit-profile-page .form-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .edit-profile-page .edit-form-panel {
+        padding: 1.5rem;
+    }
+    
+    .edit-profile-page .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .edit-profile-page .form-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .edit-profile-page .btn-primary,
+    .edit-profile-page .btn-secondary {
+        width: 100%;
+    }
+    
+    .edit-profile-page .footer {
+        padding: 2rem 1rem;
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-profile-page .nav-links {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .edit-profile-page .nav-links a {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .edit-profile-page .user-profile {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .edit-profile-page .dashboard-hero h2 {
+        font-size: 1.75rem;
+    }
+    
+    .edit-profile-page .form-title-section h3 {
+        font-size: 1.3rem;
+    }
 }
