@@ -533,11 +533,13 @@
 }
 
 .contact-info a {
-    color: #2c5292;
+    color: #e91e63;
+    font-weight: 600;
     text-decoration: none;
 }
 
 .contact-info a:hover {
+    color: #c2185b;
     text-decoration: underline;
 }
 

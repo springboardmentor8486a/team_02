@@ -7,6 +7,8 @@ import {
     BarChart3, Info, Home, ArrowRight, LogOut // Ensure LogOut is available if needed, using ArrowRight for button
 } from 'lucide-react';
 import './Volunteer.css';
+import VolunteerHeader from '../components/VolunteerHeader.jsx';
+import VolunteerFooter from '../components/VolunteerFooter.jsx';
 
 const Volunteer = () => {
     const navigate = useNavigate();
@@ -92,32 +94,12 @@ const Volunteer = () => {
 
     return (
         <div className="volunteer-dashboard">
-            {/* Header: Using Dashboard.js class names */}
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                <nav className="nav-links">
-                    <Link to="/volunteer-dashboard" className="active">Dashboard</Link>
-<Link to="/my-assigned-issues">My Assigned Issues</Link>
-                    <Link to="/volunteer-browser-issues">Browse Issues</Link>
-                </nav>
-                <div className="user-profile">
-                    <Link to="/volunteer-profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user?.name || 'Sarah Wilson')}</div>
-                        <span className="user-name">{user?.name || 'Sarah Wilson'}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+            <VolunteerHeader />
 
             {/* Hero Section */}
             <section className="hero-section">
                 <div className="hero-content">
-                    <h1 className="hero-title">Welcome back, {user?.name.split(' ')[0] || 'Sarah'}!</h1>
+                    <h1 className="hero-title">Welcome back, {(user?.fullName?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'Sarah'}!</h1>
                     <p className="hero-subtitle">
                         Making a difference in North District - Thank you for your dedication to improving our community!
                     </p>
@@ -311,6 +293,7 @@ const Volunteer = () => {
                     </div>
                 </div>
             )}
+            <VolunteerFooter />
         </div>
     );
 };

@@ -15,10 +15,12 @@ const Header = () => {
         navigate('/Home'); // Redirect to login after logout
     };
 
-    const getUserInitials = (name) => {
-        if (!name) return 'JD'; // Default if no user or name
-        return name.split(' ').map(part => part[0]).join('').toUpperCase();
-    };
+  const getUserInitials = (name) => {
+    const safe = name || '';
+    const parts = safe.split(' ').filter(Boolean);
+    if (parts.length === 0) return 'JD';
+    return parts.map(p => p[0]).join('').toUpperCase();
+  };
 
     return (
         <header className="app-header">

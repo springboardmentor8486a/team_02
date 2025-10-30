@@ -42,8 +42,8 @@ const complaintSchema = new mongoose.Schema({
 
     status: {
         type: String, 
-        enum: ["recived", "inReview", "resolved", "in progress"], // Added "in progress"
-        default: "recived"
+        enum: ["received", "inReview", "resolved", "inProgress", "recived"], // "recived" is a typo but kept for backward compatibility
+        default: "received"
     },
 
     // ✅ ADDED FIELDS for Volunteer Updates and Admin Review

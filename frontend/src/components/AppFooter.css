@@ -1,0 +1,13 @@
+.simple-footer {
+    width: 100%;
+    padding: 18px 20px;
+    background: #2c5292;
+    color: #ffffff;
+    text-align: center;
+    font-weight: 600;
+}
+.simple-footer a { color: #ffffff; text-decoration: underline; }
+
+
+
+

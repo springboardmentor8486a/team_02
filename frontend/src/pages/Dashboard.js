@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { PlusCircle, MapPin, FileText, ArrowRight, BarChart3, Users, Mail, Phone, Globe, Trash2, Lightbulb, Droplet, Wrench } from 'lucide-react';
 import './Dashboard.css';
+import AppHeader from '../components/AppHeader';
+import AppFooter from '../components/AppFooter';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Use the base URL for consistency
 
@@ -204,8 +206,9 @@ const Dashboard = () => {
     };
 
     const getUserInitials = (name) => {
-        if (!name) return 'JD';
-        const nameParts = name.split(' ');
+        const safeName = name || '';
+        const nameParts = safeName.split(' ').filter(Boolean);
+        if (nameParts.length === 0) return 'U';
         const initials = nameParts.map(part => part[0]).join('');
         return initials.toUpperCase();
     };
@@ -229,31 +232,12 @@ const Dashboard = () => {
 
     return (
         <>
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                <nav className="nav-links">
-                    <Link to="/dashboard" className="active">Dashboard</Link>
-                    <Link to="/browse-issues">Browse Issues</Link>
-                    <Link to="/report-issue">Report Issue</Link>
-                </nav>
-                <div className="user-profile">
-                    <Link to="/profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+            <AppHeader />
 
             <div className="dashboard-container">
                 <div className="dashboard-hero">
                     <div className="hero-content-wrapper">
-                        <h2>Welcome, {user.name.split(' ')[0]}!</h2>
+                        <h2>Welcome, {(user?.fullName?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'User'}!</h2>
                         <p>Together, we're making our community cleaner and safer. Monitor progress, track impact, and see how your contributions make a difference.</p>
                         <div className="hero-buttons">
                             <Link to="/report-issue" className="hero-btn-primary inline-flex items-center gap-2">
@@ -389,48 +373,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <footer className="footer">
-                <div className="footer-column footer-logo-section">
-                    <div className="logo-section">
-                        <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                        <div className="logo-text">Clean Street</div>
-                    </div>
-                    <p className="footer-tagline">Civic Engagement Platform</p>
-                    <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
-                    <div className="contact-info">
-                        <p><Mail size={16} /> <a href="mailto:hello@cleanstreet.org">hello@cleanstreet.org</a></p>
-                        <p><Phone size={16} /> <a href="tel:5551234567">(555) 123-4567</a></p>
-                        <p><Globe size={16} /> <a href="http://www.cleanstreet.org" target="_blank" rel="noopener noreferrer">www.cleanstreet.org</a></p>
-                    </div>
-                </div>
-                <div className="footer-column">
-                    <h4>Platform</h4>
-                    <ul>
-                        <li><Link to="/how-it-works">How it Works</Link></li>
-                        <li><Link to="/features">Features</Link></li>
-                        <li><Link to="/pricing">Pricing</Link></li>
-                        <li><Link to="/mobile-app">Mobile App</Link></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><Link to="/help-center">Help Center</Link></li>
-                        <li><Link to="/contact">Contact Us</Link></li>
-                        <li><Link to="/user-guide">User Guide</Link></li>
-                        <li><Link to="/community-forum">Community Forum</Link></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><Link to="/about">About Us</Link></li>
-                        <li><Link to="/careers">Careers</Link></li>
-                        <li><Link to="/press">Press Kit</Link></li>
-                        <li><Link to="/blog">Blog</Link></li>
-                    </ul>
-                </div>
-            </footer>
+            <AppFooter />
         </>
     );
 };

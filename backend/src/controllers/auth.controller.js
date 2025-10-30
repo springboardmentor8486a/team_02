@@ -1,162 +1,139 @@
-import User from "../models/user.model.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { google } from 'googleapis';
+import User from "../models/user.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
-// Initialize OAuth2 client
-const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_CALLBACK_URL
-);
+// Helper: build a safe user object with consistent field names
+function buildSafeUser(userDoc) {
+  const user = userDoc.toObject({ getters: true });
+  return {
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    location: user.location || "",
+    about: user.about ?? user.aboutMe ?? "",
+    profilePhoto: user.profilePhoto || "",
+    isVerified: user.isVerified || false,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
 
-// Check if Google OAuth is configured
-const isGoogleOAuthEnabled = () => {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    
-    if (!clientId || !clientSecret || 
-        clientId.includes('your-actual') || 
-        clientId === 'placeholder-client-id') {
-        return false;
+// POST /signup
+const signup = asyncHandler(async (req, res) => {
+  const { fullName, email, password, role, location, about } = req.body || {};
+  const emailNormalized = (email || '').toLowerCase().trim();
+  const passwordRaw = (password || '').toString();
+
+  if (!fullName || !emailNormalized || !passwordRaw) {
+    throw new ApiError(400, "fullName, email and password are required");
+  }
+
+  const existing = await User.findOne({ email: emailNormalized });
+  if (existing) {
+    throw new ApiError(400, "User already exists");
+  }
+
+  // Optional profile photo (multer provides req.file)
+  let profilePhotoUrl = "";
+  if (req.file?.path) {
+    const uploadResult = await uploadOnCloudinary(req.file.path);
+    if (!uploadResult) {
+      throw new ApiError(500, "Profile photo upload failed");
     }
-    return true;
-};
+    profilePhotoUrl = uploadResult.secure_url;
+  }
 
-// Initiate Google OAuth
-export const googleAuth = asyncHandler(async (req, res) => {
-    // console.log('🔍 Starting Google OAuth...');
-    // console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
-    // console.log('Callback URL:', process.env.GOOGLE_CALLBACK_URL);
+  const user = await User.create({
+    fullName: fullName.trim(),
+    email: emailNormalized,
+    password: passwordRaw, // hashed by pre-save hook
+    role: role || "user",
+    location: location || "",
+    // Support both about and aboutMe (model may alias)
+    about: about || "",
+    profilePhoto: profilePhotoUrl
+  });
 
-    if (!isGoogleOAuthEnabled()) {
-        throw new ApiError(500, "Google OAuth is not properly configured");
+  const created = await User.findById(user._id).select("-password -refreshToken");
+  if (!created) {
+    throw new ApiError(500, "User creation failed");
+  }
+
+  const accessToken = created.generateAccessToken();
+  const refreshToken = created.generateRefreshToken();
+
+  created.refreshToken = refreshToken;
+  await created.save({ validateBeforeSave: false });
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  };
+
+  const safeUser = buildSafeUser(created);
+
+  return res
+    .status(201)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .json(new ApiResponse(201, { user: safeUser, accessToken }, "Signup successful"));
+});
+
+// POST /login
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body || {};
+  const emailNormalized = (email || '').toLowerCase().trim();
+  const passwordRaw = (password || '').toString();
+  if (!emailNormalized || !passwordRaw) {
+    throw new ApiError(400, "Email and password are required");
+  }
+
+  const user = await User.findOne({ email: emailNormalized });
+  if (!user) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+
+  // If this account was created via Google, it may not have a password set
+  if (user.googleId && !user.password) {
+    throw new ApiError(400, 'This account uses Google Sign-In. Please sign in with Google.');
+  }
+
+  let isValid = await user.comparePassword(passwordRaw);
+  if (!isValid) {
+    // Legacy support: migrate old plain-text passwords to bcrypt on-the-fly
+    if (user.password && typeof user.password === 'string' && user.password.length > 0 && user.password === passwordRaw) {
+      user.password = passwordRaw; // will be hashed by pre-save hook
+      await user.save();
+      isValid = true;
     }
+  }
+  if (!isValid) {
+    throw new ApiError(401, "Invalid email or password");
+  }
 
-    const scopes = [
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/userinfo.profile'
-    ];
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
 
-    const authUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes,
-        prompt: 'consent'
-    });
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
 
-    // console.log('📍 Redirecting to Google...');
-    res.redirect(authUrl);
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  };
+
+  const safeUser = buildSafeUser(user);
+
+  return res
+    .status(200)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .json(new ApiResponse(200, { user: safeUser, accessToken }, "Login successful"));
 });
 
-// Handle Google OAuth callback
-export const googleCallback = asyncHandler(async (req, res) => {
-    // console.log('📥 Google callback received');
-    // console.log('Query params:', req.query);
-
-    try {
-        const { code } = req.query;
-
-        if (!code) {
-            throw new ApiError(400, "Authorization code not found");
-        }
-
-        //console.log('🔄 Exchanging code for tokens...');
-        const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
-        // console.log('✅ Token received');
-
-        //console.log('👤 Fetching user info...');
-        const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-        const { data } = await oauth2.userinfo.get();
-
-        //console.log('📧 User email:', data.email);
-
-        // Find or create user
-        let user = await User.findOne({ email: data.email });
-
-        if (!user) {
-           // console.log('🆕 Creating new user...');
-            user = await User.create({
-                fullName: data.name,
-                email: data.email,
-                googleId: data.id,
-                avatar: data.picture,
-                isVerified: true,
-                role: 'user'
-            });
-        } else {
-           // console.log('👋 Existing user found');
-            // Update Google ID if not set
-            if (!user.googleId) {
-                user.googleId = data.id;
-                await user.save({ validateBeforeSave: false });
-            }
-        }
-
-        // Generate tokens
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
-
-        // Save refresh token
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-
-       // console.log('✅ User logged in:', user.email);
-
-        // Cookie options
-        const options = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000 // 1 day
-        };
-
-        // Set cookies AND redirect with tokens in URL
-       // console.log('🎉 Authentication complete! Redirecting to frontend...');
-        res
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-            .redirect(`http://localhost:5173/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`);
-
-    } catch (error) {
-        console.error('❌ Google callback error:', error);
-        res.redirect('http://localhost:5173/login?error=auth_failed');
-    }
-});
-
-// Get current user
-export const getCurrentUser = asyncHandler(async (req, res) => {
-  //  console.log('📡 getCurrentUser called');
-    //console.log('User from JWT:', req.user);
-    
-    return res.status(200).json(
-        new ApiResponse(200, req.user, "User fetched successfully")
-    );
-});
-
-// Logout
-export const logout = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $unset: {
-                refreshToken: 1
-            }
-        },
-        {
-            new: true
-        }
-    );
-
-    const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
-    };
-
-    return res
-        .status(200)
-        .clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options)
-        .json(new ApiResponse(200, {}, "User logged out successfully"));
-});
+export { signup, login };

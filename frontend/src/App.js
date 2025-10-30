@@ -35,6 +35,8 @@ import AdminUsersVolunteers from "./pages/AdminUsersVolunteers";
 import AdminRequests from "./pages/AdminRequests";
 import AdminIssuesUpdates from "./pages/AdminIssuesUpdates";
 import AdminProfile from "./pages/AdminProfile";
+import AdminBrowseIssues from "./pages/AdminBrowseIssues";
+import AddNewAdmin from './pages/AddNewAdmin';
 
 function App() {
   return (
@@ -143,9 +145,19 @@ function App() {
               <AdminIssuesUpdates />
             </ProtectedRoute>
           } />
+          <Route path="/admin-browse-issues" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminBrowseIssues />
+            </ProtectedRoute>
+          } />
           <Route path="/edit-admin-profile" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <EditProfile  />
+            </ProtectedRoute>
+          } />
+          <Route path="/add-admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AddNewAdmin />
             </ProtectedRoute>
           } />
         </Routes>

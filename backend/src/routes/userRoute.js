@@ -1,35 +1,53 @@
 import { Router } from "express";
-import { 
-    registerUser,
-    loginUser,
-    logoutUser,
-    getUserDetails,
-    updateUserDetails,
-    getAllUsersAndStats,
-    forgotPassword,
-    resetPassword
-} from "../controllers/user.controller.js";
+import path from "path";
+import multer from "multer";
+import { logoutUser, getUserDetails, updateUserDetails, getAllUsersAndStats, forgotPassword, resetPassword } from "../controllers/user.controller.js";
+import { signup as registerUser, login as loginUser } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
 
 const userRouter = Router();
 
-// Password reset routes (Public)
-userRouter.route("/forgot-password").post(forgotPassword);
-userRouter.route("/reset-password/:token").post(resetPassword);
+/* --------------------------------
+   🗂️ MULTER CONFIGURATION
+----------------------------------- */
 
-// User routes
-userRouter.route("/register").post(upload.single("profilePhoto"), registerUser);
-userRouter.route("/login").post(loginUser);
-userRouter.route("/logout").post(verifyJWT, logoutUser);
+const storage = multer.diskStorage({
+  destination: "./public/temp",
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`
+    );
+  },
+});
 
-// ADD THIS - Current user endpoint for OAuth callback
-userRouter.route("/current-user").get(verifyJWT, getUserDetails);
+const upload = multer({ storage });
 
-userRouter.route("/profile").get(verifyJWT, getUserDetails);
-userRouter.route("/profile").put(verifyJWT, upload.single("profilePhoto"), updateUserDetails);
+/* --------------------------------
+   🛠️ AUTH & USER ROUTES
+----------------------------------- */
 
-// Admin route
-userRouter.route("/list-all").get(verifyJWT, getAllUsersAndStats); 
+// 🔹 Password reset (Public)
+userRouter.post("/forgot-password", forgotPassword);
+userRouter.post("/reset-password/:token", resetPassword);
+
+// 🔹 Register new user (with optional profile photo)
+userRouter.post("/register", upload.single("profilePhoto"), registerUser);
+
+// 🔹 Login / Logout
+userRouter.post("/login", loginUser);
+userRouter.post("/logout", verifyJWT, logoutUser);
+
+// 🔹 Get current user details
+userRouter.get("/current-user", verifyJWT, getUserDetails);
+
+// 🔹 Get & Update profile (Protected)
+userRouter
+  .route("/profile")
+  .get(verifyJWT, getUserDetails)
+  .put(verifyJWT, upload.single("profilePhoto"), updateUserDetails);
+
+// 🔹 Admin: Get all users + stats
+userRouter.get("/list-all", verifyJWT, getAllUsersAndStats);
 
 export default userRouter;

@@ -5,7 +5,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import User from "../models/user.model.js";
 import { Complaint } from "../models/complaint.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-
+import fs from 'fs';
+import path from 'path';
 // ================= Register =================
 const registerUser = asyncHandler(async (req, res, next) => {
 // ✅ Accept both 'name' and 'fullName' for flexibility
@@ -123,37 +124,59 @@ res.status(200).json(new ApiResponse(200, user, "User details retrieved successf
 });
 
 // ================= Update User Details =================
-const updateUserDetails = asyncHandler(async (req, res, next) => {
-    const { fullName, location, aboutMe, removeProfilePhoto } = req.body;
-    if (!fullName || !location) {
-        throw new ApiError(400, "Full Name and location are required");
+
+const updateUserDetails = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ApiError(401, "Unauthorized: User not logged in");
     }
 
-    const updatedData = {
-        fullName: fullName.trim(),
-        location,
-        aboutMe
-    };
+    const { fullName, email, location, about: aboutFromBody, aboutMe, removeProfilePhoto } = req.body || {};
+    const updateData = {};
 
-    if (removeProfilePhoto === 'true') {
-        updatedData.profilePhoto = "";
-    } else if (req.file?.path) {
-        const uploadResult = await uploadOnCloudinary(req.file.path);
-        if (!uploadResult) throw new ApiError(500, "Profile photo upload failed");
-        updatedData.profilePhoto = uploadResult.secure_url;
+    if (fullName) updateData.fullName = fullName;
+    if (email) updateData.email = email;
+    if (location) updateData.location = location;
+    const aboutVal = typeof aboutFromBody === 'string' ? aboutFromBody : aboutMe;
+    if (typeof aboutVal === 'string') updateData.aboutMe = aboutVal;
+
+    // ✅ Handle Remove Photo
+    if (removeProfilePhoto === "true") {
+      updateData.profilePhoto = "";
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,   // 🧠 this depends on verifyJWT
-        updatedData,
-        { new: true, runValidators: true }
-    ).select("-password -refreshToken");
+    // ✅ Handle New Photo Upload (Multer -> Temp Folder -> Move)
+    if (req.file) {
+      const oldPath = req.file.path.replace(/\\/g, "/");
+      const newDir = "public/uploads";
 
-    if (!updatedUser) throw new ApiError(404, "User not found");
+      if (!fs.existsSync(newDir)) fs.mkdirSync(newDir, { recursive: true });
 
-    res.status(200).json(new ApiResponse(200, updatedUser, "User details updated successfully"));
+      const newPath = path.join(newDir, req.file.filename);
+      fs.renameSync(oldPath, newPath);
+
+      // Normalize path separators for cross-platform compatibility
+      const normalizedPath = newPath.replace(/\\/g, "/");
+      updateData.profilePhoto = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password -refreshToken");
+
+    if (!updatedUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedUser, "Profile updated successfully"));
+  } catch (error) {
+    console.error("❌ Error updating profile:", error);
+    throw new ApiError(500, "Server error while updating profile");
+  }
 });
-
 
 
 // ================= Get All Users and Stats =================
@@ -287,14 +310,13 @@ res.status(200).json(
 new ApiResponse(200, null, 'Password reset successful. You can now login with your new password.')
 );
 });
-
 export {
-registerUser,
-loginUser,
-logoutUser,
-getUserDetails,
-updateUserDetails,
-forgotPassword,
-resetPassword,
-getAllUsersAndStats
+  registerUser,
+  loginUser,
+  logoutUser,
+  getUserDetails,
+  updateUserDetails,
+  forgotPassword,
+  resetPassword,
+  getAllUsersAndStats
 };

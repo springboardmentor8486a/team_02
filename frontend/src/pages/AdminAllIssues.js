@@ -8,7 +8,8 @@ import {
     User as UserIcon, Loader2 
 } from 'lucide-react';
 import './AdminAllIssues.css';
-
+import AdminHeader from '../components/AdminHeader';
+import AdminFooter from '../components/AdminFooter';
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
 // List of standard department strings used during initial complaint registration
@@ -275,43 +276,7 @@ const AllIssuesAdmin = () => {
     return (
         <div className="all-issues-admin">
             {/* Header */}
-            <header className="admin-header">
-                <div className="admin-header-left">
-                    <div className="admin-logo">
-                        <img src="/images/logo.png" alt="Clean Street" className="admin-logo-img" />
-                        <div className="admin-logo-text">
-                            <div className="admin-logo-title">Clean Street</div>
-                            <div className="admin-logo-subtitle">Civic Platform</div>
-                        </div>
-                    </div>
-                    <nav className="admin-nav">
-                        <Link to="/admin-dashboard" className="admin-nav-link">
-                            <LayoutDashboard size={18} /> Dashboard
-                        </Link>
-                        <Link to="/admin-all-issues" className="admin-nav-link active">
-                            <AlertCircle size={18} /> All Issues
-                        </Link>
-                        <Link to="/admin-users-volunteers" className="admin-nav-link">
-                            <Users size={18} /> Users & Volunteers
-                        </Link>
-                        {/* <Link to="/admin-requests" className="admin-nav-link">
-                            <FileText size={18} /> Admin Requests
-                        </Link> */}
-                        {/* <Link to="/admin-issues-updates" className="admin-nav-link">
-                            <Clock size={18} /> Issue Updates
-                        </Link> */}
-                    </nav>
-                </div>
-                <div className="user-profile">
-                    <Link to="/admin-profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+           <AdminHeader />
 
             <div className="issues-hero">
                 <div className="issues-hero-content">
@@ -419,9 +384,12 @@ const AllIssuesAdmin = () => {
                             </tbody>
                         </table>
                     )}
+                    
                 </div>
             </div>
+            <AdminFooter />
         </div>
+        
     );
 };
 

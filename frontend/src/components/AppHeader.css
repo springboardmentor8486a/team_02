@@ -1,0 +1,31 @@
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+.logo-section { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.logo-image { width: 36px; height: 36px; object-fit: contain; }
+.logo-text { font-weight: 700; color: #2c5292; }
+.nav-links { display: flex; gap: 18px; }
+.nav-links a { color: #4a5568; text-decoration: none; font-weight: 600; }
+.nav-links a.active, .nav-links a:hover { color: #2c5292; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.user-profile { display: flex; align-items: center; gap: 10px; }
+.profile-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.user-initials { width: 32px; height: 32px; border-radius: 50%; background: #e9eefd; color: #2c5292; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.user-name { color: #1a202c; font-weight: 600; }
+.logout-btn-header, .sign-in-btn, .get-started-btn { border: none; background: #2c5292; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.get-started-btn { background: #4c66e4; }
+.sign-in-btn { background: transparent; color: #2c5292; border: 1px solid #2c5292; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
+
+
+
+
+

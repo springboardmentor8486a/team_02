@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from "xlsx";
+import AdminHeader from '../components/AdminHeader';
+import AdminFooter from '../components/AdminFooter';
 import { 
   LayoutDashboard, AlertCircle, Users, FileText, 
   Clock, CheckCircle, TrendingUp, Timer, ThumbsUp,
@@ -288,45 +290,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       {/* Header */}
-      <header className="admin-header">
-        <div className="admin-header-left">
-          <div className="admin-logo">
-            <img src="/images/logo.png" alt="Clean Street" className="admin-logo-img" />
-            <div className="admin-logo-text">
-              <div className="admin-logo-title">Clean Street</div>
-              <div className="admin-logo-subtitle">Civic Platform</div>
-            </div>
-          </div>
-          <nav className="admin-nav" col-mod-3 >
-
-            <Link to="/admin-dashboard" className="admin-nav-link active">
-              <LayoutDashboard size={18} />
-              Dashboard
-            </Link>
-            <Link to="/admin-all-issues" className="admin-nav-link">
-              <AlertCircle size={18} />
-              All Issues
-            </Link>
-            <Link to="/admin-users-volunteers" className="admin-nav-link">
-              <Users size={18} />
-              Users & Volunteers
-            </Link>
-            {/* <Link to="/admin-requests" className="admin-nav-link">
-              <FileText size={18} />
-              Admin Requests
-            </Link> */}
-          </nav>
-        </div>
-        <div className="user-profile">
-          <Link to="/admin-profile" className="profile-link">
-            <div className="user-initials">{getUserInitials(user.name)}</div>
-            <span className="user-name">{user.name}</span>
-          </Link>
-          <button onClick={handleLogout} className="logout-btn-header">
-            <ArrowRight size={20} />
-          </button>
-        </div>
-      </header>
+      <AdminHeader />
 
       {/* Hero Section */}
       <div className="admin-hero">
@@ -529,36 +493,16 @@ const AdminDashboard = () => {
             alt="Admin Profile"
             className="admin-profile-img"
             onError={(e) => {
-              e.target.style.display = 'none';
+              const img = e?.currentTarget;
+              if (!img) return;
+              img.style.display = 'none';
             }}
           />
         </div>
       </div>
 
-      {/* Administrative Tools */}
-      <div className="admin-tools-section">
-        <h2 className="admin-tools-title">Administrative Tools</h2>
-        <div className="admin-tools-grid">
-          {adminTools.map((tool, idx) => {
-            const Icon = tool.icon;
-            return (
-              <div
-                key={idx}
-                className="admin-tool-card"
-                onClick={() => navigate(tool.route)}
-              >
-                <div className="admin-tool-icon" style={{ backgroundColor: tool.bgColor }}>
-                  <Icon size={28} color={tool.iconColor} />
-                </div>
-                <div className="admin-tool-content">
-                  <h3 className="admin-tool-title">{tool.title}</h3>
-                  <p className="admin-tool-description">{tool.description}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      
+      <AdminFooter />
     </div>
   );
 };

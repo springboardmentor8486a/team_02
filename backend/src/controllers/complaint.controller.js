@@ -220,13 +220,19 @@ const getAssignedIssues = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Access forbidden. Only volunteers can view assigned issues.");
     }
 
-    const volunteerName = req.user.name;
+    // Use fullName from the user model (not name)
+    const volunteerName = req.user.fullName || req.user.name;
 
+    if (!volunteerName) {
+        throw new ApiError(400, "Volunteer name not found in user profile.");
+    }
+
+    // Find complaints where assignedTo matches the volunteer's fullName (case-insensitive)
     const assignedIssues = await Complaint.find({
         assignedTo: { $regex: `^${volunteerName}$`, $options: 'i' }
     })
-    .populate('userId', 'name')
-    .sort({ priority: -1, createdAt: 1 });
+    .populate('userId', 'fullName name profilePhoto')
+    .sort({ createdAt: -1 }); // Sort by newest first
 
     res.status(200).json(new ApiResponse(200, assignedIssues, "Assigned issues fetched successfully."));
 });
@@ -245,16 +251,40 @@ const volunteerUpdateStatus = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Complaint not found");
     }
 
-    complaint.status = status || complaint.status;
+    // Verify that this complaint is assigned to the current volunteer
+    const volunteerName = req.user.fullName || req.user.name;
+    if (complaint.assignedTo && complaint.assignedTo.toLowerCase() !== volunteerName.toLowerCase()) {
+        throw new ApiError(403, "You can only update complaints assigned to you.");
+    }
+
+    // Map status values to match enum
+    let statusToSave = status || complaint.status;
+    if (statusToSave === 'Completed' || statusToSave === 'completed') {
+        statusToSave = 'resolved';
+    } else if (statusToSave === 'In Progress' || statusToSave === 'in progress') {
+        statusToSave = 'inProgress';
+    }
+
+    complaint.status = statusToSave;
     complaint.updatedAt = new Date();
     
     if (workNotes) {
         complaint.workNotes = workNotes;
     }
 
+    // Handle proof photo upload
     if (req.file) {
         const imageUpload = await uploadOnCloudinary(req.file.path);
-        complaint.photo = imageUpload?.url || complaint.photo;
+        if (imageUpload?.secure_url) {
+            // Store proof photo separately or append to existing photos
+            // For now, we'll store it in the photo field (you may want a separate proofPhoto field)
+            complaint.photo = imageUpload.secure_url;
+        }
+    }
+
+    // Set pendingUpdate flag when volunteer marks as resolved
+    if (statusToSave === 'resolved') {
+        complaint.pendingUpdate = true;
     }
 
     await complaint.save();

@@ -33,10 +33,23 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin', 'volunteer'],
         default: 'user'
     },
-    avatar: {
+
+    // ✅ New fields for profile updates
+    location: {
         type: String,
-        default: null
+        default: ''
     },
+    // Primary internal field with alias for external consistency
+    aboutMe: {
+        type: String,
+        default: '',
+        alias: 'about'
+    },
+    profilePhoto: {
+        type: String,
+        default: ''
+    },
+
     refreshToken: {
         type: String
     },
@@ -45,32 +58,35 @@ const userSchema = new mongoose.Schema({
         default: false
     },
     resetPasswordToken: {
-      type: String,
+        type: String,
     },
     resetPasswordExpires: {
-      type: Date,
+        type: Date,
     }
 }, {
     timestamps: true
 });
 
-// Hash password before saving
+
+// 🔐 Hash password before saving
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
-    
+
     if (this.password) {
         this.password = await bcrypt.hash(this.password, 10);
     }
     next();
 });
 
-// Compare password method
+
+// 🔍 Compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
     if (!this.password) return false;
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Generate Access Token
+
+// 🔑 Generate Access Token
 userSchema.methods.generateAccessToken = function() {
     return jwt.sign(
         {
@@ -85,7 +101,8 @@ userSchema.methods.generateAccessToken = function() {
     );
 };
 
-// Generate Refresh Token
+
+// ♻️ Generate Refresh Token
 userSchema.methods.generateRefreshToken = function() {
     return jwt.sign(
         {
@@ -97,6 +114,7 @@ userSchema.methods.generateRefreshToken = function() {
         }
     );
 };
+
 
 const User = mongoose.model('User', userSchema);
 

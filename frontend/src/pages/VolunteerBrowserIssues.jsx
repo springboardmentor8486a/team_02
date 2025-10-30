@@ -6,6 +6,8 @@ import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCir
 
 // Assuming you have a CSS file for styling:
 import './VolunteerBrowserIssues.css';
+import VolunteerHeader from '../components/VolunteerHeader.jsx';
+import VolunteerFooter from '../components/VolunteerFooter.jsx';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
 
@@ -104,16 +106,14 @@ const UserBrowseIssue = () => {
         if (!user) return;
         setLoading(true);
 
-        // Map frontend categories to potential backend 'assignedTo' values for filtering,
-        // using 'Other' or a custom value for 'All Categories'. Assuming backend handles filtering.
         const categoryMap = {
             'Garbage & Waste': 'Municipal sanitation and public health',
             'Potholes': 'Roads and street infrastructure',
             'Street Lights': 'Street lighting and electrical assets',
             'Water Issues': 'Water, sewerage, and stormwater',
-            'Vandalism': 'Ward/zone office and central admin', // Using one of the existing backend categories for Vandalism/Other
-            'Other': 'Other', // Placeholder for "Other"
-            'All Categories': undefined // Or handle on backend
+            'Vandalism': 'Ward/zone office and central admin',
+            'Other': 'Other',
+            'All Categories': undefined
         };
 
         const statusMap = {
@@ -151,7 +151,6 @@ const UserBrowseIssue = () => {
                     'Street lighting and electrical assets': 'Street Lights',
                     'Water, sewerage, and stormwater': 'Water Issues',
                     'Ward/zone office and central admin': 'Vandalism'
-                    // Add more mappings if known
                 };
                 const displayCategory = reverseCategoryMap[comp.assignedTo] || 'Other';
 
@@ -163,7 +162,6 @@ const UserBrowseIssue = () => {
                     category: displayCategory,
                     status: statusText,
                     createdAt: comp.createdAt,
-                    // These are placeholders, actual counts will be fetched below
                     votes: 0,
                     comments: comp.comments?.length || 0,
                     views: Math.floor(Math.random() * 200), // Mocked for display
@@ -184,14 +182,13 @@ const UserBrowseIssue = () => {
                         params: { issues: issueIds },
                         withCredentials: true
                     });
-                    // Assuming response data is an object like { issueId: 'upvote' | 'downvote' | undefined }
                     userVotesMap = userVotesResp.data.data || {};
                 } catch (err) {
                     // console.warn("Failed to fetch user votes on load:", err.response?.data || err.message);
                 }
             }
             // Set the userVotes state to correctly highlight buttons
-            setUserVotes(userVotesMap); 
+            setUserVotes(userVotesMap);
 
             // Fetch overall vote counts
             const countsPromises = fetchedIssues.map(i =>
@@ -547,27 +544,7 @@ const UserBrowseIssue = () => {
 
     return (
         <>
-            {/* Header */}
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                <nav className="nav-links">
-                    <Link to="/volunteer" >Dashboard</Link>
-<Link to="/my-assigned-issues" >My Assigned Issues</Link>
-                                        <Link to="/volunteer-browser-issues" className="active">Browse Issues</Link>
-                </nav>
-                <div className="user-profile">
-                    <Link to="/profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+            <VolunteerHeader />
 
             <div className="dashboard-container">
                 {/* Hero */}
@@ -575,7 +552,7 @@ const UserBrowseIssue = () => {
                     <div className="hero-background"></div>
                     <div className="hero-content-wrapper">
                         <div className="hero-badge">Community Platform</div>
-                        <h1>Discover & Support Local Issues</h1>
+                        <h1>Browse All Community Issues</h1>
                         <p>Join thousands of community members in identifying, voting, and resolving neighborhood concerns. Together we build better communities.</p>
                         <div className="hero-stats">
                             <div className="hero-stat">
@@ -603,9 +580,10 @@ const UserBrowseIssue = () => {
                     </div>
                 </div>
 
+                {/* Main Content Layout */}
                 <div className="browse-issues-main">
                     <div className="browse-sidebar">
-                        {/* Sidebar content */}
+                        {/* Sidebar: Issue Categories */}
                         <div className="sidebar-panel">
                             <div className="panel-header">
                                 <BarChart3 size={20} className="panel-icon" />
@@ -632,7 +610,8 @@ const UserBrowseIssue = () => {
                                         </div>
                                         <span
                                             className="category-count"
-                                            style={{ backgroundColor: item.color }}
+                                            // The style logic here is duplicated and should rely on CSS, but keeping inline for compatibility with your provided structure.
+                                            style={{ backgroundColor: filters.category === item.category ? 'rgba(255, 255, 255, 0.2)' : item.color + '20', color: filters.category === item.category ? 'white' : item.color }}
                                         >
                                             {issues.filter(i => i.category === item.category).length}
                                         </span>
@@ -645,11 +624,14 @@ const UserBrowseIssue = () => {
                                     <div className="category-icon-title">
                                         <span className="category-title">All Categories</span>
                                     </div>
-                                    <span className="category-count">{issues.length}</span>
+                                    <span className="category-count" style={{ backgroundColor: filters.category === 'All Categories' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0', color: filters.category === 'All Categories' ? 'white' : '#4a5568' }}>
+                                        {issues.length}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Sidebar: Community Impact */}
                         <div className="sidebar-panel">
                             <div className="panel-header">
                                 <Users size={20} className="panel-icon" />
@@ -682,6 +664,7 @@ const UserBrowseIssue = () => {
                     </div>
 
                     <div className="browse-content">
+                        {/* Filter and Search Panel */}
                         <div className="content-panel filter-panel">
                             <div className="panel-header-main">
                                 <div className="panel-title">
@@ -831,7 +814,11 @@ const UserBrowseIssue = () => {
                                 ) : (
                                     <div className="issues-grid">
                                         {filteredIssues.map(issue => (
-                                            <div key={issue.id} className="issue-card">
+                                            // FIX: Attach navigate handler to the card wrapper
+                                            <div key={issue.id} 
+                                                 className="issue-card" 
+                                                 onClick={() => navigate(`/issue-detail/${issue.id}`)}>
+                                                
                                                 <div className="issue-header">
                                                     <div className="issue-meta-left">
                                                         <div
@@ -884,9 +871,9 @@ const UserBrowseIssue = () => {
                                                         {/* Upvote */}
                                                         <button
                                                             className={`vote-btn upvote ${userVotes[issue.id] === 'upvote' ? 'voted' : ''}`}
-                                                            onClick={() => handleVote(issue.id, 'upvote')}
-                                                            // Logic: Disable if they downvoted OR button is busy, UNLESS the current vote is 'upvote' (allowing toggle-off)
-                                                            
+                                                            // FIX: Stop propagation to prevent navigating to detail page on click
+                                                            onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'upvote'); }}
+                                                            disabled={busyVotes[issue.id]}
                                                         >
                                                             <Heart size={16} />
                                                             <span>{issue.counts?.upvote || 0}</span>
@@ -894,9 +881,9 @@ const UserBrowseIssue = () => {
                                                         {/* Downvote */}
                                                         <button
                                                             className={`vote-btn downvote ${userVotes[issue.id] === 'downvote' ? 'voted' : ''}`}
-                                                            onClick={() => handleVote(issue.id, 'downvote')}
-                                                            // Logic: Disable if they upvoted OR button is busy, UNLESS the current vote is 'downvote' (allowing toggle-off)
-                                                            
+                                                            // FIX: Stop propagation to prevent navigating to detail page on click
+                                                            onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'downvote'); }}
+                                                            disabled={busyVotes[issue.id]}
                                                         >
                                                             <ThumbsDown size={16} />
                                                             <span>{issue.counts?.downVote || 0}</span>
@@ -910,15 +897,19 @@ const UserBrowseIssue = () => {
 
                                                 {/* Comments toggle */}
                                                 <div className="comments-toggle">
-                                                    <button className="comments-open-btn" onClick={() => toggleComments(issue.id)}>
+                                                    <button 
+                                                        className="comments-open-btn" 
+                                                        // FIX: Stop propagation to prevent navigating to detail page on toggle
+                                                        onClick={(e) => { e.stopPropagation(); toggleComments(issue.id); }}
+                                                    >
                                                         <ChevronsDown size={14} /> {commentsOpen[issue.id] ? 'Hide' : 'Show'} Comments ({issue.comments || 0})
                                                     </button>
                                                 </div>
 
-                                                {/* Comments panel */}
-
+                                                {/* Comments panel (Appears/Disappears based on state) */}
                                                 {commentsOpen[issue.id] && (
-                                                    <div className="comments-panel">
+                                                    // FIX: Stop propagation in the panel to prevent navigating when interacting inside
+                                                    <div className="comments-panel" onClick={(e) => e.stopPropagation()}>
                                                         {/* Add Comment */}
                                                         <div className="add-comment">
                                                             <textarea
@@ -936,8 +927,6 @@ const UserBrowseIssue = () => {
 
                                                         {/* Comments List */}
                                                         {(commentsStore[issue.id] || []).map(c => {
-                                                            // --- Use user name from populated userId object/temp object ---
-                                                            // Fallback to a placeholder name if userId is not fully populated (e.g., during optimistic update rollback fail)
                                                             const commenterName = c.userId?.name || 'User';
                                                             const isOwner = (c.userId?._id || c.userId) === user._id;
                                                             const isEditing = editingComment?.commentId === c._id;
@@ -949,14 +938,12 @@ const UserBrowseIssue = () => {
                                                                         {isEditing ? (
                                                                             <div className="edit-comment-area">
                                                                                 <textarea
-                                                                                    // Use the content from the editing state
                                                                                     value={editingComment.content}
                                                                                     onChange={handleEditChange}
                                                                                     rows={3}
                                                                                 />
                                                                                 <div className="comment-actions">
                                                                                     <button
-                                                                                        // Pass content from the editing state
                                                                                         onClick={() => updateComment(issue.id, c._id, editingComment.content)}
                                                                                         disabled={busyComments[c._id] || !editingComment.content.trim()}
                                                                                     >
@@ -971,21 +958,14 @@ const UserBrowseIssue = () => {
                                                                                     <span className="comment-author">{commenterName}</span>
                                                                                     <span className="comment-time">
                                                                                         {getRelativeTime(c.createdAt)}
-                                                                                        {/* Check if updatedAt is later than createdAt and looks like a valid date */}
                                                                                         {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
                                                                                     </span>
                                                                                     {isOwner && (
                                                                                         <div className="comment-owner-actions">
-                                                                                            <button
-                                                                                                className="edit-comment-btn"
-                                                                                                onClick={() => startEditComment(c)}
-                                                                                            >
+                                                                                            <button className="edit-comment-btn" onClick={() => startEditComment(c)}>
                                                                                                 <Edit size={14} />
                                                                                             </button>
-                                                                                            <button
-                                                                                                className="delete-comment-btn"
-                                                                                                onClick={() => deleteComment(issue.id, c._id)}
-                                                                                            >
+                                                                                            <button className="delete-comment-btn" onClick={() => deleteComment(issue.id, c._id)}>
                                                                                                 <Trash2 size={14} />
                                                                                             </button>
                                                                                         </div>
@@ -996,7 +976,7 @@ const UserBrowseIssue = () => {
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                            )
+                                                            );
                                                         })}
                                                     </div>
                                                 )}
@@ -1010,48 +990,7 @@ const UserBrowseIssue = () => {
                 </div>
             </div>
 
-            <footer className="footer">
-                <div className="footer-content">
-                    <div className="footer-section">
-                        <div className="footer-logo">
-                            <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                            <div className="logo-text">Clean Street</div>
-                        </div>
-                        <p className="footer-tagline">Civic Engagement Platform</p>
-                        <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
-                    </div>
-                    <div className="footer-section">
-                        <h4>Platform</h4>
-                        <ul>
-                            <li><a href="#">How it Works</a></li>
-                            <li><a href="#">Features</a></li>
-                            <li><a href="#">Mobile App</a></li>
-                            <li><a href="#">Success Stories</a></li>
-                        </ul>
-                    </div>
-                    <div className="footer-section">
-                        <h4>Support</h4>
-                        <ul>
-                            <li><a href="#">Help Center</a></li>
-                            <li><a href="#">Contact Us</a></li>
-                            <li><a href="#">Community Guidelines</a></li>
-                            <li><a href="#">FAQ</a></li>
-                        </ul>
-                    </div>
-                    <div className="footer-section">
-                        <h4>Community</h4>
-                        <ul>
-                            <li><a href="#">About Us</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">Events</a></li>
-                            <li><a href="#">Partners</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="footer-bottom">
-                    <p>&copy; 2024 Clean Street. All rights reserved. Making neighborhoods better, one issue at a time.</p>
-                </div>
-            </footer>
+            <VolunteerFooter />
         </>
     );
 };

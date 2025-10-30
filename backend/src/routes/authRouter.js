@@ -2,9 +2,14 @@ import { Router } from "express";
 import axios from "axios";
 import User from "../models/user.model.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { signup, login } from "../controllers/auth.controller.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const authRouter = Router();
+// Basic email/password signup & login
+authRouter.post('/signup', signup);
+authRouter.post('/login', login);
+
 
 // Google OAuth routes - Manual implementation
 authRouter.get('/google', (req, res) => {

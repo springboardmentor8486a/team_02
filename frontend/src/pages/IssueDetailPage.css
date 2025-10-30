@@ -163,6 +163,22 @@
     line-height: 1.6;
 }
 
+.issue-description,
+.comment-text {
+    white-space: pre-line !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    max-height: unset !important;
+    height: auto !important;
+    text-overflow: unset !important;
+}
+
+.issue-info-main,
+.issue-info-section {
+    max-height: unset !important;
+    overflow: visible !important;
+}
+
 /* Voting Section styles remain the same */
 .voting-section {
     display: flex;

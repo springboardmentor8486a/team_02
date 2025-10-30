@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import AdminHeader from '../components/AdminHeader';
+import AdminFooter from '../components/AdminFooter';
 import { 
     LayoutDashboard, AlertCircle, Users, FileText, 
     Clock, CheckCircle, XCircle, ArrowRight,
@@ -135,38 +137,7 @@ const AdminIssueUpdates = () => {
 
     return (
         <div className="admin-issue-updates">
-            <header className="admin-header">
-                <div className="admin-header-left">
-                    <div className="admin-logo">
-                        <img src="/images/logo.png" alt="Clean Street" className="admin-logo-img" />
-                        <div className="admin-logo-text">
-                            <div className="admin-logo-title">Clean Street</div>
-                            <div className="admin-logo-subtitle">Civic Platform</div>
-                        </div>
-                    </div>
-                    <nav className="admin-nav">
-                        <Link to="/admin-dashboard" className="admin-nav-link">
-                            <LayoutDashboard size={18} /> Dashboard
-                        </Link>
-                        <Link to="/admin-all-issues" className="admin-nav-link">
-                            <AlertCircle size={18} /> All Issues
-                        </Link>
-                        <Link to="/admin-users-volunteers" className="admin-nav-link">
-                            <Users size={18} /> Users & Volunteers
-                        </Link>
-            
-                    </nav>
-                </div>
-                <div className="user-profile">
-                    <Link to="/admin-profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+           <AdminHeader />
 
             <div className="updates-container">
                 <div className="updates-page-header">
@@ -252,6 +223,7 @@ const AdminIssueUpdates = () => {
                             </div>
                         </div>
                     ))}
+                    <AdminFooter />
                 </div>
             </div>
         </div>

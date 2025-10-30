@@ -4,7 +4,8 @@ import React, { useEffect } from 'react'; // Removed unused useState
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-
+import AdminHeader from '../components/AdminHeader';
+import AdminFooter from '../components/AdminFooter';
 // All necessary icons imported
 import { 
     User, Mail, MapPin, Briefcase, Award, Heart, CheckCircle, LogOut, Phone, Globe, ArrowRight, Edit3, 
@@ -89,35 +90,7 @@ const AdminProfile = () => {
     return (
         <>
             {/* --- Navigation Header --- */}
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                
-                {/* FIX: Integrated Admin Navigation Links */}
-                <nav className="nav-links">
-                    <Link to="/admin-dashboard" className="admin-nav-link">
-                                                <LayoutDashboard size={18} /> Dashboard
-                                            </Link>
-                                            <Link to="/admin-all-issues" className="admin-nav-link">
-                                                <AlertCircle size={18} /> All Issues
-                                            </Link>
-                                            <Link to="/admin-users-volunteers" className="admin-nav-link">
-                                                <Users size={18} /> Users & Volunteers
-                                            </Link>
-                </nav>
-                
-                <div className="user-profile">
-                    <Link to="/AdminProfile" className="profile-link active">
-                        <div className="user-initials">{getUserInitials(mockUser.name)}</div>
-                        <span className="user-name">{mockUser.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+                  <AdminHeader />
 
             {/* --- Main Profile Layout --- */}
             <div className="profile-page-container">
@@ -185,48 +158,7 @@ const AdminProfile = () => {
             </div>
 
             {/* --- Footer --- */}
-            <footer className="footer">
-                <div className="footer-column footer-logo-section">
-                    <div className="logo-section">
-                        <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                        <div className="logo-text">Clean Street</div>
-                    </div>
-                    <p className="footer-tagline">Civic Engagement Platform</p>
-                    <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
-                    <div className="contact-info">
-                        <p><Mail size={16} /> <a href="mailto:hello@cleanstreet.org">hello@cleanstreet.org</a></p>
-                        <p><Phone size={16} /> <a href="tel:5551234567">(555) 123-4567</a></p>
-                        <p><Globe size={16} /> <a href="http://www.cleanstreet.org" target="_blank" rel="noopener noreferrer">www.cleanstreet.org</a></p>
-                    </div>
-                </div>
-                <div className="footer-column">
-                    <h4>Platform</h4>
-                    <ul>
-                        <li><a href="/how-it-works">How it Works</a></li>
-                        <li><a href="/features">Features</a></li>
-                        <li><a href="/pricing">Pricing</a></li>
-                        <li><a href="/mobile-app">Mobile App</a></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="/help">Help Center</a></li>
-                        <li><a href="/contact">Contact Us</a></li>
-                        <li><a href="/user-guide">User Guide</a></li>
-                        <li><a href="/forum">Community Forum</a></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="/about">About Us</a></li>
-                        <li><a href="/careers">Careers</a></li>
-                        <li><a href="/press">Press Kit</a></li>
-                        <li><a href="/blog">Blog</a></li>
-                    </ul>
-                </div>
-            </footer>
+            <AdminFooter />
         </>
     );
 };

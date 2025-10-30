@@ -45,6 +45,8 @@ const IssueDetailPage = () => {
             const response = await axios.get(`${API_BASE_URL}/complaints/${id}`, { withCredentials: true });
             
             setIssue(response.data.data);
+            // Debug: View the real API response for category
+            console.log("Fetched issue detail: ", response.data.data);
             setLoading(false);
         } catch (err) {
             console.error('Error fetching issue details:', err);
@@ -257,6 +259,17 @@ const IssueDetailPage = () => {
         );
     }
 
+    // CATEGORY MAPPING (before return)
+    const categoryMap = {
+        "Municipal sanitation and public health": "Garbage & Waste",
+        "Roads and street infrastructure": "Potholes",
+        "Street lighting and electrical assets": "Street Lights",
+        "Water, sewerage, and stormwater": "Water Issues",
+        "Ward/zone office and central admin": "Vandalism",
+        "Other": "Other"
+    };
+    const displayCategory = categoryMap[issue?.category || issue?.assignedTo] || issue?.category || "None";
+
     return (
         <div className="issue-detail-page">
             <header className="issue-detail-header">
@@ -330,12 +343,20 @@ const IssueDetailPage = () => {
                                 <User size={16} />
                                 <span>Reported by: {issue.userId?.name || 'Anonymous'}</span>
                             </div>
+                            <div className="meta-item">
+                                <User size={16} />
+                                <span>Assigned Volunteer: {issue.assignedTo || 'Unassigned'}</span>
+                            </div>
+                            {/* Category: Use mapped label */}
+                            <div className="meta-item">
+                                <span>Category: {displayCategory}</span>
+                            </div>
                         </div>
 
                         <div className="issue-description">
                             <h3>Description</h3>
                             {/* The corrected CSS ensures the full description displays */}
-                            <p className="comment-text">{issue.description}</p> 
+                            <p className="comment-text" style={{whiteSpace:'pre-line',overflow:'visible',textOverflow:'unset',maxHeight:'none'}}>{issue.description}</p> 
                         </div>
 
                         {/* Voting Section */}

@@ -154,7 +154,7 @@ const Login = () => {
 
               {/* Remember & Forgot Password */}
               <div className="flex-row justify-between align-center mb-4">
-                <label className="checkbox-label">
+                {/* <label className="checkbox-label">
                   <input 
                     type="checkbox" 
                     className="checkbox-input"
@@ -162,7 +162,7 @@ const Login = () => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
                   Remember me
-                </label>
+                </label> */}
                 <Link to="/forgot-password" className="forgot-password-link">
                   Forgot password?
                 </Link>
@@ -184,12 +184,12 @@ const Login = () => {
               </button>
 
               {/* Divider */}
-              <div className="divider">
+              {/* <div className="divider">
                 <span>or continue with</span>
-              </div>
+              </div> */}
 
               {/* Google Login */}
-              <button
+              {/* <button
                 type="button"
                 className="social-google-btn"
                 onClick={handleGoogleLogin}
@@ -197,7 +197,7 @@ const Login = () => {
               >
                 <FcGoogle size={22} />
                 Sign in with Google
-              </button>
+              </button> */}
 
               {/* Signup Link */}
               <div className="create-account-link-container">

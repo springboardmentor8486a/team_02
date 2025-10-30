@@ -15,8 +15,10 @@ const Layout = () => {
   };
   
   const getUserInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(part => part[0]).join('').toUpperCase();
+    const safe = name || '';
+    const parts = safe.split(' ').filter(Boolean);
+    if (parts.length === 0) return '?';
+    return parts.map(p => p[0]).join('').toUpperCase();
   };
 
   return (
@@ -34,8 +36,8 @@ const Layout = () => {
         {user && (
           <div className="user-profile">
             <Link to="/profile" className="profile-link">
-              <div className="user-initials">{getUserInitials(user.name)}</div>
-              <span className="user-name">{user.name}</span>
+              <div className="user-initials">{getUserInitials(user?.fullName || user?.name)}</div>
+              <span className="user-name">{user?.fullName || user?.name || 'User'}</span>
             </Link>
             <button onClick={handleLogout} className="logout-btn-header">
               <ArrowRight size={20} />

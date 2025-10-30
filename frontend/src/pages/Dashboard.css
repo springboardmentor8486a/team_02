@@ -186,9 +186,7 @@
     flex-direction: column;
     align-items: flex-start;
     color: #1a202c !important;
-
 }
-/* END FIX */
 
 .stat-icon-container {
     width: 48px;
@@ -197,14 +195,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    
-    /* REMOVED: absolute positioning that caused the overlap */
-    /* REMOVED: position: absolute; */
-    /* REMOVED: top: 1.5rem; */
-    /* REMOVED: right: 1.5rem; */
-    
     color: white; /* Icon color */
     flex-shrink: 0; /* Ensures the icon doesn't squeeze */
+    background: #eef2ff; /* light pastel */
 }
 
 .stat-icon {
@@ -217,14 +210,14 @@
 
 .stat-value {
     font-size: 2rem;
-    font-weight: bold;
+    font-weight: 700;
     margin-bottom: 0.5rem;
-    color: #1a202c !important;
+    color: #111827; /* darker for visibility */
 }
 
 .stat-label {
     color: #191c21 !important;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }
 
 .stat-card.total-reports-card .stat-icon-container { background-color: #90cdf4; }

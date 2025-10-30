@@ -1,81 +1,131 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { MapPin, Calendar, User, Edit, Award, X, CheckCircle, Home, LogOut, Loader2, FileText,ArrowRight } from 'lucide-react';
-import './MyAssignedIssues.css'; 
+// src/pages/MyAssignedIssues.jsx
 
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { 
+    MapPin, Calendar, User, Edit, Award, X, CheckCircle, ArrowRight, LogOut, Loader2, FileText, AlertCircle 
+} from 'lucide-react';
+import './MyAssignedIssues.css'; 
+import VolunteerHeader from '../components/VolunteerHeader.jsx';
+import VolunteerFooter from '../components/VolunteerFooter.jsx';
+
+const API_BASE_URL = 'http://localhost:3000/api/v1'; 
+
+// Utility to safely get initials (Extracted from your general utility logic)
+const getUserInitials = (name) => {
+    if (!name) return 'V';
+    const cleanedName = (name.fullName || name).replace(/[^a-zA-Z\s]/g, '').trim();
+    const nameParts = cleanedName.split(/\s+/).filter(Boolean);
+    if (nameParts.length === 0) return 'V';
+    const firstInitial = nameParts[0][0];
+    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
+    return (firstInitial + lastInitial).toUpperCase();
+};
 
 const MyAssignedIssues = () => {
     const navigate = useNavigate();
-    // Assuming useAuth provides a user object with a 'name' property
-    const { user, signOut } = useAuth(); 
+    const { user, signOut } = useAuth();
     
-    // Mock user for UI if auth context is not fully implemented
-    const mockUser = { name: user?.name || 'Sarah Wilson', email: user?.email || 'sarah.w@cleanstreet.org' };
+    const [assignedIssues, setAssignedIssues] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [selectedIssue, setSelectedIssue] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [updateForm, setUpdateForm] = useState({
-        status: 'In Progress',
-        proofPhoto: null,
+        status: 'in progress', 
+        proofPhoto: null, 
         workNotes: ''
     });
 
-    // Mock Data (Placeholder for API Fetch)
-    const assignedIssues = [
-        {
-            id: 1,
-            title: 'Broken streetlight on Main St',
-            description: 'Street light has been flickering and now completely out. Critical intersection.',
-            location: 'Main Street & 5th Ave',
-            category: 'Street Lights',
-            status: 'in progress',
-            priority: 'high',
-            reportedDate: '2024-01-20',
-            assignedDate: '2024-01-21',
-            reportedBy: 'John Doe'
-        },
-        {
-            id: 2,
-            title: 'Large Pothole on Oak Street',
-            description: 'Large, deep pothole causing vehicle damage. Needs immediate filling.',
-            location: 'Oak Street near City Park',
-            category: 'Potholes',
-            status: 'pending', // Pending update submission
-            priority: 'medium',
-            reportedDate: '2024-01-22',
-            assignedDate: '2024-01-22',
-            reportedBy: 'Sarah Johnson'
-        },
-        {
-            id: 3,
-            title: 'Vandalism on bus stop shelter',
-            description: 'Graffiti and broken glass at Pine Street Bus Stop.',
-            location: 'Pine Street Bus Stop',
-            category: 'Vandalism',
-            status: 'resolved',
-            priority: 'low',
-            reportedDate: '2024-01-24',
-            assignedDate: '2024-01-24',
-            reportedBy: 'Mike Davis'
-        }
-    ];
+    // --- Data Fetching Logic (FIXED FOR DYNAMIC DATA) ---
+    const robustVolunteerName =
+  user?.fullName || user?.name || user?.username || (user?.email ? user.email.split('@')[0] : '') || 'Volunteer';
 
-    const stats = [
-        { label: 'Total Assigned', value: assignedIssues.length, color: '#2c5292' },
-        { label: 'In Progress', value: assignedIssues.filter(i => i.status === 'in progress').length, color: '#dd6b20' },
-        { label: 'Completed (All Time)', value: '47', color: '#38a169' } // Hardcoded completion stat
-    ];
+    const fetchAssignedIssues = useCallback(async () => {
+        if (!user || user.role !== 'volunteer') return;
+
+        setLoading(true);
+        setError(null);
+        try {
+            // Fetch all complaints, just like admin, then filter on frontend by assignedTo
+            const response = await axios.get(`${API_BASE_URL}/complaints/all`, { withCredentials: true });
+            const DEPARTMENTS = [
+              "Municipal sanitation and public health",
+              "Roads and street infrastructure",
+              "Street lighting and electrical assets",
+              "Water, sewerage, and stormwater",
+              "Ward/zone office and central admin"
+            ];
+            const issues = (response.data.data || []).map(comp => {
+              let assignedToName = comp.assignedTo;
+              // Mark as unassigned if department
+              if (DEPARTMENTS.includes(assignedToName)) assignedToName = null;
+              return {
+                id: comp._id,
+                title: comp.title,
+                status: comp.status,
+                priority: comp.priority || 'medium',
+                assignedTo: assignedToName,
+                reportedBy: comp.userId?.name || 'Anonymous Citizen',
+                date: new Date(comp.createdAt).toLocaleDateString('en-US'),
+                description: comp.description,
+                location: Array.isArray(comp.address) ? comp.address[0] : (comp.address || 'Unknown Location'), 
+                category: comp.category || '',
+              };
+            });
+            // Only keep issues where assignedTo matches this volunteer
+            const matches = issues.filter(i =>
+              i.assignedTo && [user.fullName, user.name, user.username, robustVolunteerName].some(n => n && i.assignedTo.toLowerCase() === n.toLowerCase())
+            );
+            setAssignedIssues(matches);
+        } catch (err) {
+            setError('Failed to fetch assigned issues.');
+            setAssignedIssues([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    // Initial load and redirect logic
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        } else if (user.role !== 'volunteer') {
+            navigate('/dashboard'); 
+        } else {
+            fetchAssignedIssues();
+        }
+    }, [user, navigate, fetchAssignedIssues]);
+
+    // --- UI/Helper Logic (Fixed with correct imports) ---
+    const stats = useMemo(() => {
+        const total = assignedIssues.length;
+        const inProgress = assignedIssues.filter(i => i.status === 'in progress' || i.status === 'inReview' || i.status === 'recived').length;
+        const resolved = assignedIssues.filter(i => i.status === 'resolved').length;
+        return [
+            { label: 'Total Assigned', value: total, color: '#2c5292' },
+            { label: 'In Progress', value: inProgress, color: '#dd6b20' },
+            { label: 'Resolved', value: resolved, color: '#38a169' }
+        ];
+    }, [assignedIssues]);
 
     const handleUpdateClick = (issue) => {
         setSelectedIssue(issue);
+        const initialStatus = issue.status === 'resolved' ? 'resolved' : 'in progress';
         setUpdateForm({
-            status: issue.status === 'in progress' ? 'In Progress' : 'Completed',
+            status: initialStatus,
             proofPhoto: null,
             workNotes: ''
         });
         setShowUpdateModal(true);
+    };
+
+    const handleFileChange = (e) => {
+        setUpdateForm(prev => ({...prev, proofPhoto: e.target.files[0]}));
     };
 
     const handleSubmitUpdate = async (e) => {
@@ -87,44 +137,62 @@ const MyAssignedIssues = () => {
         }
 
         setIsSubmitting(true);
-        // Simulate API call for status update
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-        console.log('Update submitted:', { issue: selectedIssue.id, update: updateForm });
+        const submitData = new FormData();
+        let statusToSend = updateForm.status; 
         
-        setIsSubmitting(false);
-        alert('Status update submitted successfully for admin approval!');
+        if (statusToSend === 'Completed') {
+            statusToSend = 'resolved'; // Final status update to mark as complete
+        }
         
-        // In a real app, you would refetch issues here.
-        setShowUpdateModal(false);
-        setUpdateForm({ status: 'In Progress', proofPhoto: null, workNotes: '' });
+        submitData.append('status', statusToSend);
+        submitData.append('workNotes', updateForm.workNotes);
+
+        if (updateForm.proofPhoto) {
+            // Your backend controller expects the file under the key 'proofPhoto'
+            submitData.append('proofPhoto', updateForm.proofPhoto); 
+        }
+
+        try {
+            await axios.put(
+                `${API_BASE_URL}/complaints/update-status/${selectedIssue.id}`,
+                submitData,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    withCredentials: true
+                }
+            );
+            
+            alert(`Status updated to ${statusToSend.toUpperCase()}. Assignments refreshed.`);
+            setShowUpdateModal(false);
+            fetchAssignedIssues(); 
+        } catch (error) {
+            console.error('Update Submission Error:', error.response?.data || error.message);
+            alert(`Failed to submit update: ${error.response?.data?.message || 'Server error.'}`);
+        } finally {
+            setIsSubmitting(false);
+            setUpdateForm({ status: 'in progress', proofPhoto: null, workNotes: '' });
+        }
     };
-
+    
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
-            // Placeholder for real API logout call:
-            // axios.post('http://localhost:3000/api/v1/users/logout', {}, { withCredentials: true })
-            //     .catch(() => {}) 
-            //     .finally(() => {
-            //         signOut();
-            //         navigate('/');
-            //     });
             signOut();
             navigate('/');
         }
     };
 
-    const getUserInitials = (name) => {
-        if (!name) return 'V';
-        const nameParts = name.split(' ');
-        return nameParts.map(part => part[0]).join('').toUpperCase();
-    };
-
     const getStatusColor = (status) => {
-        switch (status) {
+        const normalizedStatus = (status || '').toLowerCase();
+        switch (normalizedStatus) {
+            case 'recived': // Typo in database, kept for compatibility
+            case 'received':
             case 'pending':
                 return 'status-pending';
+            case 'inprogress':
             case 'in progress':
+            case 'inreview':
+            case 'inreview':
                 return 'status-in-progress';
             case 'resolved':
                 return 'status-resolved';
@@ -135,67 +203,28 @@ const MyAssignedIssues = () => {
 
     const getPriorityColor = (priority) => {
         switch (priority) {
-            case 'high':
-                return 'priority-high';
-            case 'medium':
-                return 'priority-medium';
-            case 'low':
-                return 'priority-low';
-            default:
-                return 'priority-medium';
+            case 'high': return 'priority-high';
+            case 'medium': return 'priority-medium';
+            case 'low': return 'priority-low';
+            default: return 'priority-medium';
         }
     };
 
+    if (!user || user.role !== 'volunteer') return null;
+
     return (
         <div className="my-assigned-container">
-            {/* 1. Header: Matches VolunteerBrowseIssues structure */}
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                <nav className="nav-links">
-                    <Link to="/volunteer">Dashboard</Link>
-                    <Link to="/MyAssignedIssues" className="active">My Assigned Issues</Link>
-                    <Link to="/volunteer-browser-issues">Browse Issues</Link>
-                </nav>
-                <div className="header-right">
-                    {/* Home Button */}
+            <VolunteerHeader />
 
-
-                    {/* Profile Button - Clickable */}
-                    <div 
-                        className="user-info clickable-profile" 
-                        onClick={() => navigate('/volunteer-profile')}
-                        title="View Profile"
-                    >
-                        <div className="user-initials">{getUserInitials(mockUser.name)}</div>
-                        <span className="user-name">
-                            {mockUser.name}
-                        </span>
-                    </div>
-
-                    {/* Logout Button */}
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
-
-            {/* 2. Hero Section */}
             <div className="assigned-hero">
                 <div className="hero-content">
                     <Award size={32} className="hero-icon" />
                     <h1>My Active Assignments</h1>
                     <p>Issues currently assigned to you and ready for field work.</p>
                 </div>
-                <div className="hero-badge">
-                    <span className="badge-icon">📍</span>
-                    <span className="badge-text">Volunteer: {mockUser.name.split(' ')[0]}</span>
-                </div>
+                
             </div>
 
-            {/* 3. Stats Cards */}
             <div className="assigned-stats-container">
                 {stats.map((stat, idx) => (
                     <div key={idx} className="assigned-stat-card">
@@ -208,7 +237,6 @@ const MyAssignedIssues = () => {
                 ))}
             </div>
 
-            {/* 4. Active Assignments Section */}
             <div className="assignments-section">
                 <div className="section-header">
                     <FileText size={20} />
@@ -217,13 +245,36 @@ const MyAssignedIssues = () => {
                 <p className="section-subtitle">Issues awaiting your field intervention or status update.</p>
 
                 <div className="assignments-list">
+                    {loading && (
+                        <div className="loading-message">
+                            <Loader2 size={24} className="spinner" /> Fetching your assignments...
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="error-message">
+                            <AlertCircle size={24} /> {error}
+                        </div>
+                    )}
+
+                    {!loading && assignedIssues.length === 0 && !error && (
+                        <div className="no-updates-message">
+                            <CheckCircle size={32} />
+                            <h3>No Issues Assigned Yet</h3>
+                            <p>You don't have any complaints assigned to you at the moment. Check back later or contact your administrator.</p>
+                        </div>
+                    )}
+
                     {assignedIssues.map((issue) => (
                         <div key={issue.id} className="assignment-card">
                             <div className="assignment-main">
                                 <div className="assignment-header">
                                     <h3>{issue.title}</h3>
                                     <span className={`status-badge ${getStatusColor(issue.status)}`}>
-                                        {issue.status}
+                                        {issue.status === 'recived' ? 'Received' : 
+                                         issue.status === 'inReview' ? 'In Review' : 
+                                         issue.status === 'inProgress' ? 'In Progress' : 
+                                         issue.status.replace(/\b\w/g, c => c.toUpperCase())}
                                     </span>
                                     <span className={`priority-badge ${getPriorityColor(issue.priority)}`}>
                                         {issue.priority}
@@ -237,23 +288,22 @@ const MyAssignedIssues = () => {
                                     </div>
                                     <div className="meta-item">
                                         <Calendar size={14} />
-                                        <span>Reported: {issue.reportedDate}</span>
+                                        <span>Reported: {issue.date}</span>
                                     </div>
                                     <div className="meta-item">
                                         <User size={14} />
                                         <span>By: {issue.reportedBy}</span>
                                     </div>
                                 </div>
-                                <div className="assignment-dates">Assigned: {issue.assignedDate}</div>
+                                <div className="assignment-dates">Assigned: {issue.assignedDate} (Volunteer: {robustVolunteerName})</div>
                             </div>
                             
-                            {issue.status !== 'resolved' && (
+                            {issue.status !== 'resolved' ? (
                                 <button className="update-btn" onClick={() => handleUpdateClick(issue)}>
                                     <Edit size={16} />
                                     Update Status
                                 </button>
-                            )}
-                             {issue.status === 'resolved' && (
+                            ) : (
                                 <button className="resolved-btn" disabled>
                                     <CheckCircle size={16} />
                                     Resolved
@@ -264,7 +314,6 @@ const MyAssignedIssues = () => {
                 </div>
             </div>
 
-            {/* 5. Update Status Modal */}
             {showUpdateModal && selectedIssue && (
                 <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
                     <div className="modal-container" onClick={(e) => e.stopPropagation()}>
@@ -275,7 +324,7 @@ const MyAssignedIssues = () => {
                                     <Edit size={20} color="#5b6fa8" />
                                     <h3>Update Issue Status</h3>
                                 </div>
-                                <p className="modal-subtitle">Submit a status update request for admin approval</p>
+                                <p className="modal-subtitle">Submit a status update request for admin review</p>
                             </div>
                             <button className="modal-close-btn" onClick={() => setShowUpdateModal(false)}>
                                 <X size={20} />
@@ -283,7 +332,6 @@ const MyAssignedIssues = () => {
                         </div>
 
                         <form className="modal-body" onSubmit={handleSubmitUpdate}>
-                            {/* Issue Information */}
                             <div className="modal-section issue-info-section">
                                 <div className="section-icon-title">
                                     <span className="section-icon">ℹ️</span>
@@ -295,25 +343,12 @@ const MyAssignedIssues = () => {
                                         <div className="info-value">{selectedIssue.title}</div>
                                     </div>
                                     <div className="info-field">
-                                        <label>Category</label>
-                                        <div className="info-value">{selectedIssue.category}</div>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>Volunteer Name</label>
-                                        <div className="info-value">{mockUser.name}</div>
-                                    </div>
-                                    <div className="info-field">
                                         <label>Current Status</label>
                                         <div className="info-value">{selectedIssue.status.toUpperCase()}</div>
-                                    </div>
-                                    <div className="info-field full-width">
-                                        <label>Location</label>
-                                        <div className="info-value">{selectedIssue.location}</div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Status Update */}
                             <div className="modal-section status-update-section">
                                 <div className="section-icon-title">
                                     <span className="section-icon">🔄</span>
@@ -326,15 +361,13 @@ const MyAssignedIssues = () => {
                                         value={updateForm.status}
                                         onChange={(e) => setUpdateForm({...updateForm, status: e.target.value})}
                                     >
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Needs Review">Needs Review</option>
+                                        <option value="in progress">In Progress</option>
+                                        <option value="Completed">Completed (Request Resolution)</option>
                                     </select>
-                                    <small>Choose the appropriate status for this issue</small>
+                                    <small>Select "Completed" to flag the issue for final admin review</small>
                                 </div>
                             </div>
 
-                            {/* Documentation */}
                             <div className="modal-section documentation-section">
                                 <div className="section-icon-title">
                                     <span className="section-icon">📎</span>
@@ -346,7 +379,7 @@ const MyAssignedIssues = () => {
                                         type="file"
                                         className="form-file-input"
                                         accept="image/*"
-                                        onChange={(e) => setUpdateForm({...updateForm, proofPhoto: e.target.files[0]})}
+                                        onChange={handleFileChange}
                                     />
                                     <small>Upload photo evidence of work completed (recommended)</small>
                                 </div>
@@ -363,7 +396,6 @@ const MyAssignedIssues = () => {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
                             <div className="modal-actions">
                                 <button type="submit" className="btn-submit" disabled={isSubmitting || !updateForm.workNotes.trim()}>
                                     {isSubmitting ? (
@@ -374,7 +406,7 @@ const MyAssignedIssues = () => {
                                     ) : (
                                         <>
                                             <CheckCircle size={18} />
-                                            Submit for Approval
+                                            Submit Update
                                         </>
                                     )}
                                 </button>
@@ -386,6 +418,7 @@ const MyAssignedIssues = () => {
                     </div>
                 </div>
             )}
+            <VolunteerFooter />
         </div>
     );
 };

@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Camera, AlertCircle, ArrowRight, User, FileText, Map, Navigation, Mail, Phone, Globe, X, Search } from 'lucide-react';
 import MapPage from './MapPage'; // Assuming this component exists and works
 import './ReportIssue.css'; // Assuming you have the corresponding CSS file
+import AppFooter from '../components/AppFooter';
+import AppHeader from '../components/AppHeader';
 
 // --- Configuration Mapping for Backend Integration ---
 
@@ -278,8 +280,8 @@ const handleSubmit = async (e) => {
 
     submitData.append('assignedTo', assignedToDepartment);
 
-    // Send coordinates as a single JSON string array: ["lng", "lat"]
-    submitData.append('locationCoords', JSON.stringify([selectedLocation.lng, selectedLocation.lat]));
+    // Send coordinates as a single JSON string array expected by backend: [lat, lng]
+    submitData.append('location', JSON.stringify([selectedLocation.lat, selectedLocation.lng]));
 
     // Backend file field is 'complaintPhoto'
     if (formData.photo) {
@@ -332,26 +334,8 @@ const handleSubmit = async (e) => {
 
     return (
         <>
-            <header className="header-top">
-                <div className="logo-section">
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                    <div className="logo-text">Clean Street</div>
-                </div>
-                <nav className="nav-links">
-                    <Link to="/dashboard">Dashboard</Link>
-                    <Link to="/browse-issues">Browse Issues</Link>
-                    <Link to="/report-issue" className="active">Report Issue</Link>
-                </nav>
-                <div className="user-profile">
-                    <Link to="/profile" className="profile-link">
-                        <div className="user-initials">{getUserInitials(user.name)}</div>
-                        <span className="user-name">{user.name}</span>
-                    </Link>
-                    <button onClick={handleLogout} className="logout-btn-header">
-                        <ArrowRight size={20} />
-                    </button>
-                </div>
-            </header>
+           
+                 <AppHeader />
 
             <div className="dashboard-container">
                 {/* Hero Section */}
@@ -381,7 +365,7 @@ const handleSubmit = async (e) => {
                                     <div className="input-with-description">
                                         <input
                                             type="text"
-                                            value={user.name || 'John Doe'}
+                                            value={(user?.fullName) || (user?.name) || ''}
                                             className="form-input"
                                             disabled
                                         />
@@ -783,43 +767,7 @@ const handleSubmit = async (e) => {
                 </div>
             )}
 
-            <footer className="footer">
-                <div className="footer-column footer-logo-section">
-                    <div className="logo-section">
-                        <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
-                        <div className="logo-text">Clean Street</div>
-                    </div>
-                    <p className="footer-tagline">Civic Engagement Platform</p>
-                    <p>Empowering communities to report, track, and resolve civic issues through collaborative engagement between citizens and local authorities.</p>
-                </div>
-                <div className="footer-column">
-                    <h4>Platform</h4>
-                    <ul>
-                        <li><a href="/">How it Works</a></li>
-                        <li><a href="/">Features</a></li>
-                        <li><a href="/">Pricing</a></li>
-                        <li><a href="/">Mobile App</a></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="/">Help Center</a></li>
-                        <li><a href="/">Contact Us</a></li>
-                        <li><a href="/">User Guide</a></li>
-                        <li><a href="/">Community Forum</a></li>
-                    </ul>
-                </div>
-                <div className="footer-column">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="/">About Us</a></li>
-                        <li><a href="/">Careers</a></li>
-                        <li><a href="/">Press Kit</a></li>
-                        <li><a href="/">Blog</a></li>
-                    </ul>
-                </div>
-            </footer>
+           <AppFooter />
         </>
     );
 };

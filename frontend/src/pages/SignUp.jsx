@@ -13,7 +13,7 @@ const SignUp = () => {
 
     const [step, setStep] = useState(1);
     const [form, setForm] = useState({
-        name: '',
+        fullName: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -64,7 +64,7 @@ const SignUp = () => {
     const handleNextStep = (e) => {
         e.preventDefault();
         if (step === 1) {
-            if (form.name && form.email) setStep(2);
+            if (form.fullName && form.email) setStep(2);
             else alert('Please fill in all required fields.');
         } else if (step === 2) {
             if (
@@ -90,7 +90,7 @@ const SignUp = () => {
         e.preventDefault();
         try {
             const formData = new FormData();
-            formData.append('name', form.name);
+            formData.append('fullName', form.fullName); // Use fullName
             formData.append('email', form.email);
             formData.append('password', form.password);
             formData.append('location', form.location);
@@ -109,7 +109,7 @@ const SignUp = () => {
             
             // Store user data in localStorage
             localStorage.setItem('userRole', form.role);
-            localStorage.setItem('userName', form.name);
+            localStorage.setItem('userName', form.fullName); // Store fullName
             localStorage.setItem('userEmail', form.email);
             localStorage.setItem('userLocation', form.location);
             
@@ -154,8 +154,8 @@ const SignUp = () => {
                                 <i className="input-icon">👤</i>
                                 <input
                                     type="text"
-                                    name="name"
-                                    value={form.name}
+                                    name="fullName"
+                                    value={form.fullName}
                                     onChange={handleChange}
                                     placeholder="Full Name"
                                     required
@@ -318,20 +318,6 @@ const SignUp = () => {
                                         </div>
                                     </div>
                                     {form.role === 'volunteer' && <i className="check-icon-active">✔️</i>}
-                                </div>
-                                
-                                <div
-                                    className={`role-option ${form.role === 'admin' ? 'active' : ''}`}
-                                    onClick={() => setForm((prev) => ({ ...prev, role: 'admin' }))}
-                                >
-                                    <div className="role-info">
-                                        <i className="role-icon">👑</i>
-                                        <div className="role-text">
-                                            <h3>Administrator</h3>
-                                            <p>Manage the platform and oversee operations</p>
-                                        </div>
-                                    </div>
-                                    {form.role === 'admin' && <i className="check-icon-active">✔️</i>}
                                 </div>
                             </div>
                             <div className="terms-checkbox">
