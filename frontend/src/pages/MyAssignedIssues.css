@@ -188,7 +188,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     max-width: 1280px;
-    margin: -40px auto 0; /* Pull stats over the hero boundary */
+    margin: -10px auto 0; /* Pull stats over the hero boundary */
     padding: 0 3rem;
     position: relative;
     z-index: 10;
@@ -220,7 +220,7 @@
     font-weight: 700;
     line-height: 1;
     margin-bottom: 0.5rem;
-    color: #1f2937 !important;
+    color: #13161b !important;
 }
 
 .stat-indicator {

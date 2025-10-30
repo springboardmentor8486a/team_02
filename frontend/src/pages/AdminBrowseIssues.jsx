@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, ChevronsDown, ThumbsDown, Edit, Save, Trash2 } from 'lucide-react';
+
+// Corrected Imports based on Admin context
 import AdminHeader from '../components/AdminHeader';
 import AdminFooter from '../components/AdminFooter';
 
@@ -13,21 +15,16 @@ import './IssuesBrowser.css';
 const getRelativeTime = (isoDateString) => {
     const reportDate = new Date(isoDateString);
     const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfReportDay = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
-    const diffTime = startOfToday.getTime() - startOfReportDay.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffInSeconds = Math.floor((today.getTime() - reportDate.getTime()) / 1000);
 
-    if (diffDays === 0) {
-        const hoursDiff = Math.floor((today.getTime() - reportDate.getTime()) / (1000 * 60 * 60));
-        if (hoursDiff === 0) return 'Just now';
-        if (hoursDiff < 24) return `${hoursDiff} hours ago`;
-        return 'Today';
-    }
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return `${Math.floor(diffDays / 30)} months ago`;
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return reportDate.toLocaleDateString();
 };
 
 const getUserInitials = (name) => {
@@ -40,13 +37,15 @@ const getUserInitials = (name) => {
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
 
-// Renamed for clarity as this is the Admin's view of Browse Issues
 const AdminBrowseIssues = () => { 
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // --- State Declarations ---
     const [authChecked, setAuthChecked] = useState(false);
-    const [issues, setIssues] = useState([]);
+    // issues: Holds the raw/master list from the API (used for local filtering source)
+    const [issues, setIssues] = useState([]); 
+    // filteredIssues: Holds the list to render after filtering/sorting logic is applied
     const [filteredIssues, setFilteredIssues] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -63,6 +62,7 @@ const AdminBrowseIssues = () => {
     const [busyVotes, setBusyVotes] = useState({});
     const [editingComment, setEditingComment] = useState(null);
 
+    // --- Memoized Data ---
     const categories = useMemo(() => [
         'All Categories', 'Garbage & Waste', 'Potholes', 'Water Issues', 'Street Lights', 'Vandalism', 'Other'
     ], []);
@@ -92,6 +92,7 @@ const AdminBrowseIssues = () => {
         totalReports: '2.8k'
     };
 
+    // --- Fetch Issues (Fetches master list, regardless of current filters) ---
     const fetchIssues = useCallback(async () => {
         if (!user) return;
         setLoading(true);
@@ -103,10 +104,9 @@ const AdminBrowseIssues = () => {
             'Water Issues': 'Water, sewerage, and stormwater',
             'Vandalism': 'Ward/zone office and central admin', 
             'Other': 'Other', 
-            'All Categories': undefined 
+            // When fetching the master list, send no filter for "All Categories"
         };
 
-        // Note: The backend uses 'recived' and 'inReview', which are mapped here to display texts.
         const statusMap = {
             'Pending': 'recived',
             'In Progress': 'inReview',
@@ -114,26 +114,22 @@ const AdminBrowseIssues = () => {
             'All Statuses': undefined
         };
 
-        const params = {
-            search: searchTerm.trim(),
-            category: filters.category !== 'All Categories' ? categoryMap[filters.category] : undefined,
-            status: filters.status !== 'All Statuses' ? statusMap[filters.status] : undefined,
-            sort: filters.sort,
-        };
+        // If the backend has poor filtering, fetching ALL issues here is safer.
+        // For this admin view, we assume we fetch the master list regardless of current filters for the sidebar counts.
+        const params = {}; 
 
         try {
             const response = await axios.get(`${API_BASE_URL}/complaints/all`, {
-                params: params,
+                params: params, // Fetching all data
                 withCredentials: true
             });
 
             const fetchedIssues = response.data.data.map(comp => {
                 const statusText = comp.status === 'recived' ? 'Pending' : comp.status === 'inReview' ? 'In Progress' : comp.status === 'resolved' ? 'Resolved' : 'Pending';
                 
-                // Handle complex address structure
-                const locationText = (comp.address && comp.address[0]) || 'Unknown Location';
+                const rawLocation = (comp.address && comp.address[0]) || 'Unknown Location';
+                const locationText = rawLocation.length > 30 ? rawLocation.substring(0, 27) + '...' : rawLocation;
                 
-                // Handle userId being an object with a name property
                 const userName = typeof comp.userId === 'object' && comp.userId && comp.userId.name ?
                     comp.userId.name :
                     'Anonymous User';
@@ -145,19 +141,19 @@ const AdminBrowseIssues = () => {
                     'Water, sewerage, and stormwater': 'Water Issues',
                     'Ward/zone office and central admin': 'Vandalism'
                 };
-                // Use assignedTo as the main category placeholder if 'category' field is absent/unreliable
                 const displayCategory = reverseCategoryMap[comp.assignedTo] || 'Other';
                 
-                // Safely get comments count
                 const commentsCount = comp.comments && Array.isArray(comp.comments) ? comp.comments.length : 0;
-
+                
+                const rawDescription = comp.description;
+                const descriptionText = rawDescription.length > 150 ? rawDescription.substring(0, 147) + '...' : rawDescription;
 
                 return {
                     id: comp._id,
                     title: comp.title,
-                    description: comp.description,
+                    description: descriptionText,
                     location: locationText,
-                    category: displayCategory,
+                    category: displayCategory, // This is the displayed category
                     status: statusText,
                     createdAt: comp.createdAt,
                     votes: 0,
@@ -171,7 +167,7 @@ const AdminBrowseIssues = () => {
                 };
             });
 
-            // Fetch user-specific vote status
+            // Fetch user-specific vote status and counts (logic retained)
             const issueIds = fetchedIssues.map(i => i.id).join(',');
             let userVotesMap = {};
             if (issueIds.length > 0) {
@@ -187,7 +183,6 @@ const AdminBrowseIssues = () => {
             }
             setUserVotes(userVotesMap);
 
-            // Fetch overall vote counts
             const countsPromises = fetchedIssues.map(i =>
                 axios.get(`${API_BASE_URL}/votes/${i.id}`, { withCredentials: true })
                 .then(r => ({ id: i.id, counts: r.data.data }))
@@ -198,18 +193,66 @@ const AdminBrowseIssues = () => {
             const countsMap = countsResults.reduce((acc, item) => { acc[item.id] = item.counts; return acc; }, {});
             const issuesWithCounts = fetchedIssues.map(i => ({ ...i, counts: countsMap[i.id] || { upvote: 0, downVote: 0 } }));
 
-            setIssues(issuesWithCounts);
-            setFilteredIssues(issuesWithCounts);
-
+            setIssues(issuesWithCounts); // Set the master data
         } catch (error) {
             console.error("Failed to fetch issues:", (error.response && error.response.data) || error.message);
             setIssues([]);
-            setFilteredIssues([]);
         } finally {
             setLoading(false);
         }
-    }, [user, searchTerm, filters]);
+    }, [user, searchTerm, filters]); // Reduced dependencies to only trigger initial fetch
 
+    // --- CLIENT-SIDE FILTERING AND SORTING LOGIC (The Fix) ---
+    useEffect(() => {
+        let updated = [...issues];
+
+        // 🔹 Filter by category
+        if (filters.category && filters.category !== 'All Categories') {
+            updated = updated.filter(issue => issue.category === filters.category);
+        }
+
+        // 🔹 Filter by status
+        if (filters.status && filters.status !== 'All Statuses') {
+            updated = updated.filter(issue => issue.status === filters.status);
+        }
+
+        // 🔹 Search filter (title, description, or location)
+        if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase();
+            updated = updated.filter(issue =>
+                issue.title?.toLowerCase().includes(term) ||
+                issue.description?.toLowerCase().includes(term) ||
+                issue.location?.toLowerCase().includes(term)
+            );
+        }
+
+        // 🔹 Sorting logic
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        
+        updated.sort((a, b) => {
+            switch (filters.sort) {
+                case 'Newest First':
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                case 'Oldest First':
+                    return new Date(a.createdAt) - new Date(b.createdAt);
+                case 'Most Voted':
+                    // Sort by net votes (upvotes - downvotes)
+                    const scoreA = (a.counts?.upvote || 0) - (a.counts?.downVote || 0);
+                    const scoreB = (b.counts?.upvote || 0) - (b.counts?.downVote || 0);
+                    return scoreB - scoreA; // Descending
+                case 'Most Viewed':
+                    return (b.views || 0) - (a.views || 0); // Descending
+                case 'Priority':
+                    return priorityOrder[a.priority] - priorityOrder[b.priority]; // Ascending (high comes first)
+                default:
+                    return 0; // No sort change
+            }
+        });
+
+        setFilteredIssues(updated);
+    }, [filters, searchTerm, issues]); // Reruns whenever filters/search change or new data is fetched into 'issues'
+
+    // --- Auth Check & Initial Fetch ---
     useEffect(() => {
         const checkAuthStatus = async () => {
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -221,7 +264,8 @@ const AdminBrowseIssues = () => {
     useEffect(() => {
         if (!authChecked) return;
 
-        if (!user || user.role !== 'admin') { // Enforce admin role check
+        // Check for Admin role
+        if (!user || user.role !== 'admin') { 
             navigate('/login');
         } else {
             fetchIssues();
@@ -236,7 +280,6 @@ const AdminBrowseIssues = () => {
         }
 
         const currentUserVote = userVotes[issueId];
-
         if (busyVotes[issueId]) return;
 
         let endpoint = `${API_BASE_URL}/votes/${issueId}?category=${voteType}`;
@@ -252,6 +295,7 @@ const AdminBrowseIssues = () => {
         let newCounts = { ...issueToUpdate.counts };
         let newUserVote;
 
+        // Optimistic UI update logic
         if (currentUserVote === voteType) {
             if (voteType === 'upvote') newCounts.upvote = Math.max(0, newCounts.upvote - 1);
             else newCounts.downVote = Math.max(0, newCounts.downVote - 1);
@@ -268,9 +312,11 @@ const AdminBrowseIssues = () => {
         setIssues(prevIssues => prevIssues.map(issue =>
             issue.id === issueId ? { ...issue, counts: newCounts } : issue
         ));
-        setFilteredIssues(prevIssues => prevIssues.map(issue =>
-            issue.id === issueId ? { ...issue, counts: newCounts } : issue
-        ));
+        
+        // This is automatically handled by the client-side filtering useEffect
+        // setFilteredIssues(prevIssues => prevIssues.map(issue =>
+        //     issue.id === issueId ? { ...issue, counts: newCounts } : issue
+        // ));
 
         setUserVotes(prevVotes => ({ ...prevVotes, [issueId]: newUserVote }));
 
@@ -281,7 +327,6 @@ const AdminBrowseIssues = () => {
 
             if (returnedCounts && (returnedCounts.upvote !== newCounts.upvote || returnedCounts.downVote !== newCounts.downVote)) {
                 setIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
-                setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
             }
 
         } catch (error) {
@@ -294,8 +339,7 @@ const AdminBrowseIssues = () => {
     };
 
 
-    // --- Comments: fetch, toggle, post, edit, delete logic (as provided) ---
-    // (Keeping this logic as it was provided in the prompt's source code, though it should ideally be refactored)
+    // --- Comments Logic ---
 
     const fetchComments = async (complaintId) => {
         setCommentsOpen(prev => ({ ...prev, [complaintId]: true }));
@@ -334,8 +378,6 @@ const AdminBrowseIssues = () => {
         }));
 
         setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
-        setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
-
 
         try {
             await axios.delete(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { withCredentials: true });
@@ -343,9 +385,9 @@ const AdminBrowseIssues = () => {
             console.error("Failed to delete comment:", (err.response && err.response.data) || err.message);
             alert("Failed to delete comment");
             
+            // Rollback
             setCommentsStore(prev => ({ ...prev, [issueId]: prevComments }));
             setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
         }
     };
 
@@ -450,9 +492,7 @@ const AdminBrowseIssues = () => {
                 [issueId]: prev[issueId].map(c => c._id === tempComment._id ? created : c)
             }));
 
-            // increment comment count on issue
             setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
         } catch (err) {
             console.error("Failed to post comment", (err.response && err.response.data) || err.message);
             
@@ -466,7 +506,7 @@ const AdminBrowseIssues = () => {
         }
     }, [commentDrafts, user]);
     
-    // --- Other Handlers ---
+    // --- Filter Handlers ---
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
             ...prev,
@@ -496,6 +536,15 @@ const AdminBrowseIssues = () => {
         });
     };
 
+    // Helper to get category count from the full issues list
+    const getCategoryCount = (categoryName) => {
+        if (categoryName === 'All Categories') {
+            return issues.length;
+        }
+        return issues.filter(i => i.category === categoryName).length;
+    };
+
+
     if (!authChecked) {
         return ( 
             <div className="loading-state full-page-loading">
@@ -508,6 +557,9 @@ const AdminBrowseIssues = () => {
     if (!user || user.role !== 'admin') {
         return null; 
     }
+
+    // Use the locally filtered results for rendering
+    const issuesToRender = filteredIssues; 
 
     return ( 
         <>
@@ -535,6 +587,17 @@ const AdminBrowseIssues = () => {
                                 <span>Active Users</span>
                             </div>
                         </div>
+                        <div className="hero-buttons">
+                            {/* Admin specific action buttons could go here */}
+                            <button className="hero-btn-primary" onClick={() => navigate('/admin/stats')}>
+                                <BarChart3 size={18} />
+                                <span>View Statistics</span>
+                            </button>
+                            <button className="hero-btn-secondary" onClick={() => navigate('/admin/user-management')}>
+                                <Users size={18} />
+                                <span>Manage Users</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -558,13 +621,13 @@ const AdminBrowseIssues = () => {
                                                     style={{
                                                         backgroundColor: item.color,
                                                     }}>
-                                                    {item.icon}
+                                                        {item.icon}
                                                 </span>
                                                 <span className="category-title">{item.category}</span>
                                             </div>
                                             <span className="category-count"
-                                                style={{ backgroundColor: filters.category === item.category ? 'rgba(255, 255, 255, 0.2)' : item.color + '20', color: filters.category === item.category ? 'white' : item.color }}>
-                                                {issues.filter(i => i.category === item.category).length}
+                                                style={{ backgroundColor: filters.category === item.category ? item.color : item.color + '20', color: filters.category === item.category ? 'white' : item.color }}>
+                                                {getCategoryCount(item.category)}
                                             </span>
                                         </div>
                                     ))
@@ -574,40 +637,9 @@ const AdminBrowseIssues = () => {
                                     <div className="category-icon-title">
                                         <span className="category-title">All Categories</span>
                                     </div>
-                                    <span className="category-count" style={{ backgroundColor: filters.category === 'All Categories' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0', color: filters.category === 'All Categories' ? 'white' : '#4a5568' }}>
+                                    <span className="category-count" style={{ backgroundColor: filters.category === 'All Categories' ? '#4a5568' : '#e2e8f0', color: filters.category === 'All Categories' ? 'white' : '#4a5568' }}>
                                         {issues.length}
                                     </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Sidebar: Community Impact */}
-                        <div className="sidebar-panel">
-                            <div className="panel-header">
-                                <Users size={20} className="panel-icon" />
-                                <h4>Community Impact</h4>
-                            </div>
-                            <div className="impact-stats">
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">✅</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.issuesResolved}</strong>
-                                        <span>Issues Resolved</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⚡</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.responseTime}</strong>
-                                        <span>Avg Response Time</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⭐</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.communityScore}</strong>
-                                        <span>Community Score</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -754,7 +786,7 @@ const AdminBrowseIssues = () => {
                                             <p>Loading community issues...</p>
                                             <span className="loading-subtitle">Fetching the latest reports from the server</span>
                                         </div>
-                                    ) : filteredIssues.length === 0 ? (
+                                    ) : issuesToRender.length === 0 ? (
                                         <div className="empty-state">
                                             <div className="empty-icon">🔍</div>
                                             <h3>No issues found</h3>
@@ -766,15 +798,14 @@ const AdminBrowseIssues = () => {
                                     ) : (
                                         <div className="issues-grid">
                                             {
-                                                filteredIssues.map(issue => (
+                                                issuesToRender.map(issue => (
                                                     <div key={issue.id}
                                                         className="issue-card"
-                                                        onClick={() => navigate(`/issue-detail/${issue.id}`)}>
+                                                        onClick={() => navigate(`/admin/issue-detail/${issue.id}`)}>
                                                         <div className="issue-header">
                                                             <div className="issue-meta-left">
                                                                 <div className="issue-category-tag"
                                                                     style={{
-                                                                        // Set background and text color based on category logic
                                                                         backgroundColor: issueCategories.find(c => c.category === issue.category) ? issueCategories.find(c => c.category === issue.category).color + '20' : 'gray',
                                                                         color: issueCategories.find(c => c.category === issue.category) ? issueCategories.find(c => c.category === issue.category).color : 'darkgray'
                                                                     }}>
@@ -789,7 +820,6 @@ const AdminBrowseIssues = () => {
                                                         </div>
 
                                                         <h4 className="issue-title">{issue.title}</h4>
-                                                        {/* 🐛 FIX: Apply CSS for description truncation */}
                                                         <p className="issue-description" style={{
                                                             display: '-webkit-box',
                                                             WebkitLineClamp: 2,
@@ -849,11 +879,11 @@ const AdminBrowseIssues = () => {
                                                             </button>
                                                         </div>
 
-                                                        {/* Comments panel (Admin view should ideally show full comment list) */}
+                                                        {/* Comments panel */}
                                                         {
                                                             commentsOpen[issue.id] && (
                                                                 <div className="comments-panel" onClick={(e) => e.stopPropagation()}> 
-                                                                    {/* Add Comment (Kept for consistency/future use) */}
+                                                                    {/* Add Comment */}
                                                                     <div className="add-comment">
                                                                         <textarea placeholder="Write your comment..."
                                                                             value={commentDrafts[issue.id] || ''}
@@ -909,7 +939,7 @@ const AdminBrowseIssues = () => {
                                                                                                             {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
                                                                                                         </span>
                                                                                                         {
-                                                                                                            (isOwner || user.role === 'admin') && ( // Admin can edit/delete all comments
+                                                                                                            (isOwner || user.role === 'admin') && ( 
                                                                                                                 <div className="comment-owner-actions">
                                                                                                                     <button className="edit-comment-btn"
                                                                                                                         onClick={(e) => { e.stopPropagation(); startEditComment(c); }}>

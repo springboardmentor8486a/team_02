@@ -29,10 +29,12 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
+        // Reset selected volunteer when the underlying issue object changes its assignedTo field
         setSelectedVolunteer(issue.assignedTo);
     }, [issue.assignedTo]);
 
     const isAssigned = issue.assignedTo && issue.assignedTo !== 'Unassigned';
+    // Check if the current selection is the same as the original assigned value
     const isSameVolunteer = selectedVolunteer === issue.assignedTo;
 
     const handleAssignment = async () => {
@@ -49,15 +51,18 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
                 { withCredentials: true }
             );
 
+            // Notify parent component to update its state
             onAssign(issue.id, selectedVolunteer);
 
             setIsReassigning(false);
-            alert(`Issue ${issue.id} successfully assigned to ${selectedVolunteer}.`);
+            // Changed alert to use selectedVolunteer name
+            alert(`Issue successfully assigned to ${selectedVolunteer}.`);
 
         } catch (error) {
             console.error("Assignment failed:", error.response?.data || error.message);
             alert(`Failed to assign issue: ${error.response?.data?.message || 'Server error.'}`);
             
+            // Rollback optimistic change on error
             setSelectedVolunteer(issue.assignedTo); 
         } finally {
             setIsSaving(false);
@@ -83,6 +88,7 @@ const AssignButton = ({ issue, volunteers, onAssign }) => {
                     <button 
                         className="action-btn assign-confirm-btn"
                         onClick={handleAssignment}
+                        // Disable if no volunteer selected OR selected volunteer is the current assigned one
                         disabled={isSaving || !selectedVolunteer || selectedVolunteer === 'Unassigned' || isSameVolunteer}
                     >
                         {isSaving ? <Loader2 size={14} className="spinner" /> : <UserCheck size={14} />}
@@ -131,23 +137,12 @@ const AllIssuesAdmin = () => {
     const [authChecked, setAuthChecked] = useState(false); 
     // ----------------------------
 
-    const handleLogout = () => {
-        if (window.confirm('Are you sure you want to logout?')) {
-            signOut();
-            navigate('/');
-        }
-    };
-
-    const getUserInitials = (name) => {
-        if (!name) return 'MJ';
-        return name.split(' ').map(part => part[0]).join('').toUpperCase();
-    };
-
     const mapStatus = (serverStatus) => {
         switch (serverStatus) {
             case 'recived': return 'Pending';
             case 'inReview': return 'In Progress';
             case 'resolved': return 'Resolved';
+            case 'in progress': return 'In Progress'; // Handle mixed cases
             default: return 'Pending';
         }
     };
@@ -159,7 +154,7 @@ const AllIssuesAdmin = () => {
             const response = await axios.get(`${API_BASE_URL}/users/list-all`, { withCredentials: true });
             const volunteersList = response.data.data.filter(u => u.role === 'volunteer').map(v => ({
                 id: v._id,
-                name: v.name,
+                name: v.fullName || v.name, // Use fullName first, fallback to name
                 location: v.location 
             }));
             setAllVolunteers(volunteersList);
@@ -180,7 +175,7 @@ const AllIssuesAdmin = () => {
             
             const mappedIssues = response.data.data.map(comp => {
                 const statusText = mapStatus(comp.status);
-                const mockPriority = ['high', 'medium', 'low'][Math.floor(Math.random() * 3)];
+                const mockPriority = comp.priority || ['high', 'medium', 'low'][Math.floor(Math.random() * 3)];
                 
                 let assignedToName = comp.assignedTo; 
                 
@@ -194,6 +189,7 @@ const AllIssuesAdmin = () => {
                 return {
                     id: comp._id,
                     title: comp.title,
+                    // Use lowercase status without spaces for CSS class matching
                     status: statusText.toLowerCase().replace(' ', ''), 
                     priority: mockPriority, 
                     assignedTo: assignedToName, // Name comes directly from DB
@@ -219,12 +215,15 @@ const AllIssuesAdmin = () => {
 
     useEffect(() => {
         if (!authChecked) return;
-        if (user) {
+        if (user && user.role === 'admin') {
             fetchIssues();
             fetchVolunteers(); // Fetch the list of volunteers
+        } else if (user) {
+            navigate('/dashboard'); // Redirect if not admin
         } else {
-            navigate('/login');
+            navigate('/login'); // Redirect if not logged in
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, navigate, fetchIssues, fetchVolunteers, authChecked]);
 
 
@@ -247,10 +246,10 @@ const AllIssuesAdmin = () => {
         const pending = allIssues.filter(i => i.status === 'pending').length;
 
         return [
-            { label: 'Total Issues', value: total, icon: BarChart3, color: '#e5e7eb' },
-            { label: 'In Progress', value: inProgress, icon: Clock, color: '#dbeafe' },
-            { label: 'Resolved', value: resolved, icon: CheckCircle, color: '#dcfce7' },
-            { label: 'Pending', value: pending, icon: AlertCircle, color: '#ffedd5' }
+            { label: 'Total Issues', value: total, icon: BarChart3, color: '#2c5292' },
+            { label: 'In Progress', value: inProgress, icon: Clock, color: '#f6ad55' },
+            { label: 'Resolved', value: resolved, icon: CheckCircle, color: '#48bb78' },
+            { label: 'Pending', value: pending, icon: AlertCircle, color: '#f56565' }
         ];
     }, [allIssues]);
 
@@ -262,21 +261,13 @@ const AllIssuesAdmin = () => {
         ));
     };
     
-    // ... (handleViewDetails and conditional rendering remains) ...
-    if (!user && !authChecked) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <p>Loading user session...</p>
-            </div>
-        );
-    }
-    
+    // --- Rendering ---
     if (!user) return null;
 
     return (
         <div className="all-issues-admin">
             {/* Header */}
-           <AdminHeader />
+            <AdminHeader />
 
             <div className="issues-hero">
                 <div className="issues-hero-content">
@@ -296,8 +287,9 @@ const AllIssuesAdmin = () => {
                                     <div className="issues-stat-label">{stat.label}</div>
                                     <div className="issues-stat-value">{stat.value}</div>
                                 </div>
-                                <div className="issues-stat-icon" style={{ backgroundColor: stat.color }}>
-                                    <Icon size={24} color="#6b7280" />
+                                <div className="issues-stat-icon" style={{ backgroundColor: stat.color + '30' }}>
+                                    {/* Icon color set to primary brand blue for consistency */}
+                                    <Icon size={24} color="#2c5292" />
                                 </div>
                             </div>
                         </div>
@@ -308,7 +300,7 @@ const AllIssuesAdmin = () => {
             <div className="issues-table-section">
                 <div className="issues-table-header">
                     <div className="issues-table-title">
-                        <AlertCircle size={20} />
+                        <AlertCircle size={20} color="#2c5292" />
                         <h2>Issues Overview</h2>
                     </div>
                     <p className="issues-table-subtitle">Complete list of all reported issues with management actions</p>
@@ -316,7 +308,7 @@ const AllIssuesAdmin = () => {
 
                 <div className="table-actions">
                     <div className="search-box">
-                        <Search size={18} />
+                        <Search size={18} color="#6b7280" />
                         <input 
                             type="text" 
                             placeholder="Search issues..."
@@ -329,17 +321,17 @@ const AllIssuesAdmin = () => {
                 <div className="issues-table-container">
                     {loading ? (
                         <div className="loading-state-admin">
-                            <div className="loading-spinner"></div>
+                            <Loader2 size={30} className="loading-spinner" color="#2c5292" />
                             <p>Loading issues from database...</p>
                         </div>
                     ) : error ? (
                         <div className="error-state-admin">
-                            <AlertCircle size={24} color="#ef4444" />
+                            <AlertCircle size={30} color="#ef4444" />
                             <p>{error}</p>
                         </div>
                     ) : filteredIssues.length === 0 ? (
                         <div className="empty-state-admin">
-                            <Search size={24} color="#9ca3af" />
+                            <Search size={30} color="#9ca3af" />
                             <p>No issues found matching your search criteria.</p>
                         </div>
                     ) : (
@@ -360,7 +352,7 @@ const AllIssuesAdmin = () => {
                                         <td className="issue-title-cell">{issue.title}</td>
                                         <td>
                                             <span className={`status-badge status-${issue.status}`}>
-                                                {issue.status}
+                                                {mapStatus(issue.status)}
                                             </span>
                                         </td>
                                         <td>

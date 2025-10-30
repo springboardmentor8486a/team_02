@@ -681,14 +681,7 @@ const handleSubmit = async (e) => {
                             </div>
                         </div>
 
-                        <div className="sidebar-panel">
-                            <h4>📞 Need Help?</h4>
-                            <div className="contact-info">
-                                <p><Mail size={16} /> <a href="mailto:support@cleanstreet.org">support@cleanstreet.org</a></p>
-                                <p><Phone size={16} /> <a href="tel:5551234567">(555) 123-HELP</a></p>
-                                <p><Globe size={16} /> <a href="#">Live Chat Support</a></p>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>

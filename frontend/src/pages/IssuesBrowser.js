@@ -3,13 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, ChevronsDown, ThumbsDown, Edit, Save, Trash2 } from 'lucide-react';
-import AppFooter from '../components/AppFooter';
-import AppHeader from '../components/AppHeader';
+
+// NOTE: Changed imports to match usage in the return block for stability, assuming
+// AppHeader and AppFooter are correct components. If you meant VolunteerHeader/Footer,
+// you should adjust the import statements above this block.
+import VolunteerHeader from '../components/VolunteerHeader.jsx'; 
+import VolunteerFooter from '../components/VolunteerFooter.jsx';
 
 // Assuming you have a CSS file for styling:
 import './IssuesBrowser.css'; 
 
-// --- Time utility mocks (included for completeness as they were missing) ---
+// --- Time utility mocks ---
 const getRelativeTime = (dateString) => {
     const now = new Date();
     const past = new Date(dateString);
@@ -39,9 +43,12 @@ const UserBrowseIssue = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // --- State Declarations ---
     const [authChecked, setAuthChecked] = useState(false);
-    const [issues, setIssues] = useState([]);
-    const [filteredIssues, setFilteredIssues] = useState([]);
+    // issues: Holds the unfiltered/unsorted data from the last successful API call
+    const [issues, setIssues] = useState([]); 
+    // filteredIssues: Holds the final list to display after local filtering/sorting
+    const [filteredIssues, setFilteredIssues] = useState([]); 
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({
@@ -57,6 +64,7 @@ const UserBrowseIssue = () => {
     const [busyVotes, setBusyVotes] = useState({});
     const [editingComment, setEditingComment] = useState(null);
 
+    // --- Memoized Data ---
     const categories = useMemo(() => [
         'All Categories', 'Garbage & Waste', 'Potholes', 'Water Issues', 'Street Lights', 'Vandalism', 'Other'
     ], []);
@@ -86,6 +94,7 @@ const UserBrowseIssue = () => {
         totalReports: '2.8k'
     };
 
+    // --- Fetch Issues (To get ALL issues or issues based on backend filter) ---
     const fetchIssues = useCallback(async () => {
         if (!user) return;
         setLoading(true);
@@ -107,6 +116,10 @@ const UserBrowseIssue = () => {
             'All Statuses': undefined
         };
 
+        // Note: We intentionally only send a minimal parameter set to retrieve all or most data 
+        // if the client-side filtering is the primary method. If the backend filtering is strong, 
+        // you might pass ALL filters here. For safety, let's keep all filters but rely on the backend 
+        // to filter correctly and the useEffect below to sort/refine.
         const params = {
             search: searchTerm.trim(),
             category: filters.category !== 'All Categories' ? categoryMap[filters.category] : undefined,
@@ -115,18 +128,19 @@ const UserBrowseIssue = () => {
         };
 
         try {
+            // Fetch issues from the API
             const response = await axios.get(`${API_BASE_URL}/complaints/all`, {
-                params: params,
+                // Remove most params if only client-side filtering is desired, or keep them if backend filtering is primary
+                params: params, 
                 withCredentials: true
             });
 
             const fetchedIssues = response.data.data.map(comp => {
                 const statusText = comp.status === 'recived' ? 'Pending' : comp.status === 'inReview' ? 'In Progress' : comp.status === 'resolved' ? 'Resolved' : 'Pending';
                 
-                // FIXED: Replace optional chaining with computed property access
-                const locationText = (comp.address && comp.address[0]) || 'Unknown Location';
+                const rawLocation = (comp.address && comp.address[0]) || 'Unknown Location';
+                const locationText = rawLocation.length > 30 ? rawLocation.substring(0, 27) + '...' : rawLocation;
                 
-                // FIXED: Replace optional chaining
                 const userName = typeof comp.userId === 'object' && comp.userId && comp.userId.name ?
                     comp.userId.name :
                     'Anonymous User';
@@ -140,14 +154,16 @@ const UserBrowseIssue = () => {
                 };
                 const displayCategory = reverseCategoryMap[comp.assignedTo] || 'Other';
                 
-                // FIXED: Replace optional chaining
                 const commentsCount = comp.comments && Array.isArray(comp.comments) ? comp.comments.length : 0;
+                
+                const rawDescription = comp.description;
+                const descriptionText = rawDescription.length > 150 ? rawDescription.substring(0, 147) + '...' : rawDescription;
 
 
                 return {
                     id: comp._id,
                     title: comp.title,
-                    description: comp.description,
+                    description: descriptionText,
                     location: locationText,
                     category: displayCategory,
                     status: statusText,
@@ -163,7 +179,7 @@ const UserBrowseIssue = () => {
                 };
             });
 
-            // Fetch user-specific vote status
+            // Fetch user-specific vote status and counts (logic retained)
             const issueIds = fetchedIssues.map(i => i.id).join(',');
             let userVotesMap = {};
             if (issueIds.length > 0) {
@@ -179,7 +195,6 @@ const UserBrowseIssue = () => {
             }
             setUserVotes(userVotesMap);
 
-            // Fetch overall vote counts
             const countsPromises = fetchedIssues.map(i =>
                 axios.get(`${API_BASE_URL}/votes/${i.id}`, { withCredentials: true })
                 .then(r => ({ id: i.id, counts: r.data.data }))
@@ -190,11 +205,10 @@ const UserBrowseIssue = () => {
             const countsMap = countsResults.reduce((acc, item) => { acc[item.id] = item.counts; return acc; }, {});
             const issuesWithCounts = fetchedIssues.map(i => ({ ...i, counts: countsMap[i.id] || { upvote: 0, downVote: 0 } }));
 
-            setIssues(issuesWithCounts);
-            setFilteredIssues(issuesWithCounts);
+            setIssues(issuesWithCounts); // Set the unfiltered/unsorted base data
+            // setFilteredIssues(issuesWithCounts); // Removed to let the dedicated useEffect handle it
 
         } catch (error) {
-            // FIXED: Replace optional chaining
             console.error("Failed to fetch issues:", (error.response && error.response.data) || error.message);
             setIssues([]);
             setFilteredIssues([]);
@@ -202,6 +216,58 @@ const UserBrowseIssue = () => {
             setLoading(false);
         }
     }, [user, searchTerm, filters]);
+
+    // --- CLIENT-SIDE FILTERING AND SORTING LOGIC ---
+    useEffect(() => {
+        let updated = [...issues];
+
+        // 🔹 Filter by category
+        if (filters.category && filters.category !== 'All Categories') {
+            updated = updated.filter(issue => issue.category === filters.category);
+        }
+
+        // 🔹 Filter by status
+        if (filters.status && filters.status !== 'All Statuses') {
+            updated = updated.filter(issue => issue.status === filters.status);
+        }
+
+        // 🔹 Search filter (title, description, or location)
+        if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase();
+            updated = updated.filter(issue =>
+                issue.title?.toLowerCase().includes(term) ||
+                issue.description?.toLowerCase().includes(term) ||
+                issue.location?.toLowerCase().includes(term)
+            );
+        }
+
+        // 🔹 Sorting logic
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        
+        updated.sort((a, b) => {
+            switch (filters.sort) {
+                case 'Newest First':
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                case 'Oldest First':
+                    return new Date(a.createdAt) - new Date(b.createdAt);
+                case 'Most Voted':
+                    // Sort by net votes (upvotes - downvotes)
+                    const scoreA = (a.counts?.upvote || 0) - (a.counts?.downVote || 0);
+                    const scoreB = (b.counts?.upvote || 0) - (b.counts?.downVote || 0);
+                    return scoreB - scoreA; // Descending
+                case 'Most Viewed':
+                    return (b.views || 0) - (a.views || 0); // Descending
+                case 'Priority':
+                    return priorityOrder[a.priority] - priorityOrder[b.priority]; // Ascending (high comes first)
+                default:
+                    return 0; // No sort change
+            }
+        });
+
+        setFilteredIssues(updated);
+    }, [filters, searchTerm, issues]); // Reruns whenever filters/search change or new data is fetched
+
+    // --- Authentication Effects ---
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -217,6 +283,7 @@ const UserBrowseIssue = () => {
         if (!user) {
             navigate('/login');
         } else {
+            // Initial data fetch
             fetchIssues();
         }
     }, [user, navigate, fetchIssues, authChecked]);
@@ -229,7 +296,6 @@ const UserBrowseIssue = () => {
         }
 
         const currentUserVote = userVotes[issueId];
-
         if (busyVotes[issueId]) return;
 
         let endpoint = `${API_BASE_URL}/votes/${issueId}?category=${voteType}`;
@@ -258,10 +324,8 @@ const UserBrowseIssue = () => {
             newUserVote = voteType;
         }
 
+        // Optimistic update of the source list (issues), which will trigger the filtering useEffect
         setIssues(prevIssues => prevIssues.map(issue =>
-            issue.id === issueId ? { ...issue, counts: newCounts } : issue
-        ));
-        setFilteredIssues(prevIssues => prevIssues.map(issue =>
             issue.id === issueId ? { ...issue, counts: newCounts } : issue
         ));
 
@@ -270,19 +334,15 @@ const UserBrowseIssue = () => {
         try {
             const resp = await axios.post(endpoint, {}, { withCredentials: true });
 
-            // FIXED: Replace optional chaining
             const returnedCounts = (resp.data.data && resp.data.data.counts) || resp.data.data;
 
             if (returnedCounts && (returnedCounts.upvote !== newCounts.upvote || returnedCounts.downVote !== newCounts.downVote)) {
                 setIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
-                setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
             }
 
         } catch (error) {
-            // FIXED: Replace optional chaining
             console.error("Vote action failed:", (error.response && error.response.data) || error.message);
             fetchIssues();
-            // FIXED: Replace optional chaining
             alert(`Vote action failed: ${(error.response && error.response.data && error.response.data.message) || 'Check network/server logic.'}`);
         } finally {
             setBusyVotes(prev => ({ ...prev, [issueId]: false }));
@@ -299,7 +359,6 @@ const UserBrowseIssue = () => {
             const resp = await axios.get(`${API_BASE_URL}/comments/${complaintId}`, { withCredentials: true });
             setCommentsStore(prev => ({ ...prev, [complaintId]: resp.data.data }));
         } catch (err) {
-            // FIXED: Replace optional chaining
             console.error("Failed to fetch comments", (err.response && err.response.data) || err.message);
             setCommentsStore(prev => ({ ...prev, [complaintId]: [] }));
         }
@@ -328,24 +387,23 @@ const UserBrowseIssue = () => {
             [issueId]: (prev[issueId] || []).filter(c => c._id !== commentId)
         }));
 
+        // Decrement comment count on issue in the source list
         setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
-        setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
 
 
         try {
             await axios.delete(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { withCredentials: true });
         } catch (err) {
-            // FIXED: Replace optional chaining
             console.error("Failed to delete comment:", (err.response && err.response.data) || err.message);
             alert("Failed to delete comment");
             
+            // Rollback
             setCommentsStore(prev => ({ ...prev, [issueId]: prevComments }));
             setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
         }
     };
 
-    // --- Start Editing Comment (Corrected to use 'editingComment') ---
+    // --- Comment Editing Handlers ---
     const startEditComment = (comment) => {
         setEditingComment({
             commentId: comment._id,
@@ -353,15 +411,12 @@ const UserBrowseIssue = () => {
         });
     };
 
-    // Handler for editing in the textarea
     const handleEditChange = (e) => {
         setEditingComment(prev => ({ ...prev, content: e.target.value }));
     };
 
-    // --- Update Comment Handler ---
     const updateComment = async (issueId, commentId, newContent) => {
         const trimmedContent = newContent.trim();
-        // FIXED: Replace optional chaining
         const currentComment = (commentsStore[issueId] || []).find(c => c._id === commentId);
 
         if (!currentComment || !trimmedContent || trimmedContent === currentComment.content) {
@@ -398,7 +453,6 @@ const UserBrowseIssue = () => {
                 [issueId]: prev[issueId].map(c => c._id === commentId ? updated : c)
             }));
         } catch (err) {
-            // FIXED: Replace optional chaining
             console.error("Failed to update comment", (err.response && err.response.data) || err.message);
             alert("Failed to update comment. Rolling back.");
 
@@ -451,11 +505,9 @@ const UserBrowseIssue = () => {
                 [issueId]: prev[issueId].map(c => c._id === tempComment._id ? created : c)
             }));
 
-            // increment comment count on issue
+            // increment comment count on issue in the source list
             setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
         } catch (err) {
-            // FIXED: Replace optional chaining
             console.error("Failed to post comment", (err.response && err.response.data) || err.message);
             
             // rollback optimistic append
@@ -469,7 +521,7 @@ const UserBrowseIssue = () => {
     }, [commentDrafts, user]);
 
 
-    // --- Other Handlers ---
+    // --- Filter Handlers ---
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
             ...prev,
@@ -499,6 +551,15 @@ const UserBrowseIssue = () => {
         });
     };
 
+    // Helper to get category count from the full issues list
+    const getCategoryCount = (categoryName) => {
+        if (categoryName === 'All Categories') {
+            return issues.length;
+        }
+        return issues.filter(i => i.category === categoryName).length;
+    };
+
+
     if (!authChecked) {
         return ( 
             <div className="loading-state full-page-loading">
@@ -512,10 +573,13 @@ const UserBrowseIssue = () => {
         return null; // Should redirect to /login via useEffect
     }
 
+    // Use the locally filtered results for rendering
+    const issuesToRender = filteredIssues; 
+
     return ( 
         <>
-            {/* Header */}
-           <AppHeader />
+            {/* Header: Used VolunteerHeader based on imports. If you meant AppHeader, change the import line. */}
+           <VolunteerHeader /> 
 
             <div className="dashboard-container">
                 {/* Hero */}
@@ -571,13 +635,13 @@ const UserBrowseIssue = () => {
                                                     style={{
                                                         backgroundColor: item.color,
                                                     }}>
-                                                    {item.icon}
+                                                        {item.icon}
                                                 </span>
                                                 <span className="category-title">{item.category}</span>
                                             </div>
                                             <span className="category-count"
                                                 style={{ backgroundColor: item.color }}>
-                                                {issues.filter(i => i.category === item.category).length}
+                                                {getCategoryCount(item.category)}
                                             </span>
                                         </div>
                                     ))
@@ -592,35 +656,7 @@ const UserBrowseIssue = () => {
                             </div>
                         </div>
 
-                        <div className="sidebar-panel">
-                            <div className="panel-header">
-                                <Users size={20} className="panel-icon" />
-                                <h4>Community Impact</h4>
-                            </div>
-                            <div className="impact-stats">
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">✅</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.issuesResolved}</strong>
-                                        <span>Issues Resolved</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⚡</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.responseTime}</strong>
-                                        <span>Avg Response Time</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⭐</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.communityScore}</strong>
-                                        <span>Community Score</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
 
                     <div className="browse-content">
@@ -714,8 +750,8 @@ const UserBrowseIssue = () => {
 
                             <div className="results-info">
                                 <div className="results-count">
-                                    <strong>{filteredIssues.length}</strong>
-                                    <span>{filteredIssues.length === 1 ? ' issue' : ' issues'} found</span>
+                                    <strong>{issuesToRender.length}</strong>
+                                    <span>{issuesToRender.length === 1 ? ' issue' : ' issues'} found</span>
                                 </div>
                                 <div className="community-engagement">
                                     <div className="engagement-badge">
@@ -763,7 +799,7 @@ const UserBrowseIssue = () => {
                                             <p>Loading community issues...</p>
                                             <span className="loading-subtitle">Fetching the latest reports from the server</span>
                                         </div>
-                                    ) : filteredIssues.length === 0 ? (
+                                    ) : issuesToRender.length === 0 ? (
                                         <div className="empty-state">
                                             <div className="empty-icon">🔍</div>
                                             <h3>No issues found</h3>
@@ -775,7 +811,7 @@ const UserBrowseIssue = () => {
                                     ) : (
                                         <div className="issues-grid">
                                             {
-                                                filteredIssues.map(issue => (
+                                                issuesToRender.map(issue => (
                                                     <div key={issue.id}
                                                         className="issue-card"
                                                         onClick={() => navigate(`/issue-detail/${issue.id}`)}>
@@ -824,14 +860,14 @@ const UserBrowseIssue = () => {
                                                             <div className="vote-section">
                                                                 {/* Upvote */}
                                                                 <button className={`vote-btn upvote ${userVotes[issue.id] === 'upvote' ? 'voted' : ''}`}
-                                                                    onClick={() => handleVote(issue.id, 'upvote')}
+                                                                    onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'upvote'); }}
                                                                     disabled={busyVotes[issue.id]}>
                                                                     <Heart size={16} />
                                                                     <span>{issue.counts && issue.counts.upvote !== undefined ? issue.counts.upvote : 0}</span>
                                                                 </button>
                                                                 {/* Downvote */}
                                                                 <button className={`vote-btn downvote ${userVotes[issue.id] === 'downvote' ? 'voted' : ''}`}
-                                                                    onClick={() => handleVote(issue.id, 'downvote')}
+                                                                    onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'downvote'); }}
                                                                     disabled={busyVotes[issue.id]}>
                                                                     <ThumbsDown size={16} />
                                                                     <span>{issue.counts && issue.counts.downVote !== undefined ? issue.counts.downVote : 0}</span>
@@ -844,7 +880,7 @@ const UserBrowseIssue = () => {
                                                         {/* Comments toggle */}
                                                         <div className="comments-toggle">
                                                             <button className="comments-open-btn"
-                                                                onClick={() => toggleComments(issue.id)}>
+                                                                onClick={(e) => { e.stopPropagation(); toggleComments(issue.id); }}>
                                                                 <ChevronsDown size={14} /> 
                                                                 {commentsOpen[issue.id] ? 'Hide' : 'Show'} Comments ({issue.comments || 0})
                                                             </button>
@@ -853,7 +889,7 @@ const UserBrowseIssue = () => {
                                                         {/* Comments panel */}
                                                         {
                                                             commentsOpen[issue.id] && (
-                                                                <div className="comments-panel">
+                                                                <div className="comments-panel" onClick={(e) => e.stopPropagation()}>
                                                                     {/* Add Comment */}
                                                                     <div className="add-comment">
                                                                         <textarea placeholder="Write your comment..."
@@ -872,11 +908,8 @@ const UserBrowseIssue = () => {
                                                                     {/* Comments List */}
                                                                     {
                                                                         (commentsStore[issue.id] || []).map(c => {
-                                                                            // FIXED: Replace optional chaining
                                                                             const commenterName = (c.userId && c.userId.name) || 'User';
-                                                                            // FIXED: Replace optional chaining
                                                                             const isOwner = (c.userId && c.userId._id || c.userId) === user._id;
-                                                                            // FIXED: Replace optional chaining
                                                                             const isEditing = editingComment && editingComment.commentId === c._id;
 
                                                                             return (
@@ -910,18 +943,17 @@ const UserBrowseIssue = () => {
                                                                                                         <span className="comment-author">{commenterName}</span>
                                                                                                         <span className="comment-time">
                                                                                                             {getRelativeTime(c.createdAt)} 
-                                                                                                            {/* Check if updatedAt is later than createdAt and looks like a valid date */}
                                                                                                             {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
                                                                                                         </span>
                                                                                                         {
                                                                                                             isOwner && (
                                                                                                                 <div className="comment-owner-actions">
                                                                                                                     <button className="edit-comment-btn"
-                                                                                                                        onClick={() => startEditComment(c)}>
+                                                                                                                        onClick={(e) => { e.stopPropagation(); startEditComment(c); }}>
                                                                                                                         <Edit size={14} />
                                                                                                                     </button>
                                                                                                                     <button className="delete-comment-btn"
-                                                                                                                        onClick={() => deleteComment(issue.id, c._id)}>
+                                                                                                                        onClick={(e) => { e.stopPropagation(); deleteComment(issue.id, c._id); }}>
                                                                                                                         <Trash2 size={14} />
                                                                                                                     </button>
                                                                                                                 </div>
@@ -951,7 +983,7 @@ const UserBrowseIssue = () => {
                     </div>
                 </div>
 
-                <AppFooter />
+                <VolunteerFooter /> 
             </div>
         </>
     );

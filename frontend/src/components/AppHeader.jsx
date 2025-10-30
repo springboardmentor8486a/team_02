@@ -40,9 +40,7 @@ const AppHeader = () => {
                             <div className="user-initials">{getUserInitials(displayName)}</div>
                             <span className="user-name">{displayName}</span>
                         </Link>
-                        <button onClick={handleLogout} className="logout-btn-header" title="Logout">
-                            <ArrowRight size={20} />
-                        </button>
+                
                     </div>
                 ) : (
                     <div className="auth-buttons">

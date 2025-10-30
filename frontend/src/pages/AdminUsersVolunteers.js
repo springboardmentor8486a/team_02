@@ -6,13 +6,14 @@ import {
     LayoutDashboard, AlertCircle, Users, FileText, Clock, 
     User as UserIcon, UserCheck, ArrowRight, BarChart3, Loader2 
 } from 'lucide-react';
-import './AdminUsersVolunteers.css'; // Assuming this CSS file exists
+import './AdminUsersVolunteers.css';
 import AdminHeader from '../components/AdminHeader';
 import AdminFooter from '../components/AdminFooter';
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
 // --- API Fetcher (Defined locally) ---
 const fetchAllUsersAndStats = async () => {
+    // This is the correct API call to get a list of all users and their summarized data
     const response = await axios.get(`${API_BASE_URL}/users/list-all`, { withCredentials: true });
     return response.data.data;
 };
@@ -33,6 +34,7 @@ const AdminUsersVolunteers = () => {
             const data = await fetchAllUsersAndStats(); 
             setAllUsers(data || []);
         } catch (err) {
+            console.error(err.response?.data?.message || 'Failed to fetch user and volunteer data.');
             setError(err.response?.data?.message || 'Failed to fetch user and volunteer data.');
         } finally {
             setLoading(false);
@@ -40,12 +42,14 @@ const AdminUsersVolunteers = () => {
     }, []);
 
     useEffect(() => {
-        if (user) {
+        if (!user) {
+            navigate('/login');
+        } else if (user.role !== 'admin') {
+            navigate('/dashboard'); // Unauthorized access attempt
+        } else {
             loadUsers();
         }
-        // NOTE: Redirection based on role (if needed) is handled here implicitly, 
-        // and unauthorized users are blocked by the 403 error from the backend.
-    }, [user, loadUsers]);
+    }, [user, navigate, loadUsers]);
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
@@ -55,12 +59,21 @@ const AdminUsersVolunteers = () => {
     };
 
     const getUserInitials = (name) => {
-        if (!name) return 'MJ';
-        return name.split(' ').map(part => part[0]).join('').toUpperCase();
+        if (!name) return 'A';
+        const safeName = (name.fullName || name.name || name).trim();
+        const parts = safeName.split(' ').filter(Boolean);
+        if (parts.length === 0) return 'A';
+        
+        let initials = parts[0][0];
+        if (parts.length > 1) {
+            initials += parts[parts.length - 1][0];
+        }
+        return initials.toUpperCase();
     };
 
     // --- Data Processing (Memoized) ---
     const { citizenUsers, volunteers, stats } = useMemo(() => {
+        // Assume reportsCount, assigned, and resolved fields are available on user objects from API
         const citizens = allUsers.filter(u => u.role === 'user');
         const vols = allUsers.filter(u => u.role === 'volunteer');
         
@@ -70,10 +83,9 @@ const AdminUsersVolunteers = () => {
         const totalReports = citizens.reduce((sum, u) => sum + (u.reportsCount || 0), 0);
         
         const summaryStats = [
-            // Note: Colors are hardcoded based on the CSS provided earlier.
             { label: 'Total Citizens', value: totalCitizens.toString(), icon: UserIcon, color: '#3b82f6' },
             { label: 'Active Volunteers', value: activeVolunteers.toString(), icon: UserCheck, color: '#22c55e' },
-            { label: 'Total Reports', value: totalReports.toString(), icon: BarChart3, color: '#f59e0b' }
+            { label: 'Total Reports Filed', value: totalReports.toString(), icon: BarChart3, color: '#f59e0b' }
         ];
 
         return {
@@ -86,8 +98,8 @@ const AdminUsersVolunteers = () => {
     // Handle initial loading and unauthorized states
     if (loading || !user) {
         return (
-             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-                <Loader2 size={36} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+            <div className="admin-users-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+                <Loader2 size={36} className="spinner" color="#2c5292" style={{ animation: 'spin 1s linear infinite' }} />
                 <p>{loading ? "Loading users and stats..." : "Authenticating..."}</p>
             </div>
         );
@@ -96,8 +108,7 @@ const AdminUsersVolunteers = () => {
     return (
         <div className="admin-users-page">
             {/* Header */}
-            
-                <AdminHeader />
+            <AdminHeader />
 
             {/* Hero Section */}
             <div className="users-hero">
@@ -129,7 +140,7 @@ const AdminUsersVolunteers = () => {
                             </div>
                         );
                     })}
-                    {/* Placeholder to match grid layout in image */}
+                    {/* Placeholder to match grid layout */}
                     <div className="users-stat-card" style={{opacity: 0, visibility: 'hidden'}}></div> 
                 </div>
             </div>
@@ -142,8 +153,8 @@ const AdminUsersVolunteers = () => {
                 <div className="users-section">
                     <div className="users-section-header">
                         <div className="users-section-title">
-                            <UserIcon size={20} />
-                            <h2>Citizen Users</h2>
+                            <UserIcon size={20} color="#6b7280" />
+                            <h2>Citizen Users ({citizenUsers.length})</h2>
                         </div>
                     </div>
                     <p className="users-section-subtitle">Users who report issues in the community</p>
@@ -163,10 +174,10 @@ const AdminUsersVolunteers = () => {
                                         <td>
                                             <div className="user-cell">
                                                 <div className="user-avatar-small">
-                                                    {getUserInitials(citizen.name)}
+                                                    {getUserInitials(citizen.name || citizen.fullName)}
                                                 </div>
                                                 <div className="user-info-cell">
-                                                    <div className="user-name-cell">{citizen.name}</div>
+                                                    <div className="user-name-cell">{citizen.name || citizen.fullName}</div>
                                                     <div className="user-email-cell">{citizen.email}</div>
                                                 </div>
                                             </div>
@@ -186,8 +197,8 @@ const AdminUsersVolunteers = () => {
                 <div className="users-section">
                     <div className="users-section-header">
                         <div className="users-section-title">
-                            <UserCheck size={20} />
-                            <h2>Volunteers</h2>
+                            <UserCheck size={20} color="#6b7280" />
+                            <h2>Volunteers ({volunteers.length})</h2>
                         </div>
                     </div>
                     <p className="users-section-subtitle">Volunteers who resolve community issues</p>
@@ -208,10 +219,10 @@ const AdminUsersVolunteers = () => {
                                         <td>
                                             <div className="user-cell">
                                                 <div className="user-avatar-small volunteer">
-                                                    {getUserInitials(volunteer.name)}
+                                                    {getUserInitials(volunteer.name || volunteer.fullName)}
                                                 </div>
                                                 <div className="user-info-cell">
-                                                    <div className="user-name-cell">{volunteer.name}</div>
+                                                    <div className="user-name-cell">{volunteer.name || volunteer.fullName}</div>
                                                     <div className="user-email-cell">{volunteer.email}</div>
                                                 </div>
                                             </div>

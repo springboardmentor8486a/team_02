@@ -14,18 +14,73 @@
 .nav-links a.active, .nav-links a:hover { color: #2c5292; }
 .header-right { display: flex; align-items: center; gap: 12px; }
 .user-profile { display: flex; align-items: center; gap: 10px; }
-.profile-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.user-initials { width: 32px; height: 32px; border-radius: 50%; background: #e9eefd; color: #2c5292; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.user-name { color: #1a202c; font-weight: 600; }
-.logout-btn-header, .sign-in-btn, .get-started-btn { border: none; background: #2c5292; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-.get-started-btn { background: #4c66e4; }
-.sign-in-btn { background: transparent; color: #2c5292; border: 1px solid #2c5292; }
-
-@media (max-width: 768px) {
-  .nav-links { display: none; }
+/* Applied to the Link in AdminHeader and AppHeader to make the whole profile block clickable */
+.profile-link { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    text-decoration: none; 
+    padding: 4px 8px; /* Added padding for clickable area */
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.profile-link:hover {
+    background: #f0f4f8;
 }
 
+.user-initials { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    background: #e9eefd; 
+    color: #2c5292; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: 700; 
+}
+.user-name { color: #1a202c; font-weight: 600; }
 
+/* FIX: Standard logout button for AdminHeader and AppHeader */
+.logout-btn-header { 
+    border: none; 
+    background: transparent;
+    color: #2c5292; 
+    padding: 8px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+    transform: rotate(180deg); /* Rotate the ArrowRight icon for logout look */
+}
+.logout-btn-header:hover {
+    background: #f0f4f8;
+}
 
+/* Auth Buttons (for AppHeader unauthenticated state) */
+.sign-in-btn { 
+    background: transparent; 
+    color: #2c5292; 
+    border: 1px solid #2c5292;
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.get-started-btn { 
+    background: #4c66e4; 
+    color: #fff; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    cursor: pointer;
+    font-weight: 600;
+    border: none;
+}
 
-
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+}

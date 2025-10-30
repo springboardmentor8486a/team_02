@@ -1,357 +1,342 @@
 /* General Body and Page Styles */
 .volunteer-edit-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #f3f4f6;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: #111827;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    /* Adopting the light background color from the other pages */
+    background-color: #f7fafc; 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #1a202c;
 }
 
-/* Header Styles */
+/* ------------------------------------------------------------- */
+/* --- HEADER STYLES (MATCHING OTHER PAGES) --- */
+/* ------------------------------------------------------------- */
 .volunteer-header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 3rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    z-index: 100;
 }
 
 .logo-section {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  gap: 0.75rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.5rem;
 }
 
 .logo-image {
-  height: 40px;
-  /* Width is set to 100px in your CSS, you might want auto */
-  width: 100px; 
+    height: 40px;
+    width: auto;
 }
 
 .logo-text {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1f2937;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c5292; /* Main Brand Color */
 }
 
+/* User Role Badge - Consistent Blue Theme */
 .user-badge {
-  margin-left: 450px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #dbeafe;
-  color: #1e40af;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-weight: 600;
+    /* Adjusted margin for proper alignment */
+    margin-left: 20px; 
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #e2e8f0; 
+    color: #2c5292;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.85rem;
 }
 
 .back-to-profile .back-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  background-color: transparent;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background-color: #f0f4f8; 
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
 .back-to-profile .back-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+    background-color: #e2e8f0;
+    border-color: #9ca3af;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Main Content Container */
+/* ------------------------------------------------------------- */
+/* --- MAIN CONTENT & PANEL STYLES (COHESIVE CARD) --- */
+/* ------------------------------------------------------------- */
+
 .volunteer-edit-container {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2.5rem 1rem;
 }
 
 .volunteer-edit-panel {
-  width: 100%;
-  max-width: 720px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem;
+    width: 100%;
+    max-width: 650px;
+    background-color: #ffffff;
+    /* Large, soft corners */
+    border-radius: 20px; 
+    /* Soft shadow consistent with other cards */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); 
+    padding: 3rem 2.5rem;
+    border: 1px solid #e2e8f0;
 }
 
 /* Panel Header */
 .panel-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.panel-header .header-icon {
-  color: #10b981;
-  margin: 0 auto 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
 .panel-header h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  color: #1f2937;
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    color: #1f2937;
 }
 
 .panel-header .subtitle {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
+    font-size: 1rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
 }
 
 /* Status Message */
 .status-message {
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  text-align: center;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
 }
 
 .status-message.success {
-  background-color: #d1fae5;
-  color: #065f46;
+    background-color: #d1fae5;
+    color: #065f46;
 }
 
 .status-message.error {
-  background-color: #fee2e2;
-  color: #991b1b;
+    background-color: #fee2e2;
+    color: #991b1b;
 }
 
 /* Form Styles */
 .volunteer-edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-}
-#aboutMe{
-    border: 2px solid red;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group label {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #374151;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .form-group input,
 .form-group textarea {
-  width: 100%;
-  padding: 0.875rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: #f9fafb;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box; /* Ensures padding doesn't affect width */
+    width: 100%;
+    padding: 0.875rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f9fafb;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
-
+/* Specific red border removed for #aboutMe */
 .form-group input:focus,
 .form-group textarea:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    outline: none;
+    border-color: #2c5292;
+    box-shadow: 0 0 0 3px rgba(44, 82, 146, 0.15);
 }
 
 .form-group.read-only-group input {
-  background-color: #e5e7eb;
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-.form-group small {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #6b7280;
+    background-color: #edf2f7;
+    color: #6b7280;
+    cursor: default;
 }
 
 /* Avatar Section */
 .avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
-  background-color: #f9fafb;
-  min-height: 200px;
-}
-
-.avatar-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.avatar-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    min-height: 200px;
 }
 
 .profile-photo-preview {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .volunteer-initials {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background-color: #10b981;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 3rem;
-  font-weight: bold;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #2c5292; /* Primary blue for initials */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: bold;
 }
 
 .file-input {
-  display: none;
+    display: none;
 }
 
 .volunteer-upload {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .volunteer-upload:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+    background-color: #e2e8f0;
+    border-color: #a0aec0;
 }
 
 .remove-photo-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid transparent;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
+    background-color: #fef3c7; /* Subtle warning color */
+    color: #92400e;
+    border: 1px solid transparent;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .remove-photo-btn:hover {
-  background-color: #fecaca;
-  color: #991b1b;
+    background-color: #fde68a;
+    color: #744210;
 }
 
 
-/* Submit Button */
+/* Submit Button - Primary Color */
 .volunteer-save {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 1rem;
-  background-color: #10b981;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
-  margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    background-color: #2c5292;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s, transform 0.2s;
+    margin-top: 1rem;
+    box-shadow: 0 4px 10px rgba(44, 82, 146, 0.3);
 }
 
-.volunteer-save:hover {
-  background-color: #059669;
+.volunteer-save:hover:not(:disabled) {
+    background-color: #1a365d;
+    transform: translateY(-1px);
 }
 
 .volunteer-save:disabled {
-  background-color: #6ee7b7;
-  cursor: wait;
-  opacity: 0.8;
+    background-color: #90a3c2;
+    cursor: not-allowed;
+    opacity: 0.8;
 }
 
 /* Password Link */
 .password-link {
-  text-align: center;
-  margin-top: 0.5rem;
+    text-align: center;
+    margin-top: 0.5rem;
 }
 
 .password-link a {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
+    color: #2c5292;
+    text-decoration: none;
+    font-weight: 500;
 }
 
 .password-link a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 /* Footer Styles */
 .footer {
-  text-align: center;
-  padding: 1.5rem;
-  color: #6b7280;
-  font-size: 0.9rem;
-  background-color: #ffffff;
-  border-top: 1px solid #e5e7eb;
-  margin-top: auto; /* Pushes footer to bottom */
+    text-align: center;
+    padding: 1.5rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    margin-top: auto; 
+    flex-shrink: 0;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .volunteer-header-top {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .back-to-profile {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .volunteer-edit-panel {
-    padding: 1.5rem;
-  }
-  
-  .panel-header h2 {
-    font-size: 1.75rem;
-  }
+    .volunteer-header-top {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+        align-items: stretch;
+    }
+    
+    .logo-section .user-badge {
+        margin-left: 0;
+    }
+
+    .volunteer-edit-container {
+        padding: 1rem;
+    }
+    
+    .volunteer-edit-panel {
+        padding: 1.5rem;
+    }
 }

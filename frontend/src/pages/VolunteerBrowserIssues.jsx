@@ -5,55 +5,46 @@ import { useAuth } from '../contexts/AuthContext';
 import { Search, Filter, MapPin, ArrowRight, BarChart3, Users, FileText, PlusCircle, Heart, MessageSquare, Eye, Clock, ChevronsDown, ThumbsDown, Edit, Save, Trash2 } from 'lucide-react';
 
 // Assuming you have a CSS file for styling:
-import './VolunteerBrowserIssues.css';
+import './IssuesBrowser.css';
 import VolunteerHeader from '../components/VolunteerHeader.jsx';
 import VolunteerFooter from '../components/VolunteerFooter.jsx';
 
-const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
+// --- Time utility mocks ---
+const getRelativeTime = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
 
-// --- Time utility ---
-const getRelativeTime = (isoDateString) => {
-    const reportDate = new Date(isoDateString);
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfReportDay = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
-    const diffTime = startOfToday.getTime() - startOfReportDay.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        const hoursDiff = Math.floor((today.getTime() - reportDate.getTime()) / (1000 * 60 * 60));
-        if (hoursDiff === 0) return 'Just now';
-        if (hoursDiff < 24) return `${hoursDiff} hours ago`;
-        return 'Today';
-    }
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return `${Math.floor(diffDays / 30)} months ago`;
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return past.toLocaleDateString();
 };
 
 const getUserInitials = (name) => {
-    if (!name) return 'JD';
-    // Handle names that might include multiple spaces or other non-letter characters
-    const cleanedName = name.replace(/[^a-zA-Z\s]/g, '').trim();
-    const nameParts = cleanedName.split(/\s+/).filter(Boolean);
-
-    if (nameParts.length === 0) return 'JD';
-
-    // Get the first letter of the first and last part
-    const firstInitial = nameParts[0][0];
-    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
-
-    return (firstInitial + lastInitial).toUpperCase();
+    if (!name) return '??';
+    const parts = name.split(' ').filter(p => p.length > 0);
+    if (parts.length === 0) return '??';
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
+
+const API_BASE_URL = 'http://localhost:3000/api/v1'; // Define API URL
 
 const UserBrowseIssue = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // --- State Declarations ---
     const [authChecked, setAuthChecked] = useState(false);
-    const [issues, setIssues] = useState([]);
-    const [filteredIssues, setFilteredIssues] = useState([]);
+    // apiIssues holds the unfiltered/unsorted data from the last successful API call
+    const [apiIssues, setApiIssues] = useState([]); 
+    // filteredIssues holds the list after local filtering/sorting is applied
+    const [filteredIssues, setFilteredIssues] = useState([]); 
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({
@@ -61,18 +52,15 @@ const UserBrowseIssue = () => {
         status: 'All Statuses',
         sort: 'Newest First'
     });
-    // userVotes state is crucial for persistent coloring
     const [userVotes, setUserVotes] = useState({});
     const [commentsOpen, setCommentsOpen] = useState({});
     const [commentsStore, setCommentsStore] = useState({});
     const [commentDrafts, setCommentDrafts] = useState({});
     const [busyComments, setBusyComments] = useState({});
-    // State to manage voting action busy status
     const [busyVotes, setBusyVotes] = useState({});
-
-    // Consistent state name
     const [editingComment, setEditingComment] = useState(null);
 
+    // --- Memoized Data ---
     const categories = useMemo(() => [
         'All Categories', 'Garbage & Waste', 'Potholes', 'Water Issues', 'Street Lights', 'Vandalism', 'Other'
     ], []);
@@ -102,18 +90,21 @@ const UserBrowseIssue = () => {
         totalReports: '2.8k'
     };
 
+    // --- Fetch Issues (Backend Data Logic - Server-side Filtering/Sorting still enabled) ---
+    // NOTE: This version *still* passes filters/search to the API, but relies on a separate useEffect for local filtering if the API returns a full list.
     const fetchIssues = useCallback(async () => {
         if (!user) return;
         setLoading(true);
 
+        // API MAPPING (Kept, as your backend may be expecting it, but client-side filtering handles the display logic)
         const categoryMap = {
             'Garbage & Waste': 'Municipal sanitation and public health',
             'Potholes': 'Roads and street infrastructure',
             'Street Lights': 'Street lighting and electrical assets',
             'Water Issues': 'Water, sewerage, and stormwater',
-            'Vandalism': 'Ward/zone office and central admin',
-            'Other': 'Other',
-            'All Categories': undefined
+            'Vandalism': 'Ward/zone office and central admin', 
+            'Other': 'Other', 
+            'All Categories': undefined 
         };
 
         const statusMap = {
@@ -123,7 +114,7 @@ const UserBrowseIssue = () => {
             'All Statuses': undefined
         };
 
-
+        // Pass filters to the backend (in case backend filtering works)
         const params = {
             search: searchTerm.trim(),
             category: filters.category !== 'All Categories' ? categoryMap[filters.category] : undefined,
@@ -139,11 +130,13 @@ const UserBrowseIssue = () => {
 
             const fetchedIssues = response.data.data.map(comp => {
                 const statusText = comp.status === 'recived' ? 'Pending' : comp.status === 'inReview' ? 'In Progress' : comp.status === 'resolved' ? 'Resolved' : 'Pending';
-                const locationText = comp.address?.[0] || 'Unknown Location';
-
-                const userName = typeof comp.userId === 'object' && comp.userId?.name
-                    ? comp.userId.name
-                    : 'Anonymous User';
+                
+                const rawLocation = (comp.address && comp.address[0]) || 'Unknown Location';
+                const locationText = rawLocation.length > 30 ? rawLocation.substring(0, 27) + '...' : rawLocation;
+                
+                const userName = typeof comp.userId === 'object' && comp.userId && comp.userId.name ?
+                    comp.userId.name :
+                    'Anonymous User';
 
                 const reverseCategoryMap = {
                     'Municipal sanitation and public health': 'Garbage & Waste',
@@ -153,27 +146,32 @@ const UserBrowseIssue = () => {
                     'Ward/zone office and central admin': 'Vandalism'
                 };
                 const displayCategory = reverseCategoryMap[comp.assignedTo] || 'Other';
+                
+                const commentsCount = comp.comments && Array.isArray(comp.comments) ? comp.comments.length : 0;
+                
+                const rawDescription = comp.description;
+                const descriptionText = rawDescription.length > 150 ? rawDescription.substring(0, 147) + '...' : rawDescription;
 
                 return {
                     id: comp._id,
                     title: comp.title,
-                    description: comp.description,
+                    description: descriptionText,
                     location: locationText,
                     category: displayCategory,
                     status: statusText,
                     createdAt: comp.createdAt,
                     votes: 0,
-                    comments: comp.comments?.length || 0,
-                    views: Math.floor(Math.random() * 200), // Mocked for display
-                    priority: ['high', 'medium', 'low'][Math.floor(Math.random() * 3)], // Mocked for display
-                    urgency: 'Community Concern', // Mocked for display
+                    comments: commentsCount,
+                    views: Math.floor(Math.random() * 200), // Mocked
+                    priority: ['high', 'medium', 'low'][Math.floor(Math.random() * 3)], // Mocked
+                    urgency: 'Community Concern', // Mocked
                     user: userName,
                     userAvatar: getUserInitials(userName),
                     counts: { upvote: 0, downVote: 0 }
                 };
             });
 
-            // --- CRUCIAL: Fetch user-specific vote status ---
+            // Fetch user-specific vote status and counts (logic retained)
             const issueIds = fetchedIssues.map(i => i.id).join(',');
             let userVotesMap = {};
             if (issueIds.length > 0) {
@@ -187,55 +185,105 @@ const UserBrowseIssue = () => {
                     // console.warn("Failed to fetch user votes on load:", err.response?.data || err.message);
                 }
             }
-            // Set the userVotes state to correctly highlight buttons
             setUserVotes(userVotesMap);
 
-            // Fetch overall vote counts
             const countsPromises = fetchedIssues.map(i =>
                 axios.get(`${API_BASE_URL}/votes/${i.id}`, { withCredentials: true })
-                    .then(r => ({ id: i.id, counts: r.data.data }))
-                    .catch(() => ({ id: i.id, counts: { upvote: 0, downVote: 0 } }))
+                .then(r => ({ id: i.id, counts: r.data.data }))
+                .catch(() => ({ id: i.id, counts: { upvote: 0, downVote: 0 } }))
             );
 
             const countsResults = await Promise.all(countsPromises);
             const countsMap = countsResults.reduce((acc, item) => { acc[item.id] = item.counts; return acc; }, {});
             const issuesWithCounts = fetchedIssues.map(i => ({ ...i, counts: countsMap[i.id] || { upvote: 0, downVote: 0 } }));
 
-            setIssues(issuesWithCounts);
-            setFilteredIssues(issuesWithCounts);
+            // Update the source list
+            setApiIssues(issuesWithCounts); 
 
         } catch (error) {
-            console.error("Failed to fetch issues:", error.response?.data || error.message);
-            setIssues([]);
-            setFilteredIssues([]);
+            console.error("Failed to fetch issues:", (error.response && error.response.data) || error.message);
+            setApiIssues([]);
         } finally {
             setLoading(false);
         }
-    }, [user, searchTerm, filters]);
+    }, [user, searchTerm, filters]); // Re-run fetch on filter/search change
+
+    // --- CLIENT-SIDE FILTERING/SORTING LOGIC ---
+    // This useEffect applies filtering locally to the fetched data (apiIssues)
+    // and stores the result in filteredIssues.
+    useEffect(() => {
+        let updated = [...apiIssues];
+
+        // 🔹 Filter by category
+        if (filters.category && filters.category !== 'All Categories') {
+            updated = updated.filter(issue => issue.category === filters.category);
+        }
+
+        // 🔹 Filter by status
+        if (filters.status && filters.status !== 'All Statuses') {
+            updated = updated.filter(issue => issue.status === filters.status);
+        }
+
+        // 🔹 Search filter (title, description, or location)
+        if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase();
+            updated = updated.filter(issue =>
+                issue.title?.toLowerCase().includes(term) ||
+                issue.description?.toLowerCase().includes(term) ||
+                issue.location?.toLowerCase().includes(term)
+            );
+        }
+
+        // 🔹 Sorting logic
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        
+        // Use a stable sorting algorithm if possible, or ensure data types are consistent
+        updated.sort((a, b) => {
+            switch (filters.sort) {
+                case 'Newest First':
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                case 'Oldest First':
+                    return new Date(a.createdAt) - new Date(b.createdAt);
+                case 'Most Voted':
+                    // Subtract downVotes from upVotes for a net score
+                    const scoreA = (a.counts?.upvote || 0) - (a.counts?.downVote || 0);
+                    const scoreB = (b.counts?.upvote || 0) - (b.counts?.downVote || 0);
+                    return scoreB - scoreA; // Descending
+                case 'Most Viewed':
+                    return (b.views || 0) - (a.views || 0); // Descending
+                case 'Priority':
+                    return priorityOrder[a.priority] - priorityOrder[b.priority]; // Ascending (high=1)
+                default:
+                    return 0; // No sort change
+            }
+        });
+
+        setFilteredIssues(updated);
+    }, [filters, searchTerm, apiIssues]); // Runs whenever the source data or filters change
+
+    // --- Authentication Effects ---
 
     useEffect(() => {
         const checkAuthStatus = async () => {
-            // Wait briefly for AuthContext to resolve the user state on refresh
             await new Promise(resolve => setTimeout(resolve, 50));
             setAuthChecked(true);
         };
         checkAuthStatus();
     }, []);
 
-    // FIX 1: Corrected useEffect logic for authentication and page reload
     useEffect(() => {
         if (!authChecked) return;
 
-        // If user object is null/undefined after auth check, redirect to login
         if (!user) {
             navigate('/login');
         } else {
-            // If user object exists, stay on the page and fetch data
+            // Note: Since filters/search are passed to fetchIssues, this fetch will use 
+            // the initial state values, and the separate useEffect handles subsequent changes.
             fetchIssues();
         }
     }, [user, navigate, fetchIssues, authChecked]);
 
-    // --- VOTE Handler (Upvote & Downvote) ---
+    // --- VOTE Handler (Optimistic Update Logic retained) ---
     const handleVote = async (issueId, voteType) => {
         if (!user) {
             alert("Please login to vote.");
@@ -244,15 +292,13 @@ const UserBrowseIssue = () => {
 
         const currentUserVote = userVotes[issueId];
 
-        // Prevent rapid clicks
         if (busyVotes[issueId]) return;
 
         let endpoint = `${API_BASE_URL}/votes/${issueId}?category=${voteType}`;
 
         setBusyVotes(prev => ({ ...prev, [issueId]: true }));
 
-        // Optimistic Update: Calculate new counts and new user vote state immediately
-        const issueToUpdate = issues.find(issue => issue.id === issueId);
+        const issueToUpdate = apiIssues.find(issue => issue.id === issueId) || filteredIssues.find(issue => issue.id === issueId);
         if (!issueToUpdate) {
             setBusyVotes(prev => ({ ...prev, [issueId]: false }));
             return;
@@ -262,60 +308,48 @@ const UserBrowseIssue = () => {
         let newUserVote;
 
         if (currentUserVote === voteType) {
-            // Case 1: Toggling off (Deleting existing vote)
             if (voteType === 'upvote') newCounts.upvote = Math.max(0, newCounts.upvote - 1);
             else newCounts.downVote = Math.max(0, newCounts.downVote - 1);
             newUserVote = undefined;
         } else {
-            // Case 2: Changing vote (Remove old, add new) or initial vote (Add new)
-            // Remove previous vote if it existed
             if (currentUserVote === 'upvote') newCounts.upvote = Math.max(0, newCounts.upvote - 1);
             if (currentUserVote === 'downvote') newCounts.downVote = Math.max(0, newCounts.downVote - 1);
 
-            // Add new vote
             if (voteType === 'upvote') newCounts.upvote = (newCounts.upvote || 0) + 1;
             else newCounts.downVote = (newCounts.downVote || 0) + 1;
             newUserVote = voteType;
         }
 
-        // Apply the optimistic update to main state
-        setIssues(prevIssues => prevIssues.map(issue =>
-            issue.id === issueId ? { ...issue, counts: newCounts } : issue
-        ));
-        setFilteredIssues(prevIssues => prevIssues.map(issue =>
+        // Apply optimistic update to the main list (apiIssues), which triggers the filtering useEffect
+        setApiIssues(prevIssues => prevIssues.map(issue =>
             issue.id === issueId ? { ...issue, counts: newCounts } : issue
         ));
 
-        // Apply the new user vote state permanently
         setUserVotes(prevVotes => ({ ...prevVotes, [issueId]: newUserVote }));
 
         try {
             const resp = await axios.post(endpoint, {}, { withCredentials: true });
 
-            // Re-fetch only the counts to ensure absolute server truth (or rely on response data)
-            const returnedCounts = resp.data.data?.counts || resp.data.data;
+            const returnedCounts = (resp.data.data && resp.data.data.counts) || resp.data.data;
 
             if (returnedCounts && (returnedCounts.upvote !== newCounts.upvote || returnedCounts.downVote !== newCounts.downVote)) {
-                // If server-returned counts differ, update the issues state
-                setIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
-                setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
+                // Final consistency update from server to apiIssues
+                setApiIssues(prev => prev.map(i => i.id === issueId ? { ...i, counts: returnedCounts } : i));
             }
 
         } catch (error) {
-            console.error("Vote action failed:", error.response?.data || error.message);
-            // Rollback visual state by re-fetching on error
-            fetchIssues();
-            alert(`Vote action failed: ${error.response?.data?.message || 'Check network/server logic.'}`);
+            console.error("Vote action failed:", (error.response && error.response.data) || error.message);
+            fetchIssues(); // Re-fetch on major error to sync data
+            alert(`Vote action failed: ${(error.response && error.response.data && error.response.data.message) || 'Check network/server logic.'}`);
         } finally {
-            // Restore busy state regardless of success/failure
             setBusyVotes(prev => ({ ...prev, [issueId]: false }));
         }
     };
 
 
-    // --- Comments: fetch for a single complaint ---
+    // --- Comments Handlers (Logic retained and updated to target apiIssues count) ---
+
     const fetchComments = async (complaintId) => {
-        // Prevent re-fetch if data is already present, but always open the view
         setCommentsOpen(prev => ({ ...prev, [complaintId]: true }));
         if (commentsStore[complaintId]) return;
 
@@ -323,7 +357,7 @@ const UserBrowseIssue = () => {
             const resp = await axios.get(`${API_BASE_URL}/comments/${complaintId}`, { withCredentials: true });
             setCommentsStore(prev => ({ ...prev, [complaintId]: resp.data.data }));
         } catch (err) {
-            console.error("Failed to fetch comments", err.response?.data || err.message);
+            console.error("Failed to fetch comments", (err.response && err.response.data) || err.message);
             setCommentsStore(prev => ({ ...prev, [complaintId]: [] }));
         }
     };
@@ -346,33 +380,27 @@ const UserBrowseIssue = () => {
 
         const prevComments = commentsStore[issueId] || [];
 
-        // Optimistic removal
         setCommentsStore(prev => ({
             ...prev,
             [issueId]: (prev[issueId] || []).filter(c => c._id !== commentId)
         }));
 
-        // Decrement comment count optimistically
-        setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
-        setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
+        // Decrement comment count on issue (using apiIssues to ensure consistency)
+        setApiIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: Math.max(0, (i.comments || 1) - 1) } : i));
 
 
         try {
             await axios.delete(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { withCredentials: true });
-
-            // If successful, optimistic update remains
         } catch (err) {
-            console.error("Failed to delete comment:", err.response?.data || err.message);
+            console.error("Failed to delete comment:", (err.response && err.response.data) || err.message);
             alert("Failed to delete comment");
-            // rollback comments list
+            
+            // Rollback
             setCommentsStore(prev => ({ ...prev, [issueId]: prevComments }));
-            // rollback comment count
-            setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+            setApiIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
         }
     };
 
-    // --- Start Editing Comment (Corrected to use 'editingComment') ---
     const startEditComment = (comment) => {
         setEditingComment({
             commentId: comment._id,
@@ -380,17 +408,14 @@ const UserBrowseIssue = () => {
         });
     };
 
-    // Handler for editing in the textarea
     const handleEditChange = (e) => {
         setEditingComment(prev => ({ ...prev, content: e.target.value }));
     };
 
-    // --- Update Comment Handler ---
     const updateComment = async (issueId, commentId, newContent) => {
         const trimmedContent = newContent.trim();
-        const currentComment = commentsStore[issueId]?.find(c => c._id === commentId);
+        const currentComment = (commentsStore[issueId] || []).find(c => c._id === commentId);
 
-        // Cancel if empty or unchanged
         if (!currentComment || !trimmedContent || trimmedContent === currentComment.content) {
             setEditingComment(null);
             return;
@@ -398,38 +423,34 @@ const UserBrowseIssue = () => {
 
         setBusyComments(prev => ({ ...prev, [commentId]: true }));
         const prevContent = currentComment.content;
-        const prevUpdatedAt = currentComment.updatedAt; // Capture original timestamp for rollback
+        const prevUpdatedAt = currentComment.updatedAt; 
 
         // 1. Optimistic update
         setCommentsStore(prev => ({
             ...prev,
             [issueId]: prev[issueId].map(c =>
-                c._id === commentId
-                    ? {
-                        ...c,
-                        content: trimmedContent,
-                        // Simulate an update timestamp. Use a new Date string.
-                        updatedAt: new Date().toISOString(),
-                        // Preserve the populated userId object
-                        userId: currentComment.userId
-                    }
-                    : c
+                c._id === commentId ? {
+                    ...c,
+                    content: trimmedContent,
+                    updatedAt: new Date().toISOString(),
+                    userId: currentComment.userId
+                } :
+                c
             )
         }));
-        setEditingComment(null); // Exit edit mode immediately
+        setEditingComment(null); 
 
         try {
-            // 2. API call to update the comment
             const resp = await axios.put(`${API_BASE_URL}/comments/${issueId}/${commentId}`, { content: trimmedContent }, { withCredentials: true });
             const updated = resp.data.data;
 
-            // 3. Final update from server response (atomic replacement)
+            // 3. Final update from server response
             setCommentsStore(prev => ({
                 ...prev,
                 [issueId]: prev[issueId].map(c => c._id === commentId ? updated : c)
             }));
         } catch (err) {
-            console.error("Failed to update comment", err.response?.data || err.message);
+            console.error("Failed to update comment", (err.response && err.response.data) || err.message);
             alert("Failed to update comment. Rolling back.");
 
             // 4. Rollback on error
@@ -440,7 +461,7 @@ const UserBrowseIssue = () => {
                 )
             }));
 
-            // 5. Re-open edit state with old content for user to retry
+            // 5. Re-open edit state
             setEditingComment({ commentId, content: prevContent });
         } finally {
             setBusyComments(prev => ({ ...prev, [commentId]: false }));
@@ -452,12 +473,10 @@ const UserBrowseIssue = () => {
         const text = (commentDrafts[issueId] || '').trim();
         if (!text) return alert("Comment can't be empty");
 
-        // Disable post button
         setBusyComments(prev => ({ ...prev, [issueId]: true }));
 
         const tempComment = {
             _id: `temp-${Date.now()}`,
-            // Populate userId as an object so the comment item can display the name correctly
             userId: { _id: user._id, name: user.name },
             complaintId: issueId,
             content: text,
@@ -484,10 +503,11 @@ const UserBrowseIssue = () => {
             }));
 
             // increment comment count on issue
-            setIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
-            setFilteredIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+            setApiIssues(prev => prev.map(i => i.id === issueId ? { ...i, comments: (i.comments || 0) + 1 } : i));
+
         } catch (err) {
-            console.error("Failed to post comment", err.response?.data || err.message);
+            console.error("Failed to post comment", (err.response && err.response.data) || err.message);
+            
             // rollback optimistic append
             setCommentsStore(prev => ({ ...prev, [issueId]: (prev[issueId] || []).filter(c => c._id !== tempComment._id) }));
             // Re-populate draft
@@ -499,7 +519,8 @@ const UserBrowseIssue = () => {
     }, [commentDrafts, user]);
 
 
-    // --- Other Handlers ---
+    // --- Filter Handlers ---
+
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
             ...prev,
@@ -513,7 +534,7 @@ const UserBrowseIssue = () => {
 
     const handleLogout = () => {
         axios.post(`${API_BASE_URL}/users/logout`, {}, { withCredentials: true })
-            .catch(() => { })
+            .catch(() => {})
             .finally(() => {
                 signOut();
                 navigate('/');
@@ -529,8 +550,17 @@ const UserBrowseIssue = () => {
         });
     };
 
+    // Helper to get category count from the full issue list
+    const getCategoryCount = (categoryName) => {
+        if (categoryName === 'All Categories') {
+            return apiIssues.length;
+        }
+        return apiIssues.filter(i => i.category === categoryName).length;
+    };
+
+
     if (!authChecked) {
-        return (
+        return ( 
             <div className="loading-state full-page-loading">
                 <div className="loading-spinner"></div>
                 <p>Checking authentication status...</p>
@@ -542,9 +572,13 @@ const UserBrowseIssue = () => {
         return null; // Should redirect to /login via useEffect
     }
 
-    return (
+    // Use the locally filtered results for rendering
+    const issuesToRender = filteredIssues; 
+
+    return ( 
         <>
-            <VolunteerHeader />
+            {/* Header */}
+           <VolunteerHeader />
 
             <div className="dashboard-container">
                 {/* Hero */}
@@ -552,7 +586,7 @@ const UserBrowseIssue = () => {
                     <div className="hero-background"></div>
                     <div className="hero-content-wrapper">
                         <div className="hero-badge">Community Platform</div>
-                        <h1>Browse All Community Issues</h1>
+                        <h1>Discover & Support Local Issues</h1>
                         <p>Join thousands of community members in identifying, voting, and resolving neighborhood concerns. Together we build better communities.</p>
                         <div className="hero-stats">
                             <div className="hero-stat">
@@ -569,21 +603,14 @@ const UserBrowseIssue = () => {
                             </div>
                         </div>
                         <div className="hero-buttons">
-                            <button className="hero-btn-primary" onClick={() => navigate('/report-issue')}>
-                                <PlusCircle size={18} />
-                                <span>Report New Issue</span>
-                            </button>
-                            <button className="hero-btn-secondary" onClick={() => navigate('/dashboard')}>
-                                <span>View Dashboard</span>
-                            </button>
+                            
                         </div>
                     </div>
                 </div>
 
-                {/* Main Content Layout */}
                 <div className="browse-issues-main">
                     <div className="browse-sidebar">
-                        {/* Sidebar: Issue Categories */}
+                        {/* Sidebar content */}
                         <div className="sidebar-panel">
                             <div className="panel-header">
                                 <BarChart3 size={20} className="panel-icon" />
@@ -591,80 +618,41 @@ const UserBrowseIssue = () => {
                             </div>
                             <p className="panel-subtitle">Browse by issue type</p>
                             <div className="categories-list">
-                                {issueCategories.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className={`category-item ${filters.category === item.category ? 'active' : ''}`}
-                                        onClick={() => handleFilterChange('category', item.category)}
-                                    >
-                                        <div className="category-icon-title">
-                                            <span
-                                                className="category-icon"
-                                                style={{
-                                                    backgroundColor: item.color,
-                                                }}
-                                            >
-                                                {item.icon}
+                                {
+                                    issueCategories.map((item, index) => (
+                                        <div key={index}
+                                            className={`category-item ${filters.category === item.category ? 'active' : ''}`}
+                                            onClick={() => handleFilterChange('category', item.category)}>
+                                            <div className="category-icon-title">
+                                                <span className="category-icon"
+                                                    style={{
+                                                        backgroundColor: item.color,
+                                                    }}>
+                                                        {item.icon}
+                                                </span>
+                                                <span className="category-title">{item.category}</span>
+                                            </div>
+                                            <span className="category-count"
+                                                style={{ backgroundColor: item.color }}>
+                                                {getCategoryCount(item.category)}
                                             </span>
-                                            <span className="category-title">{item.category}</span>
                                         </div>
-                                        <span
-                                            className="category-count"
-                                            // The style logic here is duplicated and should rely on CSS, but keeping inline for compatibility with your provided structure.
-                                            style={{ backgroundColor: filters.category === item.category ? 'rgba(255, 255, 255, 0.2)' : item.color + '20', color: filters.category === item.category ? 'white' : item.color }}
-                                        >
-                                            {issues.filter(i => i.category === item.category).length}
-                                        </span>
-                                    </div>
-                                ))}
-                                <div
-                                    className={`category-item ${filters.category === 'All Categories' ? 'active' : ''}`}
-                                    onClick={() => handleFilterChange('category', 'All Categories')}
-                                >
+                                    ))
+                                }
+                                <div className={ `category-item ${filters.category === 'All Categories' ? 'active' : ''}` }
+                                    onClick={() => handleFilterChange('category', 'All Categories')}>
                                     <div className="category-icon-title">
                                         <span className="category-title">All Categories</span>
                                     </div>
-                                    <span className="category-count" style={{ backgroundColor: filters.category === 'All Categories' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0', color: filters.category === 'All Categories' ? 'white' : '#4a5568' }}>
-                                        {issues.length}
-                                    </span>
+                                    <span className="category-count">{apiIssues.length}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Sidebar: Community Impact */}
-                        <div className="sidebar-panel">
-                            <div className="panel-header">
-                                <Users size={20} className="panel-icon" />
-                                <h4>Community Impact</h4>
-                            </div>
-                            <div className="impact-stats">
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">✅</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.issuesResolved}</strong>
-                                        <span>Issues Resolved</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⚡</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.responseTime}</strong>
-                                        <span>Avg Response Time</span>
-                                    </div>
-                                </div>
-                                <div className="impact-stat-item">
-                                    <div className="impact-icon">⭐</div>
-                                    <div className="impact-content">
-                                        <strong>{communityImpact.communityScore}</strong>
-                                        <span>Community Score</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
 
                     <div className="browse-content">
-                        {/* Filter and Search Panel */}
                         <div className="content-panel filter-panel">
                             <div className="panel-header-main">
                                 <div className="panel-title">
@@ -674,31 +662,32 @@ const UserBrowseIssue = () => {
                                         <p>Find and engage with community concerns</p>
                                     </div>
                                 </div>
-                                {(searchTerm || filters.category !== 'All Categories' || filters.status !== 'All Statuses') && (
-                                    <button onClick={clearFilters} className="clear-filters-btn">
-                                        <span>Clear All</span>
-                                    </button>
-                                )}
+                                {
+                                    (searchTerm || filters.category !== 'All Categories' || filters.status !== 'All Statuses') && (
+                                        <button onClick={clearFilters} className="clear-filters-btn">
+                                            <span>Clear All</span>
+                                        </button>
+                                    )
+                                }
                             </div>
 
                             <div className="search-section">
                                 <div className="search-bar">
                                     <Search size={20} className="search-icon" />
-                                    <input
-                                        type="text"
+                                    <input type="text"
                                         placeholder="Search issues by title, description, location..."
                                         value={searchTerm}
                                         onChange={handleSearchChange}
                                         className="search-input"
                                     />
-                                    {searchTerm && (
-                                        <button
-                                            className="clear-search-btn"
-                                            onClick={() => setSearchTerm('')}
-                                        >
-                                            ×
-                                        </button>
-                                    )}
+                                    {
+                                        searchTerm && (
+                                            <button className="clear-search-btn"
+                                                onClick={() => setSearchTerm('')}>
+                                                ×
+                                            </button>
+                                        )
+                                    }
                                 </div>
                             </div>
 
@@ -708,16 +697,14 @@ const UserBrowseIssue = () => {
                                         <span className="filter-label-icon">📁</span>
                                         Category
                                     </label>
-                                    <select
-                                        value={filters.category}
+                                    <select value={filters.category}
                                         onChange={(e) => handleFilterChange('category', e.target.value)}
-                                        className="filter-select"
-                                    >
-                                        {categories.map(category => (
-                                            <option key={category} value={category}>
-                                                {category}
-                                            </option>
-                                        ))}
+                                        className="filter-select">
+                                        {
+                                            categories.map(category => (
+                                                <option key={category} value={category}>{category}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
 
@@ -726,16 +713,14 @@ const UserBrowseIssue = () => {
                                         <span className="filter-label-icon">🔄</span>
                                         Status
                                     </label>
-                                    <select
-                                        value={filters.status}
+                                    <select value={filters.status}
                                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                                        className="filter-select"
-                                    >
-                                        {statusOptions.map(status => (
-                                            <option key={status} value={status}>
-                                                {status}
-                                            </option>
-                                        ))}
+                                        className="filter-select">
+                                        {
+                                            statusOptions.map(status => (
+                                                <option key={status} value={status}>{status}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
 
@@ -744,24 +729,22 @@ const UserBrowseIssue = () => {
                                         <span className="filter-label-icon">📊</span>
                                         Sort By
                                     </label>
-                                    <select
-                                        value={filters.sort}
+                                    <select value={filters.sort}
                                         onChange={(e) => handleFilterChange('sort', e.target.value)}
-                                        className="filter-select"
-                                    >
-                                        {sortOptions.map(option => (
-                                            <option key={option} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
+                                        className="filter-select">
+                                        {
+                                            sortOptions.map(option => (
+                                                <option key={option} value={option}>{option}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
                             </div>
 
                             <div className="results-info">
                                 <div className="results-count">
-                                    <strong>{filteredIssues.length}</strong>
-                                    <span>{filteredIssues.length === 1 ? ' issue' : ' issues'} found</span>
+                                    <strong>{issuesToRender.length}</strong>
+                                    <span>{issuesToRender.length === 1 ? ' issue' : ' issues'} found</span>
                                 </div>
                                 <div className="community-engagement">
                                     <div className="engagement-badge">
@@ -783,214 +766,218 @@ const UserBrowseIssue = () => {
                                     </div>
                                 </div>
                                 <div className="active-filters">
-                                    {filters.category !== 'All Categories' && (
-                                        <span className="active-filter-tag">Category: {filters.category}</span>
-                                    )}
-                                    {filters.status !== 'All Statuses' && (
-                                        <span className="active-filter-tag">Status: {filters.status}</span>
-                                    )}
-                                    {filters.sort !== 'Newest First' && (
-                                        <span className="active-filter-tag">Sorted by: {filters.sort}</span>
-                                    )}
+                                    {
+                                        filters.category !== 'All Categories' && (
+                                            <span className="active-filter-tag">Category: {filters.category}</span>
+                                        )
+                                    }
+                                    {
+                                        filters.status !== 'All Statuses' && (
+                                            <span className="active-filter-tag">Status: {filters.status}</span>
+                                        )
+                                    }
+                                    {
+                                        filters.sort !== 'Newest First' && (
+                                            <span className="active-filter-tag">Sorted by: {filters.sort}</span>
+                                        )
+                                    }
                                 </div>
                             </div>
 
                             <div className="issues-list-container">
-                                {loading ? (
-                                    <div className="loading-state">
-                                        <div className="loading-spinner"></div>
-                                        <p>Loading community issues...</p>
-                                        <span className="loading-subtitle">Fetching the latest reports from the server</span>
-                                    </div>
-                                ) : filteredIssues.length === 0 ? (
-                                    <div className="empty-state">
-                                        <div className="empty-icon">🔍</div>
-                                        <h3>No issues found</h3>
-                                        <p>We couldn't find any issues matching your search criteria.</p>
-                                        <button onClick={clearFilters} className="clear-filters-btn large">
-                                            Clear All Filters
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="issues-grid">
-                                        {filteredIssues.map(issue => (
-                                            // FIX: Attach navigate handler to the card wrapper
-                                            <div key={issue.id} 
-                                                 className="issue-card" 
-                                                 onClick={() => navigate(`/issue-detail/${issue.id}`)}>
-                                                
-                                                <div className="issue-header">
-                                                    <div className="issue-meta-left">
-                                                        <div
-                                                            className="issue-category-tag"
-                                                            style={{
-                                                                backgroundColor: issueCategories.find(c => c.category === issue.category)?.color + '20',
-                                                                color: issueCategories.find(c => c.category === issue.category)?.color
-                                                            }}
-                                                        >
-                                                            {issue.category}
+                                {
+                                    loading ? (
+                                        <div className="loading-state">
+                                            <div className="loading-spinner"></div>
+                                            <p>Loading community issues...</p>
+                                            <span className="loading-subtitle">Fetching the latest reports from the server</span>
+                                        </div>
+                                    ) : issuesToRender.length === 0 ? (
+                                        <div className="empty-state">
+                                            <div className="empty-icon">🔍</div>
+                                            <h3>No issues found</h3>
+                                            <p>We couldn't find any issues matching your search criteria.</p>
+                                            <button onClick={clearFilters} className="clear-filters-btn large">
+                                                Clear All Filters
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="issues-grid">
+                                            {
+                                                issuesToRender.map(issue => (
+                                                    <div key={issue.id}
+                                                        className="issue-card"
+                                                        onClick={() => navigate(`/issue-detail/${issue.id}`)}>
+                                                        <div className="issue-header">
+                                                            <div className="issue-meta-left">
+                                                                <div className="issue-category-tag"
+                                                                    style={{
+                                                                        backgroundColor: issueCategories.find(c => c.category === issue.category) ? issueCategories.find(c => c.category === issue.category).color + '20' : 'gray',
+                                                                        color: issueCategories.find(c => c.category === issue.category) ? issueCategories.find(c => c.category === issue.category).color : 'darkgray'
+                                                                    }}>
+                                                                    {issue.category}
+                                                                </div>
+                                                                <div className={`priority-indicator priority-${issue.priority}`}>
+                                                                    <div className={`priority-dot priority-${issue.priority}`}></div>
+                                                                    {issue.priority} priority
+                                                                </div>
+                                                            </div>
+                                                            <div className="issue-urgency">{issue.urgency}</div>
                                                         </div>
-                                                        <div className={`priority-indicator priority-${issue.priority}`}>
-                                                            <div className={`priority-dot priority-${issue.priority}`}></div>
-                                                            {issue.priority} priority
-                                                        </div>
-                                                    </div>
-                                                    <div className="issue-urgency">
-                                                        {issue.urgency}
-                                                    </div>
-                                                </div>
 
-                                                <h4 className="issue-title">{issue.title}</h4>
-                                                <p className="issue-description">{issue.description}</p>
+                                                        <h4 className="issue-title">{issue.title}</h4>
+                                                        <p className="issue-description">{issue.description}</p>
 
-                                                <div className="issue-meta">
-                                                    <div className="meta-item">
-                                                        <MapPin size={16} />
-                                                        <span>{issue.location}</span>
-                                                    </div>
-                                                    <div className="meta-item">
-                                                        <Clock size={16} />
-                                                        <span>{getRelativeTime(issue.createdAt)}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="issue-footer">
-                                                    <div className="user-info">
-                                                        <div className="user-avatar-small">
-                                                            {issue.userAvatar}
-                                                        </div>
-                                                        <div className="user-details">
-                                                            <span className="user-name">{issue.user}</span>
-                                                            <span className="report-time">{getRelativeTime(issue.createdAt)}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="issue-actions">
-                                                    <div className="vote-section">
-                                                        {/* Upvote */}
-                                                        <button
-                                                            className={`vote-btn upvote ${userVotes[issue.id] === 'upvote' ? 'voted' : ''}`}
-                                                            // FIX: Stop propagation to prevent navigating to detail page on click
-                                                            onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'upvote'); }}
-                                                            disabled={busyVotes[issue.id]}
-                                                        >
-                                                            <Heart size={16} />
-                                                            <span>{issue.counts?.upvote || 0}</span>
-                                                        </button>
-                                                        {/* Downvote */}
-                                                        <button
-                                                            className={`vote-btn downvote ${userVotes[issue.id] === 'downvote' ? 'voted' : ''}`}
-                                                            // FIX: Stop propagation to prevent navigating to detail page on click
-                                                            onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'downvote'); }}
-                                                            disabled={busyVotes[issue.id]}
-                                                        >
-                                                            <ThumbsDown size={16} />
-                                                            <span>{issue.counts?.downVote || 0}</span>
-                                                        </button>
-                                                    </div>
-
-                                                    <div className={`status-badge status-${issue.status.replace(' ', '').toLowerCase()}`}>
-                                                        {issue.status}
-                                                    </div>
-                                                </div>
-
-                                                {/* Comments toggle */}
-                                                <div className="comments-toggle">
-                                                    <button 
-                                                        className="comments-open-btn" 
-                                                        // FIX: Stop propagation to prevent navigating to detail page on toggle
-                                                        onClick={(e) => { e.stopPropagation(); toggleComments(issue.id); }}
-                                                    >
-                                                        <ChevronsDown size={14} /> {commentsOpen[issue.id] ? 'Hide' : 'Show'} Comments ({issue.comments || 0})
-                                                    </button>
-                                                </div>
-
-                                                {/* Comments panel (Appears/Disappears based on state) */}
-                                                {commentsOpen[issue.id] && (
-                                                    // FIX: Stop propagation in the panel to prevent navigating when interacting inside
-                                                    <div className="comments-panel" onClick={(e) => e.stopPropagation()}>
-                                                        {/* Add Comment */}
-                                                        <div className="add-comment">
-                                                            <textarea
-                                                                placeholder="Write your comment..."
-                                                                value={commentDrafts[issue.id] || ''}
-                                                                onChange={(e) => handleCommentChange(issue.id, e.target.value)}
-                                                                rows={2}
-                                                            />
-                                                            <div className="comment-actions">
-                                                                <button onClick={() => postComment(issue.id)} disabled={busyComments[issue.id] || (commentDrafts[issue.id] || '').trim().length === 0}>
-                                                                    {busyComments[issue.id] ? 'Posting...' : 'Post Comment'}
-                                                                </button>
+                                                        <div className="issue-meta">
+                                                            <div className="meta-item">
+                                                                <MapPin size={16} />
+                                                                <span>{issue.location}</span>
+                                                            </div>
+                                                            <div className="meta-item">
+                                                                <Clock size={16} />
+                                                                <span>{getRelativeTime(issue.createdAt)}</span>
                                                             </div>
                                                         </div>
 
-                                                        {/* Comments List */}
-                                                        {(commentsStore[issue.id] || []).map(c => {
-                                                            const commenterName = c.userId?.name || 'User';
-                                                            const isOwner = (c.userId?._id || c.userId) === user._id;
-                                                            const isEditing = editingComment?.commentId === c._id;
-
-                                                            return (
-                                                                <div key={c._id} className="comment-item">
-                                                                    <div className="comment-avatar">{getUserInitials(commenterName)}</div>
-                                                                    <div className="comment-body">
-                                                                        {isEditing ? (
-                                                                            <div className="edit-comment-area">
-                                                                                <textarea
-                                                                                    value={editingComment.content}
-                                                                                    onChange={handleEditChange}
-                                                                                    rows={3}
-                                                                                />
-                                                                                <div className="comment-actions">
-                                                                                    <button
-                                                                                        onClick={() => updateComment(issue.id, c._id, editingComment.content)}
-                                                                                        disabled={busyComments[c._id] || !editingComment.content.trim()}
-                                                                                    >
-                                                                                        <Save size={14} /> {busyComments[c._id] ? 'Saving...' : 'Save'}
-                                                                                    </button>
-                                                                                    <button className="cancel-edit-btn" onClick={() => setEditingComment(null)}>Cancel</button>
-                                                                                </div>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <>
-                                                                                <div className="comment-meta">
-                                                                                    <span className="comment-author">{commenterName}</span>
-                                                                                    <span className="comment-time">
-                                                                                        {getRelativeTime(c.createdAt)}
-                                                                                        {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
-                                                                                    </span>
-                                                                                    {isOwner && (
-                                                                                        <div className="comment-owner-actions">
-                                                                                            <button className="edit-comment-btn" onClick={() => startEditComment(c)}>
-                                                                                                <Edit size={14} />
-                                                                                            </button>
-                                                                                            <button className="delete-comment-btn" onClick={() => deleteComment(issue.id, c._id)}>
-                                                                                                <Trash2 size={14} />
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className="comment-content">{c.content}</div>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
+                                                        <div className="issue-footer">
+                                                            <div className="user-info">
+                                                                <div className="user-avatar-small">{issue.userAvatar}</div>
+                                                                <div className="user-details">
+                                                                    <span className="user-name">{issue.user}</span>
+                                                                    <span className="report-time">{getRelativeTime(issue.createdAt)}</span>
                                                                 </div>
-                                                            );
-                                                        })}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="issue-actions">
+                                                            <div className="vote-section">
+                                                                {/* Upvote */}
+                                                                <button className={`vote-btn upvote ${userVotes[issue.id] === 'upvote' ? 'voted' : ''}`}
+                                                                    onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'upvote'); }}
+                                                                    disabled={busyVotes[issue.id]}>
+                                                                    <Heart size={16} />
+                                                                    <span>{issue.counts && issue.counts.upvote !== undefined ? issue.counts.upvote : 0}</span>
+                                                                </button>
+                                                                {/* Downvote */}
+                                                                <button className={`vote-btn downvote ${userVotes[issue.id] === 'downvote' ? 'voted' : ''}`}
+                                                                    onClick={(e) => { e.stopPropagation(); handleVote(issue.id, 'downvote'); }}
+                                                                    disabled={busyVotes[issue.id]}>
+                                                                    <ThumbsDown size={16} />
+                                                                    <span>{issue.counts && issue.counts.downVote !== undefined ? issue.counts.downVote : 0}</span>
+                                                                </button>
+                                                            </div>
+
+                                                            <div className={`status-badge status-${issue.status.replace(' ', '').toLowerCase()}`}>{issue.status}</div>
+                                                        </div>
+
+                                                        {/* Comments toggle */}
+                                                        <div className="comments-toggle">
+                                                            <button className="comments-open-btn"
+                                                                onClick={(e) => { e.stopPropagation(); toggleComments(issue.id); }}>
+                                                                <ChevronsDown size={14} /> 
+                                                                {commentsOpen[issue.id] ? 'Hide' : 'Show'} Comments ({issue.comments || 0})
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Comments panel */}
+                                                        {
+                                                            commentsOpen[issue.id] && (
+                                                                <div className="comments-panel" onClick={(e) => e.stopPropagation()}>
+                                                                    {/* Add Comment */}
+                                                                    <div className="add-comment">
+                                                                        <textarea placeholder="Write your comment..."
+                                                                            value={commentDrafts[issue.id] || ''}
+                                                                            onChange={(e) => handleCommentChange(issue.id, e.target.value)}
+                                                                            rows={2}
+                                                                        />
+                                                                        <div className="comment-actions">
+                                                                            <button onClick={() => postComment(issue.id)}
+                                                                                disabled={busyComments[issue.id] || (commentDrafts[issue.id] || '').trim().length === 0}>
+                                                                                {busyComments[issue.id] ? 'Posting...' : 'Post Comment'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Comments List */}
+                                                                    {
+                                                                        (commentsStore[issue.id] || []).map(c => {
+                                                                            const commenterName = (c.userId && c.userId.name) || 'User';
+                                                                            const isOwner = (c.userId && c.userId._id || c.userId) === user._id;
+                                                                            const isEditing = editingComment && editingComment.commentId === c._id;
+
+                                                                            return (
+                                                                                <div key={c._id} className="comment-item">
+                                                                                    <div className="comment-avatar">{getUserInitials(commenterName)}</div>
+                                                                                    <div className="comment-body">
+                                                                                        {
+                                                                                            isEditing ? (
+                                                                                                <div className="edit-comment-area">
+                                                                                                    <textarea
+                                                                                                        value={editingComment.content}
+                                                                                                        onChange={handleEditChange}
+                                                                                                        rows={3}
+                                                                                                    />
+                                                                                                    <div className="comment-actions">
+                                                                                                        <button
+                                                                                                            onClick={() => updateComment(issue.id, c._id, editingComment.content)}
+                                                                                                            disabled={busyComments[c._id] || !editingComment.content.trim()}>
+                                                                                                            <Save size={14} /> 
+                                                                                                            {busyComments[c._id] ? 'Saving...' : 'Save'}
+                                                                                                        </button>
+                                                                                                        <button className="cancel-edit-btn"
+                                                                                                            onClick={() => setEditingComment(null)}>
+                                                                                                            Cancel
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <>
+                                                                                                    <div className="comment-meta">
+                                                                                                        <span className="comment-author">{commenterName}</span>
+                                                                                                        <span className="comment-time">
+                                                                                                            {getRelativeTime(c.createdAt)} 
+                                                                                                            {c.updatedAt && new Date(c.updatedAt) > new Date(c.createdAt) ? ' (edited)' : ''}
+                                                                                                        </span>
+                                                                                                        {
+                                                                                                            isOwner && (
+                                                                                                                <div className="comment-owner-actions">
+                                                                                                                    <button className="edit-comment-btn"
+                                                                                                                        onClick={(e) => { e.stopPropagation(); startEditComment(c); }}>
+                                                                                                                        <Edit size={14} />
+                                                                                                                    </button>
+                                                                                                                    <button className="delete-comment-btn"
+                                                                                                                        onClick={(e) => { e.stopPropagation(); deleteComment(issue.id, c._id); }}>
+                                                                                                                        <Trash2 size={14} />
+                                                                                                                    </button>
+                                                                                                                </div>
+                                                                                                            )
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div className="comment-content">{c.content}</div>
+                                                                                                </>
+                                                                                            )
+                                                                                        }
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })
+                                                                    }
+                                                                </div>
+                                                            )
+                                                        }
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                                ))
+                                            }
+                                        </div>
+                                    )
+                                }
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <VolunteerFooter />
+                <VolunteerFooter />
+            </div>
         </>
     );
 };

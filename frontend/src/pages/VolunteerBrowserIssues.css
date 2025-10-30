@@ -1501,3 +1501,24 @@ button.disabled {
     /* This generic class is not used; styles rely on the :disabled pseudo-class */
     opacity: 1;
 }
+
+/* THEME UPGRADE for AdminBrowseIssues/IssuesBrowser */
+.dashboard-hero, .admin-hero {
+  background: linear-gradient(94deg, #2c5292 0%, #36557f 100%);
+  color: white;
+  padding: 4rem 2.5rem;
+  text-align: center;
+  border-radius: 0 0 2.3rem 2.3rem;
+  margin-bottom: 2rem;
+}
+.hero-content-wrapper { text-align: center; }
+.hero-badge, .panel-header-main { color: #2c5292; background: #e2e8f0; border-radius: 9999px; display: inline-block; padding: 0.5rem 1.2rem; font-weight: 700; margin-bottom: 0.85rem; }
+.issues-grid { gap: 1.4rem; }
+.issue-card { border-radius: 19px; background: #fff; color: #1a202c; box-shadow: 0 2px 12px 0 #2c529218; padding: 2rem 1.3rem; transition: box-shadow 0.14s; }
+.issue-card:hover { box-shadow: 0 8px 48px -16px #2c529288; }
+.status-badge { border-radius: 9999px; padding: 0.43em 1.13em; font-weight: 650; font-size: 0.97em; letter-spacing: 0.01em; }
+.status-resolved { background: #b9f5d0; color: #166534; }
+.status-inprogress { background: #bee3f8; color: #2c5292; }
+.status-pending { background: #faf089; color: #744210; }
+/* Responsive: Single col below 750px */
+@media (max-width: 750px) {.issues-grid { grid-template-columns: 1fr; } .dashboard-hero { padding: 2.2rem 1rem; } }

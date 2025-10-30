@@ -1,11 +1,10 @@
-// src/pages/EditProfile.jsx
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowRight, Save, XCircle, Shield } from 'lucide-react';
 import './EditProfile.css'; 
+import AppFooter from '../components/AppFooter';
 
 const EditProfile = () => {
     const { user, updateUserContext, signOut } = useAuth();
@@ -24,6 +23,15 @@ const EditProfile = () => {
     const [removePhotoFlag, setRemovePhotoFlag] = useState(false); 
 
     const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+    // Utility to safely get initials
+    const getUserInitials = (name) => {
+        if (!name) return 'S';
+        const nameParts = name.split(' ').filter(p => p.length > 0);
+        if (nameParts.length === 0) return 'S';
+        if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+        return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+    };
 
     // Fetch fresh user data from database on page load
     useEffect(() => {
@@ -66,7 +74,7 @@ const EditProfile = () => {
 
         fetchUserData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [navigate]); // Only run on mount and when navigate changes
+    }, [navigate]); 
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -113,14 +121,13 @@ const EditProfile = () => {
         if (removePhotoFlag) {
             formData.append('removeProfilePhoto', 'true');
         } else if (profilePhoto) {
-            // 'profilePhoto' must match the field name used in the multer middleware in the backend route
             formData.append('profilePhoto', profilePhoto); 
         }
         
         try {
            const res = await axios.put(`${API_BASE_URL}/users/profile`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    withCredentials: true  // 👈 critical
+    withCredentials: true 
 });
 
             // Backend returns ApiResponse format: { statusCode, data, message }
@@ -139,7 +146,6 @@ const EditProfile = () => {
             setAboutMe(updatedUser.aboutMe || '');
             
             // Handle profile photo update
-            // Revoke old blob URL if it exists
             if (photoPreview && photoPreview.startsWith('blob:')) {
                 URL.revokeObjectURL(photoPreview);
             }
@@ -147,8 +153,7 @@ const EditProfile = () => {
             if (removePhotoFlag) {
                 setPhotoPreview('/images/default-avatar.png');
             } else if (updatedUser.profilePhoto) {
-                // Use the new photo from server
-                // If it starts with http, it's a full URL, otherwise it's a relative path
+                // Construct full URL if necessary
                 const photoUrl = updatedUser.profilePhoto.startsWith('http') 
                     ? updatedUser.profilePhoto 
                     : `${API_BASE_URL.replace('/api/v1', '')}${updatedUser.profilePhoto}`;
@@ -184,7 +189,7 @@ const EditProfile = () => {
             
             if (err.response) {
                 errorMsg = err.response.data?.message || 
-                           `Error ${err.response.status}: ${err.response.statusText}`;
+                                `Error ${err.response.status}: ${err.response.statusText}`;
                 
                 // Handle authentication errors
                 if (err.response.status === 401 || err.response.status === 403) {
@@ -200,33 +205,9 @@ const EditProfile = () => {
             
             setMessage(errorMsg);
             setIsError(true);
-
-
-            // let errorMsg = 'Failed to update profile. Please try again.';
-            // if (err.response) {
-            //     // If the error message is specific from the backend, show it
-            //     errorMsg = err.response.data?.message || `Error: ${err.response.status} - Could not update profile.`;
-                
-            //     if (err.response.status === 401 || err.response.status === 403) {
-            //         errorMsg = 'Session expired or unauthorized. Please log in again.';
-            //         signOut();
-            //         navigate('/login');
-            //     }
-            // } else if (err.request) {
-            //     errorMsg = 'Network error: Server is unreachable. Check your backend terminal.';
-            // }
-            // setMessage(errorMsg);
-            // setIsError(true);
-
         } finally {
             setLoading(false);
         }
-    };
-
-    const getUserInitials = (name) => {
-        if (!name) return 'S';
-        const nameParts = name.split(' ');
-        return nameParts.map(part => part.charAt(0)).join('').toUpperCase();
     };
 
     if (!user) return null; 
@@ -238,7 +219,8 @@ const EditProfile = () => {
         <div className="volunteer-edit-page">
             <header className="volunteer-header-top">
                 <div className="logo-section" onClick={() => navigate('/')}>
-                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" />
+                    <img src="/images/logo.png" alt="Clean Street Logo" className="logo-image" 
+                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://placehold.co/40x40/2c5292/ffffff?text=CS'; }}/>
                     <div className="logo-text">Clean Street</div>
                     <div className="user-badge"><Shield size={18} /> <span>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></div> 
                 </div>
@@ -264,24 +246,25 @@ const EditProfile = () => {
                         <div className="avatar-section">
                             <label className="avatar-label">Profile Photo</label>
                             <div className="avatar-wrapper">
-                                {(photoPreview && photoPreview !== '/images/default-avatar.png' && !removePhotoFlag) ? (
-                                    <img 
-                                        src={photoPreview} 
-                                        alt="Profile Preview"
-                                        className="profile-photo-preview"
-                                        onError={(e) => {
-                                            const img = e?.currentTarget;
-                                            if (!img) return;
-                                            img.style.display = 'none';
-                                            const sibling = img.nextSibling;
-                                            if (sibling && sibling.style) sibling.style.display = 'flex';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="volunteer-initials" style={{display: 'flex'}}>
-                                        <span>{getUserInitials(fullName)}</span>
-                                    </div>
-                                )}
+                                {/* Use an image tag for the photo preview */}
+                                <img 
+                                    src={photoPreview} 
+                                    alt="Profile Preview"
+                                    className="profile-photo-preview"
+                                    style={{ display: (photoPreview && photoPreview !== '/images/default-avatar.png' && !removePhotoFlag) ? 'block' : 'none' }}
+                                    onError={(e) => {
+                                        // Fallback to initials if image URL fails to load
+                                        e.currentTarget.style.display = 'none';
+                                        const sibling = document.getElementById('initials-fallback');
+                                        if (sibling) sibling.style.display = 'flex';
+                                    }}
+                                />
+                                {/* Initials Fallback */}
+                                <div id="initials-fallback" className="volunteer-initials" style={{ 
+                                    display: (photoPreview && photoPreview !== '/images/default-avatar.png' && !removePhotoFlag) ? 'none' : 'flex' 
+                                }}>
+                                    <span>{getUserInitials(fullName)}</span>
+                                </div>
                             </div>
 
                             <input
@@ -293,9 +276,10 @@ const EditProfile = () => {
                                 className="file-input"
                                 ref={fileInputRef}
                             />
+                            {/* Use label for upload button */}
                             <label htmlFor="profilePhoto" className="volunteer-upload">Change Photo</label>
                             
-                            {(user?.profilePhoto || profilePhoto) && ( 
+                            {(photoPreview && photoPreview !== '/images/default-avatar.png' && !removePhotoFlag) && ( 
                                 <button type="button" className="remove-photo-btn" onClick={handleRemovePhoto}>
                                     <XCircle size={16} /> Remove Photo
                                 </button>
@@ -359,9 +343,7 @@ const EditProfile = () => {
                 </div>
             </div>
 
-            <footer className="footer">
-                <p>© 2025 Clean Street. All rights reserved.</p>
-            </footer>
+            <AppFooter />
         </div>
     );
 };
